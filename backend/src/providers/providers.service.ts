@@ -6,8 +6,53 @@ import { ActivateProviderDto } from './dto/provider.dto';
 export class ProvidersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll() {
+  async findAll(city?: string, category?: string, search?: string) {
+    const where: any = {};
+
+    if (city && city !== 'Todas' && city !== 'Tu ciudad') {
+      where.user = {
+        profile: {
+          city: {
+            contains: city,
+          },
+        },
+      };
+    }
+
+    if (category) {
+      where.providerServices = {
+        some: {
+          service: {
+            category: {
+              name: {
+                contains: category,
+              },
+            },
+          },
+        },
+      };
+    }
+
+    if (search && search.trim()) {
+      const q = search.trim();
+      where.OR = [
+        { title: { contains: q } },
+        { user: { firstName: { contains: q } } },
+        { user: { lastName: { contains: q } } },
+        {
+          providerServices: {
+            some: {
+              service: {
+                name: { contains: q },
+              },
+            },
+          },
+        },
+      ];
+    }
+
     return this.prisma.providerProfile.findMany({
+      where,
       include: {
         user: {
           include: {

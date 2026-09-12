@@ -21,6 +21,7 @@ import {
   Check,
   Plus
 } from 'lucide-react';
+import AdminSidebar from '@/components/AdminSidebar';
 
 interface Plan {
   id: string;
@@ -177,50 +178,8 @@ export default function AdminSubscriptionsPage() {
 
   return (
     <div className="min-h-screen bg-slate-100 flex font-sans">
-      {/* Sidebar */}
-      <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800 shrink-0 hidden md:flex">
-        <div className="p-6 border-b border-slate-800 flex items-center space-x-3">
-          <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-blue-500/30">
-            360
-          </div>
-          <div>
-            <h1 className="font-bold text-white tracking-tight">CONECTA 360</h1>
-            <p className="text-xs text-slate-400 font-medium">Panel Administrativo</p>
-          </div>
-        </div>
-
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {menuItems.map((item, idx) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={idx}
-                href={item.href}
-                className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-                  item.active
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                }`}
-              >
-                <div className="flex items-center space-x-3">
-                  <Icon className="w-5 h-5" />
-                  <span>{item.name}</span>
-                </div>
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="p-4 border-t border-slate-800">
-          <Link
-            href="/"
-            className="w-full py-2.5 px-4 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 font-semibold text-xs transition-colors flex items-center justify-center space-x-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Volver a la Web</span>
-          </Link>
-        </div>
-      </aside>
+      {/* Sidebar - Always displays all 8 modules */}
+      <AdminSidebar currentPath="/admin/subscriptions" />
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">

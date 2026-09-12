@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, Query, ParseIntPipe } from '@nestjs/common';
 import { ProvidersService } from './providers.service';
 import { ActivateProviderDto } from './dto/provider.dto';
 
@@ -7,8 +7,12 @@ export class ProvidersController {
   constructor(private readonly providersService: ProvidersService) {}
 
   @Get()
-  findAll() {
-    return this.providersService.findAll();
+  findAll(
+    @Query('city') city?: string,
+    @Query('category') category?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.providersService.findAll(city, category, search);
   }
 
   @Get(':userId')

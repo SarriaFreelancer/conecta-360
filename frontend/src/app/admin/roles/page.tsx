@@ -9,9 +9,9 @@ import {
   Wrench,
   LayoutDashboard,
   ArrowLeft,
-  CheckCircle2,
   ShieldCheck
 } from 'lucide-react';
+import AdminSidebar from '@/components/AdminSidebar';
 
 interface RoleItem {
   id: number;
@@ -39,47 +39,8 @@ export default function AdminRolesPage() {
 
   return (
     <div className="min-h-screen bg-slate-100 flex font-sans">
-      {/* Sidebar */}
-      <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800 shrink-0 hidden md:flex">
-        <div className="p-6 border-b border-slate-800 flex items-center space-x-3">
-          <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-blue-500/30">
-            360
-          </div>
-          <div>
-            <h1 className="font-bold text-white tracking-tight">CONECTA 360</h1>
-            <p className="text-xs text-slate-400 font-medium">Panel Administrativo</p>
-          </div>
-        </div>
-
-        <nav className="flex-1 p-4 space-y-1">
-          <Link href="/admin" className="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white">
-            <LayoutDashboard className="w-5 h-5" />
-            <span>Dashboard</span>
-          </Link>
-          <Link href="/admin/users" className="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white">
-            <Users className="w-5 h-5" />
-            <span>Usuarios</span>
-          </Link>
-          <Link href="/admin/categories" className="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white">
-            <Layers className="w-5 h-5" />
-            <span>Categorías</span>
-          </Link>
-          <Link href="/admin/services" className="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white">
-            <Wrench className="w-5 h-5" />
-            <span>Servicios</span>
-          </Link>
-          <Link href="/admin/roles" className="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold bg-blue-600 text-white shadow-lg shadow-blue-600/30">
-            <ShieldAlert className="w-5 h-5" />
-            <span>Roles</span>
-          </Link>
-        </nav>
-
-        <div className="p-4 border-t border-slate-800">
-          <Link href="/" className="w-full py-2.5 px-4 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 font-semibold text-xs transition-colors flex items-center justify-center">
-            Volver a la Web
-          </Link>
-        </div>
-      </aside>
+      {/* Sidebar - Always displays all 8 modules */}
+      <AdminSidebar currentPath="/admin/roles" />
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0">

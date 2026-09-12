@@ -110,16 +110,32 @@ export default function Home() {
       .then((data) => {
         if (Array.isArray(data)) setCategories(data);
       })
-      .catch((err) => console.error(err));
+      .catch((err) => console.error('Error fetching categories from backend:', err));
+  }, []);
 
-    // 3. Cargar proveedores de MySQL
-    fetch('http://localhost:3001/providers')
+  // 3. Cargar proveedores filtrados desde el backend MySQL
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (selectedCity && selectedCity !== 'Todas' && selectedCity !== 'Tu ciudad') {
+      params.append('city', selectedCity);
+    }
+    if (selectedCategory) {
+      params.append('category', selectedCategory);
+    }
+    if (searchQuery.trim()) {
+      params.append('search', searchQuery.trim());
+    }
+
+    const url = `http://localhost:3001/providers${params.toString() ? `?${params.toString()}` : ''}`;
+    fetch(url)
       .then((res) => res.json())
       .then((data) => {
-        if (Array.isArray(data) && data.length > 0) setProviders(data);
+        if (Array.isArray(data)) {
+          setProviders(data);
+        }
       })
-      .catch((err) => console.error(err));
-  }, []);
+      .catch((err) => console.error('Error fetching filtered providers from backend:', err));
+  }, [selectedCity, selectedCategory, searchQuery]);
 
   const handleLogout = () => {
     setCurrentUser(null);

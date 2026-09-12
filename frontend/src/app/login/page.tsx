@@ -14,7 +14,7 @@ import {
   Briefcase,
   AlertCircle
 } from 'lucide-react';
-import { getCurrentUser, setCurrentUser, getInitialProviderSession, UserSession } from '@/lib/auth';
+import { getCurrentUser, setCurrentUser, getInitialProviderSession, getInitialClientSession, UserSession } from '@/lib/auth';
 
 function LoginContent() {
   const router = useRouter();
@@ -66,6 +66,7 @@ function LoginContent() {
             profession: 'Técnico de Servicios',
           },
           services: [],
+          history: [],
         };
         setCurrentUser(session);
         router.push(session.role === 'PROVIDER' ? '/dashboard' : redirectUrl);
@@ -83,24 +84,7 @@ function LoginContent() {
       setCurrentUser(providerSession);
       router.push('/dashboard');
     } else if (role === 'CLIENT') {
-      const clientSession: UserSession = {
-        id: 101,
-        email: 'maria.gomez@gmail.com',
-        firstName: 'María Fernanda',
-        lastName: 'Gómez',
-        phone: '+57 318 654 3210',
-        role: 'USER',
-        status: 'APPROVED',
-        isVerified: true,
-        plan: 'FREE',
-        createdAt: new Date().toISOString(),
-        profile: {
-          city: 'Cali',
-          department: 'Valle del Cauca',
-          country: 'Colombia',
-        },
-        services: [],
-      };
+      const clientSession = getInitialClientSession();
       setCurrentUser(clientSession);
       router.push('/');
     } else {

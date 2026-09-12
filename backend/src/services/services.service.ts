@@ -6,8 +6,26 @@ import { CreateServiceDto, UpdateServiceDto } from './dto/service.dto';
 export class ServicesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  findAll() {
+  findAll(category?: string, search?: string) {
+    const where: any = {};
+
+    if (category) {
+      where.category = {
+        name: { contains: category },
+      };
+    }
+
+    if (search && search.trim()) {
+      const q = search.trim();
+      where.OR = [
+        { name: { contains: q } },
+        { description: { contains: q } },
+        { category: { name: { contains: q } } },
+      ];
+    }
+
     return this.prisma.service.findMany({
+      where,
       include: { category: true },
       orderBy: { name: 'asc' },
     });
