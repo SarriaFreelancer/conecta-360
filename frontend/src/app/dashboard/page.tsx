@@ -45,6 +45,8 @@ import {
   updateServiceHistoryStatus,
   updateUserProfile,
   toggleUserRole,
+  payUserPlatformDebt,
+  calculateUserPlatformDebt,
   UserSession,
   ProviderServiceItem,
   ServiceHistoryItem
@@ -63,6 +65,11 @@ function UserDashboardContent() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Modal para pagar deuda con la plataforma (Modo Prestador)
+  const [showDebtPaymentModal, setShowDebtPaymentModal] = useState(false);
+  const [debtPaymentMethod, setDebtPaymentMethod] = useState<'PSE' | 'BANCOLOMBIA' | 'NEQUI' | 'TARJETA'>('PSE');
+  const [debtPaymentProcessing, setDebtPaymentProcessing] = useState(false);
 
   // Modal para calificar servicio (Modo Cliente)
   const [ratingModalItem, setRatingModalItem] = useState<ServiceHistoryItem | null>(null);
@@ -309,6 +316,25 @@ function UserDashboardContent() {
     }
   };
 
+  // Pagar deuda con la plataforma
+  const handlePayDebt = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    setDebtPaymentProcessing(true);
+    setTimeout(() => {
+      const updated = payUserPlatformDebt(user.id);
+      if (updated) {
+        setUser({ ...updated });
+      } else {
+        setUser({ ...user, platformDebt: 0 });
+      }
+      setDebtPaymentProcessing(false);
+      setShowDebtPaymentModal(false);
+      setToastMessage('✓ ¡Pago registrado con éxito! Tu saldo deudor con Conecta 360 ha quedado en $0 COP (Al día).');
+      setTimeout(() => setToastMessage(null), 4000);
+    }, 700);
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -509,6 +535,79 @@ function UserDashboardContent() {
             </div>
           )}
         </div>
+
+        {/* 1.5. Módulo de Tarifa de Descuento y Deuda con la Plataforma (Modo Prestador) */}
+        {user.role === 'PROVIDER' && (
+          <div
+            className={`rounded-3xl p-6 sm:p-7 border transition-all ${
+              (user.platformDebt || 0) > 0
+                ? 'bg-gradient-to-br from-rose-50/90 via-amber-50/50 to-white border-rose-200 shadow-sm'
+                : 'bg-emerald-50/60 border-emerald-200 shadow-xs'
+            }`}
+          >
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-900 text-white">
+                    Tarifa de Descuento Conecta 360
+                  </span>
+                  <span className="text-xs font-bold text-slate-500">
+                    Comisión mínima: {globalSettings.platformCommission || 5}% &bull; Mínimo ${Number(globalSettings.minPlatformFee || 2500).toLocaleString('es-CO')} COP
+                  </span>
+                </div>
+
+                <div>
+                  <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight flex flex-wrap items-center gap-2">
+                    <span>Estado de Deuda con la Plataforma:</span>
+                    <span className={(user.platformDebt || 0) > 0 ? 'text-rose-600' : 'text-emerald-600'}>
+                      ${(user.platformDebt || 0).toLocaleString('es-CO')} COP
+                    </span>
+                    {(user.platformDebt || 0) > 0 ? (
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-rose-100 text-rose-800 border border-rose-300">
+                        Saldo en Deuda
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                        Al Día (Sin saldo pendiente)
+                      </span>
+                    )}
+                  </h3>
+
+                  <p className="text-xs text-slate-600 leading-relaxed mt-1.5 max-w-3xl">
+                    {(user.platformDebt || 0) > 0 ? (
+                      <>
+                        ⚠️ <strong>¿Por qué quedaste en deuda con la plataforma?</strong> Cuando el cliente te paga directamente mediante <strong>Transferencia Bancaria</strong> o en <strong>Efectivo</strong>, recibes el 100% del dinero en tus manos sin intermediación bancaria de la pasarela. Por esta razón, la tarifa mínima de intermediación (5% o mín. $2.500 COP) se liquida como <strong>saldo pendiente por pagar a Conecta 360</strong> para mantener activo tu perfil en Cali.
+                      </>
+                    ) : (
+                      <>
+                        ✓ ¡Excelente! No tienes comisiones pendientes por transferencias bancarias o cobros en efectivo. Tu cuenta está 100% al día y tus servicios se muestran activos en Cali.
+                      </>
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-3 shrink-0">
+                {(user.platformDebt || 0) > 0 ? (
+                  <button
+                    onClick={() => setShowDebtPaymentModal(true)}
+                    className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 active:scale-[0.99] text-white font-black text-xs sm:text-sm shadow-lg shadow-rose-600/20 transition-all flex items-center justify-center space-x-2"
+                  >
+                    <CreditCard className="w-4 h-4" />
+                    <span>Pagar Deuda (${(user.platformDebt || 0).toLocaleString('es-CO')} COP)</span>
+                  </button>
+                ) : (
+                  <div className="text-right">
+                    <span className="text-xs font-bold text-emerald-700 bg-white/80 px-3 py-1.5 rounded-xl border border-emerald-200 inline-flex items-center space-x-1.5 shadow-2xs">
+                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                      <span>Cuenta al Día</span>
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* 2. Ribbon de Métricas Clave (Cantidad de Servicios, Calificación y Estrellas, Servicios Realizados, Pagos) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1012,7 +1111,7 @@ function UserDashboardContent() {
                         </div>
 
                         {/* Pago del Servicio */}
-                        <div className="text-right">
+                        <div className="text-right space-y-1">
                           <div className="text-base font-black text-slate-900">
                             ${item.amount.toLocaleString('es-CO')} COP
                           </div>
@@ -1024,6 +1123,24 @@ function UserDashboardContent() {
                             </span>
                             <span className="text-slate-400 font-normal">({item.paymentMethod})</span>
                           </div>
+
+                          {/* Comisión Conecta 360 y Deuda del Servicio */}
+                          {item.platformFee && (
+                            <div className="flex flex-col items-end pt-1 space-y-1">
+                              <span className="text-[11px] text-slate-500 font-medium">
+                                Comisión Conecta 360: <strong className="text-slate-800">${item.platformFee.toLocaleString('es-CO')} COP</strong> (5%)
+                              </span>
+                              {item.platformDebtStatus === 'EN_DEUDA' ? (
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-rose-50 text-rose-700 border border-rose-200">
+                                  ⚠️ En deuda (Cobro directo {item.paymentMethod})
+                                </span>
+                              ) : item.platformDebtStatus === 'AL_DIA' ? (
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  ✓ Al día (Retenido por pasarela)
+                                </span>
+                              ) : null}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1765,6 +1882,140 @@ function UserDashboardContent() {
                 Subir a Plan Pro
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Pagar Deuda con la Plataforma (Modo Prestador) */}
+      {showDebtPaymentModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-5 my-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
+                  <CreditCard className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900">
+                    Pagar Saldo con Conecta 360
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    Comisiones por cobros directos en Cali
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowDebtPaymentModal(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Resumen del Saldo */}
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-rose-50 to-amber-50 border border-rose-200 text-center space-y-1">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-rose-800">
+                Total a Pagar / Ponerse al Día
+              </span>
+              <div className="text-3xl font-black text-rose-600">
+                ${(user.platformDebt || 0).toLocaleString('es-CO')} COP
+              </div>
+              <p className="text-[11px] text-slate-600">
+                Comisión mínima ({globalSettings.platformCommission || 5}%) sobre servicios completados por Efectivo o Transferencia
+              </p>
+            </div>
+
+            <form onSubmit={handlePayDebt} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">
+                  Selecciona Método de Pago en Colombia
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDebtPaymentMethod('PSE')}
+                    className={`p-3 rounded-xl border text-left transition-all ${
+                      debtPaymentMethod === 'PSE'
+                        ? 'border-[#0056d2] bg-blue-50/70 text-[#0056d2] font-bold shadow-2xs'
+                        : 'border-slate-200 hover:bg-slate-50 text-slate-700'
+                    }`}
+                  >
+                    <div className="text-xs font-black">PSE en Línea</div>
+                    <div className="text-[10px] text-slate-500">Cuentas de Ahorros / Corriente</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDebtPaymentMethod('NEQUI')}
+                    className={`p-3 rounded-xl border text-left transition-all ${
+                      debtPaymentMethod === 'NEQUI'
+                        ? 'border-purple-600 bg-purple-50/70 text-purple-700 font-bold shadow-2xs'
+                        : 'border-slate-200 hover:bg-slate-50 text-slate-700'
+                    }`}
+                  >
+                    <div className="text-xs font-black">Nequi / Daviplata</div>
+                    <div className="text-[10px] text-slate-500">Pago rápido desde el móvil</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDebtPaymentMethod('BANCOLOMBIA')}
+                    className={`p-3 rounded-xl border text-left transition-all ${
+                      debtPaymentMethod === 'BANCOLOMBIA'
+                        ? 'border-amber-600 bg-amber-50/70 text-amber-800 font-bold shadow-2xs'
+                        : 'border-slate-200 hover:bg-slate-50 text-slate-700'
+                    }`}
+                  >
+                    <div className="text-xs font-black">Bancolombia QR</div>
+                    <div className="text-[10px] text-slate-500">Botón Bancolombia / App</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDebtPaymentMethod('TARJETA')}
+                    className={`p-3 rounded-xl border text-left transition-all ${
+                      debtPaymentMethod === 'TARJETA'
+                        ? 'border-emerald-600 bg-emerald-50/70 text-emerald-800 font-bold shadow-2xs'
+                        : 'border-slate-200 hover:bg-slate-50 text-slate-700'
+                    }`}
+                  >
+                    <div className="text-xs font-black">Tarjeta Débito / Crédito</div>
+                    <div className="text-[10px] text-slate-500">Visa, Mastercard, Diners</div>
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600 flex items-start space-x-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <p className="text-[11px] leading-relaxed">
+                  Al completar este abono, tu saldo deudor quedará en <strong>$0 COP</strong>, tu certificado de paz y salvo se actualizará automáticamente y mantendrás tu perfil con máxima visibilidad en Cali.
+                </p>
+              </div>
+
+              <div className="flex space-x-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowDebtPaymentModal(false)}
+                  className="flex-1 py-3 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={debtPaymentProcessing}
+                  className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-black text-xs sm:text-sm rounded-xl shadow-lg shadow-emerald-600/20 flex items-center justify-center space-x-2 transition-all"
+                >
+                  {debtPaymentProcessing ? (
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      <span>Confirmar Pago (${(user.platformDebt || 0).toLocaleString('es-CO')} COP)</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

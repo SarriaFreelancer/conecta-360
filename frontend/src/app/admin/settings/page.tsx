@@ -24,16 +24,19 @@ import {
   ToggleRight
 } from 'lucide-react';
 import AdminSidebar from '@/components/AdminSidebar';
+import { getGlobalSettings, saveGlobalSettings } from '@/lib/system-settings';
 
 export default function AdminSettingsPage() {
+  const [globalSettings, setGlobalSettings] = useState(getGlobalSettings());
+
   const [generalConfig, setGeneralConfig] = useState({
-    platformName: 'CONECTA 360',
+    platformName: globalSettings.platformName || 'CONECTA 360',
     primarySlogan: 'Conecta lo que necesitas con quien puede hacerlo.',
     secondarySlogan: 'Necesitas. Encuentras. Contratas.',
-    supportEmail: 'contacto@conecta360.com',
-    supportPhone: '+593 98 123 4567',
-    currency: 'USD ($)',
-    country: 'Ecuador'
+    supportEmail: 'contacto@conecta360.co',
+    supportPhone: '+57 315 789 4521',
+    currency: 'COP ($)',
+    country: 'Colombia'
   });
 
   const [securityRules, setSecurityRules] = useState({
@@ -45,22 +48,24 @@ export default function AdminSettingsPage() {
   });
 
   const [financialRules, setFinancialRules] = useState({
-    platformCommission: '8.5',
-    minHourlyRate: '10.00',
+    platformCommission: String(globalSettings.platformCommission || 5.0),
+    minPlatformFee: String(globalSettings.minPlatformFee || 2500),
+    minHourlyRate: String(globalSettings.minHourlyRate || 25000),
+    cashTransferDebtEnabled: globalSettings.cashTransferDebtEnabled ?? true,
     allowCardPayments: true,
     allowBankTransfer: true,
     allowCashOnDelivery: true
   });
 
   const [cities, setCities] = useState([
-    { name: 'Quito', province: 'Pichincha', active: true },
-    { name: 'Guayaquil', province: 'Guayas', active: true },
-    { name: 'Cuenca', province: 'Azuay', active: true },
-    { name: 'Ambato', province: 'Tungurahua', active: true },
-    { name: 'Manta', province: 'Manabí', active: true },
-    { name: 'Loja', province: 'Loja', active: true },
-    { name: 'Machala', province: 'El Oro', active: true },
-    { name: 'Santo Domingo', province: 'Santo Domingo', active: false }
+    { name: 'Cali', province: 'Valle del Cauca', active: true },
+    { name: 'Jamundí', province: 'Valle del Cauca', active: true },
+    { name: 'Yumbo', province: 'Valle del Cauca', active: true },
+    { name: 'Palmira', province: 'Valle del Cauca', active: true },
+    { name: 'Buga', province: 'Valle del Cauca', active: true },
+    { name: 'Tuluá', province: 'Valle del Cauca', active: true },
+    { name: 'Cartago', province: 'Valle del Cauca', active: false },
+    { name: 'Buenaventura', province: 'Valle del Cauca', active: false }
   ]);
 
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -78,6 +83,16 @@ export default function AdminSettingsPage() {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+    const updated = saveGlobalSettings({
+      platformName: generalConfig.platformName,
+      country: generalConfig.country,
+      currency: generalConfig.currency,
+      platformCommission: parseFloat(financialRules.platformCommission) || 5.0,
+      minPlatformFee: parseFloat(financialRules.minPlatformFee) || 2500,
+      minHourlyRate: parseFloat(financialRules.minHourlyRate) || 25000,
+      cashTransferDebtEnabled: financialRules.cashTransferDebtEnabled,
+    });
+    setGlobalSettings(updated);
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 4000);
   };
@@ -108,26 +123,23 @@ export default function AdminSettingsPage() {
 
           <button
             onClick={handleSave}
-            className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center space-x-2 shadow-sm transition-all"
+            className="flex items-center space-x-2 bg-[#0056d2] hover:bg-[#0046a8] text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-md shadow-blue-600/20 transition-all"
           >
             <Save className="w-4 h-4" />
             <span>Guardar Configuración</span>
           </button>
         </header>
 
-        <div className="p-8 max-w-5xl w-full mx-auto space-y-8">
-          {savedSuccess && (
-            <div className="p-4 rounded-2xl bg-emerald-600 text-white font-bold text-sm shadow-md flex items-center justify-between animate-fade-in">
-              <div className="flex items-center space-x-2">
-                <CheckCircle2 className="w-5 h-5" />
-                <span>✓ Parámetros de CONECTA 360 guardados y sincronizados correctamente.</span>
-              </div>
-              <button onClick={() => setSavedSuccess(false)} className="text-white/80 hover:text-white">✕</button>
-            </div>
-          )}
+        {savedSuccess && (
+          <div className="fixed bottom-6 right-6 z-50 bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center space-x-2 text-xs font-bold animate-in fade-in slide-in-from-bottom-5">
+            <CheckCircle2 className="w-4 h-4" />
+            <span>Configuración de tarifas y comisiones guardada exitosamente</span>
+          </div>
+        )}
 
+        <div className="p-8 max-w-5xl w-full mx-auto space-y-6">
           {/* Form */}
-          <form onSubmit={handleSave} className="space-y-8">
+          <form onSubmit={handleSave} className="space-y-6">
             {/* 1. Datos Generales */}
             <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-5">
               <div className="flex items-center space-x-3 pb-3 border-b border-slate-100">
@@ -135,14 +147,14 @@ export default function AdminSettingsPage() {
                   <Globe className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-slate-900">Identidad y Marca</h3>
-                  <p className="text-xs text-slate-400 font-medium">Textos principales visibles en la portada y motores de búsqueda</p>
+                  <h3 className="text-base font-black text-slate-900">Identidad de la Plataforma</h3>
+                  <p className="text-xs text-slate-400 font-medium">Configuración de nombre, país y datos institucionales</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Nombre de la Plataforma</label>
+                  <label className="block font-bold text-slate-700 mb-1">Nombre Comercial</label>
                   <input
                     type="text"
                     value={generalConfig.platformName}
@@ -152,31 +164,21 @@ export default function AdminSettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Moneda del Sistema</label>
+                  <label className="block font-bold text-slate-700 mb-1">País Principal</label>
                   <input
                     type="text"
-                    value={generalConfig.currency}
-                    disabled
-                    className="w-full p-2.5 bg-slate-100 border border-slate-200 rounded-xl font-bold text-slate-500 cursor-not-allowed"
-                  />
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label className="block font-bold text-slate-700 mb-1">Eslogan Principal</label>
-                  <input
-                    type="text"
-                    value={generalConfig.primarySlogan}
-                    onChange={(e) => setGeneralConfig({ ...generalConfig, primarySlogan: e.target.value })}
+                    value={generalConfig.country}
+                    onChange={(e) => setGeneralConfig({ ...generalConfig, country: e.target.value })}
                     className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
                   />
                 </div>
 
-                <div className="sm:col-span-2">
-                  <label className="block font-bold text-slate-700 mb-1">Eslogan Secundario</label>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Moneda del Sistema</label>
                   <input
                     type="text"
-                    value={generalConfig.secondarySlogan}
-                    onChange={(e) => setGeneralConfig({ ...generalConfig, secondarySlogan: e.target.value })}
+                    value={generalConfig.currency}
+                    onChange={(e) => setGeneralConfig({ ...generalConfig, currency: e.target.value })}
                     className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
                   />
                 </div>
@@ -184,7 +186,7 @@ export default function AdminSettingsPage() {
                 <div>
                   <label className="block font-bold text-slate-700 mb-1 flex items-center space-x-1">
                     <Mail className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Email de Soporte</span>
+                    <span>Correo de Soporte</span>
                   </label>
                   <input
                     type="email"
@@ -194,10 +196,10 @@ export default function AdminSettingsPage() {
                   />
                 </div>
 
-                <div>
+                <div className="sm:col-span-2">
                   <label className="block font-bold text-slate-700 mb-1 flex items-center space-x-1">
                     <Phone className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Teléfono / WhatsApp Oficial</span>
+                    <span>Teléfono / WhatsApp Oficial en Colombia</span>
                   </label>
                   <input
                     type="text"
@@ -271,38 +273,75 @@ export default function AdminSettingsPage() {
                 </div>
                 <div>
                   <h3 className="text-base font-black text-slate-900">Comisiones y Parámetros Financieros</h3>
-                  <p className="text-xs text-slate-400 font-medium">Porcentajes de monetización del marketplace</p>
+                  <p className="text-xs text-slate-400 font-medium">Tarifa de descuento para la plataforma y reglas de cobro en Colombia</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Comisión Estándar por Servicio (%)</label>
+                  <label className="block font-bold text-slate-700 mb-1">Comisión Mínima (%)</label>
                   <div className="relative">
                     <input
                       type="number"
-                      step="0.1"
+                      step="0.5"
                       value={financialRules.platformCommission}
                       onChange={(e) => setFinancialRules({ ...financialRules, platformCommission: e.target.value })}
                       className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 font-bold text-slate-400">%</span>
                   </div>
+                  <p className="text-[10px] text-slate-400 mt-1">Tarifa mínima del 5%</p>
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Tarifa Mínima por Hora ($ USD)</label>
+                  <label className="block font-bold text-slate-700 mb-1">Tarifa Fija Mínima ($ COP)</label>
                   <div className="relative">
                     <input
                       type="number"
-                      step="1.0"
+                      step="500"
+                      value={financialRules.minPlatformFee}
+                      onChange={(e) => setFinancialRules({ ...financialRules, minPlatformFee: e.target.value })}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 font-bold text-slate-400">COP</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1">Piso mínimo $2.500 COP</p>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Tarifa Sugerida Mínima ($ COP/h)</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="5000"
                       value={financialRules.minHourlyRate}
                       onChange={(e) => setFinancialRules({ ...financialRules, minHourlyRate: e.target.value })}
                       className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
                     />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 font-bold text-slate-400">USD</span>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 font-bold text-slate-400">COP</span>
                   </div>
+                  <p className="text-[10px] text-slate-400 mt-1">Mínimo sugerido $25.000 COP</p>
                 </div>
+              </div>
+
+              {/* Regla de Deuda en Efectivo y Transferencia Bancaria */}
+              <div className="p-4 bg-amber-50/80 rounded-2xl border border-amber-200 text-xs text-amber-950 space-y-2">
+                <label className="flex items-start justify-between cursor-pointer">
+                  <div className="space-y-0.5 pr-4">
+                    <p className="font-extrabold text-slate-900 text-xs">
+                      Deuda Automática por Cobros Directos (Efectivo y Transferencia Bancaria)
+                    </p>
+                    <p className="text-slate-600 text-[11px] leading-relaxed">
+                      Cuando un cliente paga mediante <strong>Transferencia Bancaria directa</strong> o en <strong>Efectivo</strong>, el prestador de servicios recibe el 100% del dinero directamente en sus manos. Al activar esta regla, el prestador queda registrado con un <strong>saldo en deuda</strong> correspondiente a la comisión mínima de la plataforma (5% o mín. $2.500 COP), que debe abonar posteriormente a Conecta 360.
+                    </p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={financialRules.cashTransferDebtEnabled}
+                    onChange={(e) => setFinancialRules({ ...financialRules, cashTransferDebtEnabled: e.target.checked })}
+                    className="w-4 h-4 text-amber-600 rounded mt-1 shrink-0"
+                  />
+                </label>
               </div>
             </div>
 

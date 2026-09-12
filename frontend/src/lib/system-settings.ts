@@ -11,7 +11,9 @@ export interface GlobalPlatformSettings {
   freePlanMaxServices: number; // 1 servicio en plan gratis
   maxActivitiesPerService: number; // 10 actividades relacionadas límite
   requireVerificationDocument: boolean;
-  platformCommission: number;
+  platformCommission: number; // Tarifa de descuento mínima para la plataforma (%)
+  minPlatformFee: number; // Tarifa fija mínima de intermediación en COP
+  cashTransferDebtEnabled: boolean; // Cobros en efectivo/transferencia generan deuda con la plataforma
 }
 
 export const DEFAULT_GLOBAL_SETTINGS: GlobalPlatformSettings = {
@@ -25,7 +27,9 @@ export const DEFAULT_GLOBAL_SETTINGS: GlobalPlatformSettings = {
   freePlanMaxServices: 1,   // Plan gratis: exactamente 1 servicio
   maxActivitiesPerService: 10, // Límite de 10 actividades
   requireVerificationDocument: true,
-  platformCommission: 8.5,
+  platformCommission: 5.0, // Tarifa de descuento mínima del 5% para la plataforma
+  minPlatformFee: 2500,    // Tarifa mínima de $2.500 COP por servicio
+  cashTransferDebtEnabled: true, // Persona queda en deuda con la plataforma por transferencias o efectivo
 };
 
 const SETTINGS_STORAGE_KEY = 'conecta360_global_settings';
@@ -55,3 +59,10 @@ export function saveGlobalSettings(newSettings: Partial<GlobalPlatformSettings>)
     return DEFAULT_GLOBAL_SETTINGS;
   }
 }
+
+export function calculatePlatformFee(amount: number): number {
+  const settings = getGlobalSettings();
+  const feeByPercent = Math.round((amount * (settings.platformCommission || 5)) / 100);
+  return Math.max(feeByPercent, settings.minPlatformFee || 2500);
+}
+

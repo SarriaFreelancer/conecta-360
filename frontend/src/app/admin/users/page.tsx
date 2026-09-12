@@ -26,7 +26,8 @@ import {
   Award
 } from 'lucide-react';
 import AdminSidebar from '@/components/AdminSidebar';
-import { getUserHistoryForAdmin, verifyUserByAdmin, ServiceHistoryItem } from '@/lib/auth';
+import { getUserHistoryForAdmin, verifyUserByAdmin, calculateUserPlatformDebt, ServiceHistoryItem } from '@/lib/auth';
+import { getGlobalSettings } from '@/lib/system-settings';
 
 interface UserItem {
   id: number;
@@ -313,6 +314,7 @@ export default function AdminUsersPage() {
                     <th className="py-4 px-6">Tipo / Rol</th>
                     <th className="py-4 px-6">Categoría & Servicios</th>
                     <th className="py-4 px-6">Calificación / Estrellas</th>
+                    <th className="py-4 px-6">Deuda Plataforma</th>
                     <th className="py-4 px-6">Estado Verificación</th>
                     <th className="py-4 px-6 text-right">Historial & Acciones</th>
                   </tr>
@@ -320,13 +322,13 @@ export default function AdminUsersPage() {
                 <tbody className="divide-y divide-slate-100 text-sm font-medium text-slate-700">
                   {loading ? (
                     <tr>
-                      <td colSpan={6} className="py-8 text-center text-slate-400 text-xs font-semibold">
+                      <td colSpan={7} className="py-8 text-center text-slate-400 text-xs font-semibold">
                         Cargando usuarios...
                       </td>
                     </tr>
                   ) : filteredUsers.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-8 text-center text-slate-400 text-xs font-semibold">
+                      <td colSpan={7} className="py-8 text-center text-slate-400 text-xs font-semibold">
                         No se encontraron usuarios con los filtros seleccionados.
                       </td>
                     </tr>
@@ -335,6 +337,7 @@ export default function AdminUsersPage() {
                       const isProvider = !!u.providerProfile || u.role?.name === 'PROVIDER';
                       const userCategory = getUserCategory(u);
                       const isVerified = u.providerProfile?.isVerified || u.status === 'APPROVED';
+                      const userDebt = isProvider ? calculateUserPlatformDebt(u.id) : 0;
 
                       return (
                         <tr key={u.id} className="hover:bg-slate-50/80 transition-colors">
@@ -411,6 +414,27 @@ export default function AdminUsersPage() {
                               </div>
                             ) : (
                               <span className="text-xs font-bold text-slate-600">★★★★★ (Cliente verificado)</span>
+                            )}
+                          </td>
+
+                          {/* Deuda con la plataforma */}
+                          <td className="py-4 px-6">
+                            {isProvider ? (
+                              userDebt > 0 ? (
+                                <div className="space-y-0.5">
+                                  <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-black bg-rose-50 text-rose-700 border border-rose-200">
+                                    <span>Deuda: ${userDebt.toLocaleString('es-CO')} COP</span>
+                                  </span>
+                                  <p className="text-[10px] text-slate-400">Cobro directo Efectivo/Transf.</p>
+                                </div>
+                              ) : (
+                                <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  <span>Al Día ($0 COP)</span>
+                                </span>
+                              )
+                            ) : (
+                              <span className="text-xs text-slate-400">Sin deudas</span>
                             )}
                           </td>
 
@@ -506,7 +530,7 @@ export default function AdminUsersPage() {
             </div>
 
             {/* Cinta de Métricas del Usuario */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/70 space-y-1">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                   Servicios Registrados
@@ -531,7 +555,7 @@ export default function AdminUsersPage() {
                     ))}
                   </div>
                 </div>
-                <p className="text-[11px] text-amber-700">Satisfacción excelente</p>
+                <p className="text-[11px] text-amber-700">Satisfacción verificada</p>
               </div>
 
               <div className="bg-blue-50/60 p-4 rounded-2xl border border-blue-200/70 space-y-1">
@@ -545,6 +569,27 @@ export default function AdminUsersPage() {
                     .toLocaleString('es-CO')}
                 </div>
                 <p className="text-[11px] text-slate-500">Total liquidado y en curso</p>
+              </div>
+
+              {/* 4ta Métrica: Deuda con Conecta 360 */}
+              <div className={`p-4 rounded-2xl border space-y-1 ${
+                calculateUserPlatformDebt(selectedUser.id) > 0
+                  ? 'bg-rose-50/70 border-rose-200'
+                  : 'bg-emerald-50/70 border-emerald-200'
+              }`}>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  Deuda Plataforma Conecta 360
+                </span>
+                <div className={`text-2xl font-black ${
+                  calculateUserPlatformDebt(selectedUser.id) > 0 ? 'text-rose-600' : 'text-emerald-600'
+                }`}>
+                  ${calculateUserPlatformDebt(selectedUser.id).toLocaleString('es-CO')} COP
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  {calculateUserPlatformDebt(selectedUser.id) > 0
+                    ? '⚠️ Por cobros en Efectivo / Transf.'
+                    : '✓ Cuenta al día sin saldo'}
+                </p>
               </div>
             </div>
 
@@ -616,6 +661,22 @@ export default function AdminUsersPage() {
                             &bull; {item.paymentStatus} ({item.paymentMethod})
                           </span>
                         </div>
+
+                        {/* Desglose Comisión Conecta 360 y Deuda */}
+                        {item.platformFee && (
+                          <div className="flex items-center sm:justify-end space-x-1.5 text-[11px] pt-1 text-slate-500 font-medium">
+                            <span>Comisión 5%: <strong>${item.platformFee.toLocaleString('es-CO')} COP</strong></span>
+                            {item.platformDebtStatus === 'EN_DEUDA' ? (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-rose-50 text-rose-700 border border-rose-200">
+                                En Deuda ({item.paymentMethod})
+                              </span>
+                            ) : item.platformDebtStatus === 'AL_DIA' ? (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                Al Día
+                              </span>
+                            ) : null}
+                          </div>
+                        )}
                       </div>
                     </div>
 

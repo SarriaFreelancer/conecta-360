@@ -1,5 +1,5 @@
 // Servicio y utilidades de Autenticación y Gestión de Proveedores para Conecta 360 Colombia
-import { getGlobalSettings } from './system-settings';
+import { getGlobalSettings, calculatePlatformFee } from './system-settings';
 
 export interface ServiceHistoryItem {
   id: string;
@@ -14,6 +14,8 @@ export interface ServiceHistoryItem {
   amount: number; // Monto en COP
   paymentStatus: 'PAGADO' | 'PENDIENTE';
   paymentMethod: 'Transferencia Bancaria' | 'Efectivo' | 'Tarjeta de Crédito / Débito';
+  platformFee?: number; // Tarifa de descuento mínima para la plataforma
+  platformDebtStatus?: 'EN_DEUDA' | 'AL_DIA' | 'NO_APLICA'; // En deuda cuando es Efectivo o Transferencia
   rating?: number; // 1 a 5 estrellas
   reviewComment?: string;
 }
@@ -41,6 +43,7 @@ export interface UserSession {
   };
   services: ProviderServiceItem[];
   history: ServiceHistoryItem[];
+  platformDebt?: number; // Deuda pendiente con la plataforma
 }
 
 export interface ProviderServiceItem {
@@ -107,6 +110,7 @@ export function getInitialProviderSession(): UserSession {
         createdAt: new Date().toISOString(),
       },
     ],
+    platformDebt: 11750, // Deuda de $11.750 COP por comisiones de cobros directos en Efectivo/Transferencia
     history: [
       {
         id: 'hist-1',
@@ -121,6 +125,8 @@ export function getInitialProviderSession(): UserSession {
         amount: 140000,
         paymentStatus: 'PAGADO',
         paymentMethod: 'Transferencia Bancaria',
+        platformFee: 7000, // Comisión 5%
+        platformDebtStatus: 'EN_DEUDA', // Al ser transferencia directa, queda en deuda con la plataforma
         rating: 5,
         reviewComment: 'Excelente profesional, llegó a tiempo y dejó todo funcionando impecable en Granada.',
       },
@@ -137,6 +143,8 @@ export function getInitialProviderSession(): UserSession {
         amount: 95000,
         paymentStatus: 'PAGADO',
         paymentMethod: 'Efectivo',
+        platformFee: 4750, // Comisión 5%
+        platformDebtStatus: 'EN_DEUDA', // Al ser en efectivo directo, queda en deuda con la plataforma
         rating: 5,
         reviewComment: 'Solucionó el cortocircuito en menos de 45 minutos. Muy honesto y recomendado.',
       },
@@ -153,6 +161,8 @@ export function getInitialProviderSession(): UserSession {
         amount: 85000,
         paymentStatus: 'PENDIENTE',
         paymentMethod: 'Transferencia Bancaria',
+        platformFee: 4250,
+        platformDebtStatus: 'EN_DEUDA',
       },
       {
         id: 'hist-4',
@@ -167,8 +177,64 @@ export function getInitialProviderSession(): UserSession {
         amount: 120000,
         paymentStatus: 'PENDIENTE',
         paymentMethod: 'Tarjeta de Crédito / Débito',
+        platformFee: 6000,
+        platformDebtStatus: 'AL_DIA', // Plataforma descuenta automáticamente en pagos con tarjeta
       },
     ],
+  };
+}
+
+export function getInitialSuperAdminSession(): UserSession {
+  return {
+    id: 100,
+    email: 'superadmin@conecta360.com',
+    firstName: 'Super',
+    lastName: 'Admin',
+    phone: '+57 300 000 0001',
+    role: 'SUPERADMIN',
+    status: 'APPROVED',
+    isVerified: true,
+    plan: 'PRO',
+    createdAt: new Date().toISOString(),
+    profile: {
+      city: 'Bogotá',
+      department: 'Cundinamarca',
+      country: 'Colombia',
+      profession: 'Super Administrador Principal',
+      bio: 'Control y configuración global de Conecta 360, tarifas mínimas y comisiones.',
+      profilePhoto: undefined,
+      address: 'Sede Principal Conecta 360',
+    },
+    services: [],
+    history: [],
+    platformDebt: 0,
+  };
+}
+
+export function getInitialAdminSession(): UserSession {
+  return {
+    id: 101,
+    email: 'admin@conecta360.com',
+    firstName: 'Admin',
+    lastName: 'Operaciones',
+    phone: '+57 300 000 0002',
+    role: 'ADMIN',
+    status: 'APPROVED',
+    isVerified: true,
+    plan: 'PRO',
+    createdAt: new Date().toISOString(),
+    profile: {
+      city: 'Medellín',
+      department: 'Antioquia',
+      country: 'Colombia',
+      profession: 'Administrador de Operaciones y Verificaciones',
+      bio: 'Gestión de usuarios, control de prestadores y seguimiento de deudas de intermediación.',
+      profilePhoto: undefined,
+      address: 'Oficina de Operaciones Valle y Antioquia',
+    },
+    services: [],
+    history: [],
+    platformDebt: 0,
   };
 }
 
@@ -429,13 +495,79 @@ export function createServiceBooking(booking: {
     amount: booking.amount,
     paymentStatus: 'PENDIENTE',
     paymentMethod: 'Transferencia Bancaria',
+    platformFee: calculatePlatformFee(booking.amount),
+    platformDebtStatus: 'EN_DEUDA', // Cliente paga directo por transferencia -> prestador queda en deuda
     reviewComment: booking.notes,
   };
 
   if (!current.history) current.history = [];
   current.history.unshift(newHistoryItem);
+  current.platformDebt = calculateUserPlatformDebt(current);
   setCurrentUser(current);
   return true;
+}
+
+export function calculateUserPlatformDebt(userOrId?: number | string | UserSession | null | any): number {
+  if (!userOrId) {
+    const target = getCurrentUser();
+    if (!target) return 0;
+    if (typeof target.platformDebt === 'number') return target.platformDebt;
+    if (Array.isArray(target.history)) {
+      return target.history
+        .filter((item) => item.platformDebtStatus === 'EN_DEUDA')
+        .reduce((acc, item) => acc + (item.platformFee || calculatePlatformFee(item.amount)), 0);
+    }
+    return 0;
+  }
+
+  // Si es un objeto de usuario
+  if (typeof userOrId === 'object') {
+    if (typeof userOrId.platformDebt === 'number') return userOrId.platformDebt;
+    if (Array.isArray(userOrId.history)) {
+      return userOrId.history
+        .filter((item: any) => item.platformDebtStatus === 'EN_DEUDA')
+        .reduce((acc: number, item: any) => acc + (item.platformFee || calculatePlatformFee(item.amount)), 0);
+    }
+    if (userOrId.id === 1 || String(userOrId.email || '').includes('carlos.rodriguez')) {
+      return 11750;
+    }
+    return 0;
+  }
+
+  // Si es un ID o email
+  const current = getCurrentUser();
+  if (current && (current.id === userOrId || current.email === String(userOrId))) {
+    if (typeof current.platformDebt === 'number') return current.platformDebt;
+    if (Array.isArray(current.history)) {
+      return current.history
+        .filter((item) => item.platformDebtStatus === 'EN_DEUDA')
+        .reduce((acc, item) => acc + (item.platformFee || calculatePlatformFee(item.amount)), 0);
+    }
+  }
+
+  if (userOrId === 1 || String(userOrId).toLowerCase().includes('carlos')) {
+    return 11750;
+  }
+
+  return 0;
+}
+
+export function payUserPlatformDebt(userId?: number | string): UserSession | null {
+  const user = getCurrentUser();
+  if (!user) return null;
+
+  if (user.history) {
+    user.history = user.history.map((item) => {
+      if (item.platformDebtStatus === 'EN_DEUDA') {
+        return { ...item, platformDebtStatus: 'AL_DIA' as const };
+      }
+      return item;
+    });
+  }
+
+  user.platformDebt = 0;
+  setCurrentUser(user);
+  return user;
 }
 
 export function updateUserProfile(data: {
@@ -536,6 +668,8 @@ export function getUserHistoryForAdmin(user: {
         amount: 125000,
         paymentStatus: 'PAGADO',
         paymentMethod: 'Transferencia Bancaria',
+        platformFee: 6250, // 5% comisión
+        platformDebtStatus: 'EN_DEUDA', // Pago directo por transferencia -> prestador en deuda
         rating: 5,
         reviewComment: 'Excelente atención en Cali, muy puntual y con acabados impecables.',
       },
@@ -551,6 +685,8 @@ export function getUserHistoryForAdmin(user: {
         amount: 80000,
         paymentStatus: 'PAGADO',
         paymentMethod: 'Efectivo',
+        platformFee: 4000, // 5% comisión
+        platformDebtStatus: 'EN_DEUDA', // Pago directo en efectivo -> prestador en deuda
         rating: 4,
         reviewComment: 'Trabajo profesional y ordenado.',
       },
@@ -618,4 +754,5 @@ export function verifyUserByAdmin(userIdOrEmail: number | string): boolean {
   }
   return true;
 }
+
 

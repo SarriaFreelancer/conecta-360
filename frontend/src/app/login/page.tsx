@@ -14,7 +14,15 @@ import {
   Briefcase,
   AlertCircle
 } from 'lucide-react';
-import { getCurrentUser, setCurrentUser, getInitialProviderSession, getInitialClientSession, UserSession } from '@/lib/auth';
+import {
+  getCurrentUser,
+  setCurrentUser,
+  getInitialSuperAdminSession,
+  getInitialAdminSession,
+  getInitialProviderSession,
+  getInitialClientSession,
+  UserSession
+} from '@/lib/auth';
 
 function LoginContent() {
   const router = useRouter();
@@ -32,7 +40,9 @@ function LoginContent() {
     // Si ya está logueado, redirigir
     const current = getCurrentUser();
     if (current) {
-      if (current.role === 'PROVIDER') {
+      if (current.role === 'SUPERADMIN' || current.role === 'ADMIN') {
+        router.push('/admin');
+      } else if (current.role === 'PROVIDER') {
         router.push('/dashboard');
       } else {
         router.push(redirectUrl);
@@ -46,9 +56,38 @@ function LoginContent() {
     setLoading(true);
 
     setTimeout(() => {
-      // Simulación de autenticación conectada
+      const em = email.trim().toLowerCase();
+      // Credenciales de prueba integradas
+      if (em === 'superadmin@conecta360.com') {
+        const session = getInitialSuperAdminSession();
+        setCurrentUser(session);
+        router.push('/admin');
+        return;
+      }
+
+      if (em === 'admin@conecta360.com') {
+        const session = getInitialAdminSession();
+        setCurrentUser(session);
+        router.push('/admin');
+        return;
+      }
+
+      if (em === 'carlos.rodriguez@conecta360.co' || em.includes('electricista') || em.includes('proveedor')) {
+        const session = getInitialProviderSession();
+        setCurrentUser(session);
+        router.push('/dashboard');
+        return;
+      }
+
+      if (em === 'laura.gomez@gmail.com' || em.includes('cliente')) {
+        const session = getInitialClientSession();
+        setCurrentUser(session);
+        router.push(redirectUrl);
+        return;
+      }
+
+      // Si ingresa con cualquier otro correo válido
       if (email.trim() && password.trim()) {
-        // Generar o recuperar sesión
         const session: UserSession = {
           id: Date.now(),
           email: email.trim(),
@@ -68,6 +107,7 @@ function LoginContent() {
           },
           services: [],
           history: [],
+          platformDebt: 0,
         };
         setCurrentUser(session);
         router.push(session.role === 'PROVIDER' ? '/dashboard' : redirectUrl);
@@ -75,22 +115,33 @@ function LoginContent() {
         setError('Por favor ingresa tu correo y contraseña.');
         setLoading(false);
       }
-    }, 600);
+    }, 400);
   };
 
   // Cuentas rápidas de demostración
-  const handleQuickLogin = (role: 'PROVIDER' | 'CLIENT' | 'ADMIN') => {
-    if (role === 'PROVIDER') {
+  const handleQuickLogin = (role: 'SUPERADMIN' | 'ADMIN' | 'PROVIDER' | 'CLIENT') => {
+    if (role === 'SUPERADMIN') {
+      const session = getInitialSuperAdminSession();
+      setCurrentUser(session);
+      router.push('/admin');
+    } else if (role === 'ADMIN') {
+      const session = getInitialAdminSession();
+      setCurrentUser(session);
+      router.push('/admin');
+    } else if (role === 'PROVIDER') {
       const providerSession = getInitialProviderSession();
       setCurrentUser(providerSession);
       router.push('/dashboard');
-    } else if (role === 'CLIENT') {
+    } else {
       const clientSession = getInitialClientSession();
       setCurrentUser(clientSession);
-      router.push('/');
-    } else {
-      router.push('/admin');
+      router.push(redirectUrl);
     }
+  };
+
+  const fillCredentials = (userEmail: string, userPass: string) => {
+    setEmail(userEmail);
+    setPassword(userPass);
   };
 
   return (
@@ -223,35 +274,95 @@ function LoginContent() {
             </button>
           </form>
 
-          {/* Quick Access Demo Accounts */}
-          <div className="pt-2 border-t border-slate-100">
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center mb-3">
-              Ingreso rápido para demostración
-            </p>
+          {/* Quick Access Demo Accounts - 4 Roles */}
+          <div className="pt-2 border-t border-slate-100 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                Credenciales de Prueba (1-Click)
+              </p>
+              <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
+                4 Roles Listos
+              </span>
+            </div>
+
             <div className="grid grid-cols-2 gap-2">
+              {/* Superadmin */}
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('SUPERADMIN')}
+                className="p-2.5 rounded-xl border border-purple-200 bg-purple-50/70 hover:bg-purple-100/80 text-left transition-all group shadow-2xs"
+              >
+                <div className="flex items-center space-x-1.5 text-xs font-bold text-purple-700">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>SuperAdmin</span>
+                </div>
+                <p className="text-[10px] text-slate-500 mt-0.5 truncate">superadmin@conecta360.com</p>
+              </button>
+
+              {/* Admin */}
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('ADMIN')}
+                className="p-2.5 rounded-xl border border-indigo-200 bg-indigo-50/70 hover:bg-indigo-100/80 text-left transition-all group shadow-2xs"
+              >
+                <div className="flex items-center space-x-1.5 text-xs font-bold text-indigo-700">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Admin Operaciones</span>
+                </div>
+                <p className="text-[10px] text-slate-500 mt-0.5 truncate">admin@conecta360.com</p>
+              </button>
+
+              {/* Prestador */}
               <button
                 type="button"
                 onClick={() => handleQuickLogin('PROVIDER')}
-                className="p-2.5 rounded-xl border border-blue-200 bg-blue-50/60 hover:bg-blue-100/70 text-left transition-all group"
+                className="p-2.5 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100/80 text-left transition-all group shadow-2xs"
               >
                 <div className="flex items-center space-x-1.5 text-xs font-bold text-[#0056d2]">
                   <Briefcase className="w-3.5 h-3.5" />
-                  <span>Soy Prestador (Cali)</span>
+                  <span>Prestador (Cali)</span>
                 </div>
-                <p className="text-[10px] text-slate-500 mt-0.5">Carlos Rodríguez &bull; Electricista</p>
+                <p className="text-[10px] text-slate-500 mt-0.5 truncate">carlos.rodriguez@conecta360.co</p>
               </button>
 
+              {/* Cliente */}
               <button
                 type="button"
                 onClick={() => handleQuickLogin('CLIENT')}
-                className="p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-left transition-all group"
+                className="p-2.5 rounded-xl border border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100/80 text-left transition-all group shadow-2xs"
               >
-                <div className="flex items-center space-x-1.5 text-xs font-bold text-slate-700">
+                <div className="flex items-center space-x-1.5 text-xs font-bold text-emerald-700">
                   <User className="w-3.5 h-3.5" />
-                  <span>Soy Cliente</span>
+                  <span>Cliente Solicitante</span>
                 </div>
-                <p className="text-[10px] text-slate-500 mt-0.5">Buscar y contratar servicios</p>
+                <p className="text-[10px] text-slate-500 mt-0.5 truncate">laura.gomez@gmail.com</p>
               </button>
+            </div>
+
+            {/* Accordion / Info Box con las contraseñas exactas */}
+            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 text-[11px] text-slate-600 space-y-1.5 font-mono">
+              <div className="flex items-center justify-between text-slate-700 font-sans font-bold text-[10px] uppercase tracking-wide">
+                <span>Tabla de Accesos de Prueba</span>
+                <span className="text-slate-400 font-normal lowercase">(o haz click arriba)</span>
+              </div>
+              <div className="space-y-1 text-[10px]">
+                <div className="flex justify-between items-center py-0.5 border-b border-slate-100">
+                  <span className="font-semibold text-purple-800 font-sans">Superadmin:</span>
+                  <span className="text-slate-700 select-all">superadmin@conecta360.com &bull; SuperSecretPassword123!</span>
+                </div>
+                <div className="flex justify-between items-center py-0.5 border-b border-slate-100">
+                  <span className="font-semibold text-indigo-800 font-sans">Admin:</span>
+                  <span className="text-slate-700 select-all">admin@conecta360.com &bull; AdminSecretPassword123!</span>
+                </div>
+                <div className="flex justify-between items-center py-0.5 border-b border-slate-100">
+                  <span className="font-semibold text-[#0056d2] font-sans">Prestador:</span>
+                  <span className="text-slate-700 select-all">carlos.rodriguez@conecta360.co &bull; Provider123!</span>
+                </div>
+                <div className="flex justify-between items-center py-0.5">
+                  <span className="font-semibold text-emerald-800 font-sans">Cliente:</span>
+                  <span className="text-slate-700 select-all">laura.gomez@gmail.com &bull; Cliente123!</span>
+                </div>
+              </div>
             </div>
           </div>
 
