@@ -24,6 +24,7 @@ import {
   Award,
   Heart,
   Clock,
+  Calendar,
   LogOut,
   X,
   Filter
@@ -1147,72 +1148,520 @@ export default function Home() {
         )}
       </section>
 
-      {/* 6. BANNER CÓMO FUNCIONA */}
-      <section id="como-funciona" className="bg-white border-y border-slate-200 py-16 mt-12">
+      {/* 6. ¿CÓMO FUNCIONA? */}
+      <section id="como-funciona" className="py-14 sm:py-18 bg-[#f8fafc] border-t border-slate-200/80">
         <div className="max-w-[1240px] w-full mx-auto px-4 sm:px-6">
-          <div className="text-center max-w-2xl mx-auto space-y-2 mb-12">
-            <span className="text-xs font-black text-[#0056d2] uppercase tracking-wider">
-              Paso a Paso
-            </span>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight">
-              ¿Cómo funciona CONECTA 360?
+          <div className="text-left mb-10">
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              ¿Cómo funciona?
             </h2>
-            <p className="text-sm text-slate-500">
-              Una plataforma transparente para conectar necesidades con soluciones reales
+            <p className="text-xs sm:text-sm text-[#0056d2] font-semibold mt-1">
+              Es muy fácil, solo sigue estos pasos.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200 text-center space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-blue-100 text-[#0056d2] font-black text-lg flex items-center justify-center mx-auto shadow-sm">
-                1
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Paso 1 */}
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <div className="w-6 h-6 rounded-full bg-[#0056d2] text-white font-black text-xs flex items-center justify-center shadow-xs">
+                  1
+                </div>
+                <div className="w-12 h-12 rounded-full border-2 border-[#0056d2] flex items-center justify-center text-[#0056d2]">
+                  <Search className="w-6 h-6 stroke-[2.2]" />
+                </div>
               </div>
-              <h3 className="font-black text-slate-900 text-base">Encuentra o Publica</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Filtra por ciudad (Cali y principales transportes) o regístrate para ofrecer tus servicios profesionales con tarifa base.
+              <h3 className="text-base font-black text-slate-900 pt-1">
+                Busca el servicio
+              </h3>
+              <p className="text-xs text-slate-500 leading-relaxed font-medium">
+                Explora las categorías o usa el buscador para encontrar lo que necesitas.
               </p>
             </div>
 
-            <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200 text-center space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-red-100 text-[#ef4444] font-black text-lg flex items-center justify-center mx-auto shadow-sm">
-                2
+            {/* Paso 2 */}
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <div className="w-6 h-6 rounded-full bg-[#ef4444] text-white font-black text-xs flex items-center justify-center shadow-xs">
+                  2
+                </div>
+                <div className="w-12 h-12 rounded-full border-2 border-[#ef4444] flex items-center justify-center text-[#ef4444]">
+                  <User className="w-6 h-6 stroke-[2.2]" />
+                </div>
               </div>
-              <h3 className="font-black text-slate-900 text-base">Verificación y Seguridad</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Los prestadores inician con verificación pendiente y acreditan sus títulos para recibir la insignia de verificación oficial.
+              <h3 className="text-base font-black text-slate-900 pt-1">
+                Elige un proveedor
+              </h3>
+              <p className="text-xs text-slate-500 leading-relaxed font-medium">
+                Revisa perfiles, calificaciones, experiencia y precios.
               </p>
             </div>
 
-            <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200 text-center space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 font-black text-lg flex items-center justify-center mx-auto shadow-sm">
-                3
+            {/* Paso 3 */}
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <div className="w-6 h-6 rounded-full bg-[#10b981] text-white font-black text-xs flex items-center justify-center shadow-xs">
+                  3
+                </div>
+                <div className="w-12 h-12 rounded-full border-2 border-[#10b981] flex items-center justify-center text-[#10b981]">
+                  <Calendar className="w-6 h-6 stroke-[2.2]" />
+                </div>
               </div>
-              <h3 className="font-black text-slate-900 text-base">Contrata con Confianza</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Contacta directamente por WhatsApp o llamada, califica el trabajo y haz crecer la comunidad de servicios en Colombia.
+              <h3 className="text-base font-black text-slate-900 pt-1">
+                Agenda y contrata
+              </h3>
+              <p className="text-xs text-slate-500 leading-relaxed font-medium">
+                Comunícate con el proveedor, acuerda los detalles y confirma el servicio.
+              </p>
+            </div>
+
+            {/* Paso 4 */}
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <div className="w-6 h-6 rounded-full bg-[#8b5cf6] text-white font-black text-xs flex items-center justify-center shadow-xs">
+                  4
+                </div>
+                <div className="w-12 h-12 rounded-full border-2 border-[#8b5cf6] flex items-center justify-center text-[#8b5cf6]">
+                  <Check className="w-6 h-6 stroke-[3]" />
+                </div>
+              </div>
+              <h3 className="text-base font-black text-slate-900 pt-1">
+                ¡Listo!
+              </h3>
+              <p className="text-xs text-slate-500 leading-relaxed font-medium">
+                Disfruta de tu servicio con la tranquilidad de estar en una plataforma segura.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="bg-slate-900 text-white py-12">
-        <div className="max-w-[1240px] w-full mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-6 border-b border-slate-800 pb-8 mb-8">
-          <div className="flex items-center space-x-3">
-            <img
-              src="/images/logo-conecta-nav.png"
-              alt="CONECTA 360"
-              className="h-8 w-auto brightness-200 contrast-200"
-            />
+      {/* 7. ¿POR QUÉ ELEGIR CONECTA360? & APP MÓVIL */}
+      <section className="py-14 sm:py-16 bg-white border-t border-slate-200/80">
+        <div className="max-w-[1240px] w-full mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            {/* Left 8 Cols: ¿Por qué elegir Conecta360? */}
+            <div className="lg:col-span-8 space-y-6">
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                  ¿Por qué elegir Conecta360?
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                  Más que una plataforma, es una comunidad de confianza.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-5 pt-2">
+                {/* 1. Profesionales verificados */}
+                <div className="space-y-2">
+                  <div className="w-10 h-10 rounded-full bg-[#0056d2] text-white flex items-center justify-center shadow-xs">
+                    <Shield className="w-5 h-5 fill-white" />
+                  </div>
+                  <h4 className="text-xs sm:text-sm font-black text-slate-900 leading-snug">
+                    Profesionales verificados
+                  </h4>
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                    Todos nuestros proveedores son revisados y cuentan con respaldo.
+                  </p>
+                </div>
+
+                {/* 2. Valoraciones reales */}
+                <div className="space-y-2">
+                  <div className="w-10 h-10 rounded-full bg-[#8b5cf6] text-white flex items-center justify-center shadow-xs">
+                    <Star className="w-5 h-5 fill-white" />
+                  </div>
+                  <h4 className="text-xs sm:text-sm font-black text-slate-900 leading-snug">
+                    Valoraciones reales
+                  </h4>
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                    Consulta opiniones de otros usuarios antes de contratar.
+                  </p>
+                </div>
+
+                {/* 3. Ahorra tiempo */}
+                <div className="space-y-2">
+                  <div className="w-10 h-10 rounded-full bg-[#10b981] text-white flex items-center justify-center shadow-xs">
+                    <Clock className="w-5 h-5 stroke-[2.5]" />
+                  </div>
+                  <h4 className="text-xs sm:text-sm font-black text-slate-900 leading-snug">
+                    Ahorra tiempo
+                  </h4>
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                    Encuentra el servicio ideal en minutos, sin complicaciones.
+                  </p>
+                </div>
+
+                {/* 4. Apoyo local */}
+                <div className="space-y-2">
+                  <div className="w-10 h-10 rounded-full bg-[#ef4444] text-white flex items-center justify-center shadow-xs">
+                    <Heart className="w-5 h-5 fill-white" />
+                  </div>
+                  <h4 className="text-xs sm:text-sm font-black text-slate-900 leading-snug">
+                    Apoyo local
+                  </h4>
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                    Impulsamos el talento y los servicios de tu ciudad.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Right 4 Cols: App Móvil Card */}
+            <div className="lg:col-span-4">
+              <div className="bg-[#002f6c] text-white rounded-2xl p-5 sm:p-6 shadow-xl relative overflow-hidden flex items-center gap-4">
+                <div className="w-[45%] shrink-0">
+                  <img
+                    src="/images/app-banner-mobile.png"
+                    alt="Lleva Conecta360 siempre contigo"
+                    className="w-full h-auto object-contain drop-shadow-lg"
+                  />
+                </div>
+                <div className="w-[55%] space-y-2">
+                  <h3 className="text-base sm:text-lg font-black leading-tight text-white">
+                    Lleva Conecta360 siempre contigo
+                  </h3>
+                  <p className="text-[11px] text-blue-100 leading-snug">
+                    Descarga nuestra app y accede a todos los servicios desde tu celular.
+                  </p>
+                  <div className="space-y-1.5 pt-1">
+                    <a
+                      href="#"
+                      className="inline-flex items-center space-x-2 bg-black/90 hover:bg-black text-white px-2.5 py-1.5 rounded-lg border border-white/20 transition-all text-[10px] w-full"
+                    >
+                      <svg className="w-3.5 h-3.5 fill-current shrink-0" viewBox="0 0 24 24">
+                        <path d="M3.609 1.814L13.793 12 3.61 22.186a2.37 2.37 0 0 1-.22-.324 2.128 2.128 0 0 1-.2-.93V3.068c0-.342.069-.66.2-.93a2.37 2.37 0 0 1 .219-.324zm11.23 11.23l2.096-2.096-12.06-6.963 9.964 9.059zm1.042-1.042l3.242 1.872a1.764 1.764 0 0 1 0 3.052l-3.242 1.872-2.146-2.146 2.146-2.65zm-1.042 3.136l-9.964 9.059 12.06-6.963-2.096-2.096z"/>
+                      </svg>
+                      <div>
+                        <div className="text-[7px] uppercase tracking-wider text-slate-300 leading-none">Disponible en</div>
+                        <div className="text-[10px] font-bold leading-tight">Google Play</div>
+                      </div>
+                    </a>
+                    <a
+                      href="#"
+                      className="inline-flex items-center space-x-2 bg-black/90 hover:bg-black text-white px-2.5 py-1.5 rounded-lg border border-white/20 transition-all text-[10px] w-full"
+                    >
+                      <svg className="w-3.5 h-3.5 fill-current shrink-0" viewBox="0 0 24 24">
+                        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.87c.61-.75 1.04-1.8 0.92-2.87-.92.04-2.01.62-2.65 1.37-.56.65-1.06 1.71-.93 2.74 1.03.08 2.06-.52 2.66-1.24z"/>
+                      </svg>
+                      <div>
+                        <div className="text-[7px] uppercase tracking-wider text-slate-300 leading-none">Consíguelo en el</div>
+                        <div className="text-[10px] font-bold leading-tight">App Store</div>
+                      </div>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <p className="text-xs text-slate-400 text-center md:text-right">
-            Conectando profesionales y clientes en Cali, Valle del Cauca y toda Colombia.
-          </p>
         </div>
-        <p className="text-center text-xs text-slate-500">
-          &copy; {new Date().getFullYear()} CONECTA 360 Colombia &bull; Todos los derechos reservados.
-        </p>
+      </section>
+
+      {/* 8. LO QUE DICEN NUESTROS USUARIOS */}
+      <section className="py-14 sm:py-16 bg-[#f8fafc] border-t border-slate-200/80">
+        <div className="max-w-[1240px] w-full mx-auto px-4 sm:px-6">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                Lo que dicen nuestros usuarios
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                La confianza de nuestra comunidad nos impulsa a seguir.
+              </p>
+            </div>
+            <a
+              href="#"
+              className="text-xs font-bold text-[#0056d2] hover:underline flex items-center space-x-1"
+            >
+              <span>Ver más reseñas</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </a>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* Reseña 1: Laura Gómez */}
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4 hover:shadow-md transition-all">
+              <div className="flex items-center space-x-3">
+                <img
+                  src="/images/avatar-laura.png"
+                  alt="Laura Gómez"
+                  className="w-11 h-11 rounded-full object-cover shrink-0 shadow-xs border border-slate-100"
+                />
+                <div>
+                  <h4 className="font-extrabold text-sm text-[#0056d2]">
+                    Laura Gómez
+                  </h4>
+                  <div className="flex items-center text-amber-400 text-xs">
+                    {'★★★★★'}
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                &ldquo;Usé <span className="font-bold text-slate-800">Conecta360</span> para encontrar un electricista y fue excelente. Llegó puntual, hizo un gran trabajo y el precio fue justo. ¡Muy recomendado!&rdquo;
+              </p>
+
+              <div className="pt-2 border-t border-slate-100 flex items-center text-slate-500 text-[11px] font-medium">
+                <MapPin className="w-3 h-3 text-[#0056d2] mr-1 shrink-0" />
+                <span>Cali</span>
+              </div>
+            </div>
+
+            {/* Reseña 2: Andrés Ramírez */}
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4 hover:shadow-md transition-all">
+              <div className="flex items-center space-x-3">
+                <img
+                  src="/images/avatar-andres.png"
+                  alt="Andrés Ramírez"
+                  className="w-11 h-11 rounded-full object-cover shrink-0 shadow-xs border border-slate-100"
+                />
+                <div>
+                  <h4 className="font-extrabold text-sm text-[#0056d2]">
+                    Andrés Ramírez
+                  </h4>
+                  <div className="flex items-center text-amber-400 text-xs">
+                    {'★★★★★'}
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                &ldquo;La plataforma es muy fácil de usar y los proveedores son de confianza. Encontré un servicio de limpieza rápido y profesional.&rdquo;
+              </p>
+
+              <div className="pt-2 border-t border-slate-100 flex items-center text-slate-500 text-[11px] font-medium">
+                <MapPin className="w-3 h-3 text-[#0056d2] mr-1 shrink-0" />
+                <span>Palmira</span>
+              </div>
+            </div>
+
+            {/* Reseña 3: Sofía Martínez */}
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4 hover:shadow-md transition-all">
+              <div className="flex items-center space-x-3">
+                <img
+                  src="/images/avatar-sofia.png"
+                  alt="Sofía Martínez"
+                  className="w-11 h-11 rounded-full object-cover shrink-0 shadow-xs border border-slate-100"
+                />
+                <div>
+                  <h4 className="font-extrabold text-sm text-[#0056d2]">
+                    Sofía Martínez
+                  </h4>
+                  <div className="flex items-center text-amber-400 text-xs">
+                    {'★★★★★'}
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                &ldquo;Me ayudaron a encontrar un tutor de matemáticas para mi hijo. Todo fue muy organizado y la atención fue excelente.&rdquo;
+              </p>
+
+              <div className="pt-2 border-t border-slate-100 flex items-center text-slate-500 text-[11px] font-medium">
+                <MapPin className="w-3 h-3 text-[#0056d2] mr-1 shrink-0" />
+                <span>Cali</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 9. CALL TO ACTION BANNER */}
+      <section className="max-w-[1240px] w-full mx-auto px-4 sm:px-6 my-12 sm:my-16">
+        <div className="bg-[#002f6c] text-white rounded-3xl p-6 sm:p-10 shadow-2xl flex flex-col lg:flex-row items-center justify-between gap-6 relative overflow-hidden">
+          {/* Logo Circular con Slogan */}
+          <div className="flex items-center space-x-4 sm:space-x-5">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 relative drop-shadow-md">
+              <img
+                src="/images/logo-conecta-hero-icon.png"
+                alt="Icono CONECTA 360"
+                className="w-full h-full object-contain"
+              />
+            </div>
+            <div>
+              <h3 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight leading-tight">
+                ¿Listo para encontrar o ofrecer servicios?
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-200 mt-1">
+                Únete a Conecta360 y sé parte de una comunidad que hace la vida más fácil.
+              </p>
+            </div>
+          </div>
+
+          {/* Botones de Acción */}
+          <div className="flex items-center space-x-3 shrink-0 w-full sm:w-auto justify-end">
+            <Link
+              href="#servicios"
+              className="flex-1 sm:flex-initial px-6 py-3 rounded-full bg-[#ef4444] hover:bg-[#dc2626] text-white text-xs sm:text-sm font-extrabold flex items-center justify-center space-x-2 shadow-lg shadow-red-600/30 transition-all"
+            >
+              <Search className="w-4 h-4" />
+              <span>Necesito algo</span>
+            </Link>
+
+            <Link
+              href={user ? '/dashboard' : '/register?role=provider'}
+              className="flex-1 sm:flex-initial px-6 py-3 rounded-full border border-white/70 hover:bg-white/10 text-white text-xs sm:text-sm font-extrabold flex items-center justify-center space-x-2 transition-all"
+            >
+              <Wrench className="w-4 h-4" />
+              <span>Quiero ofrecer</span>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* 10. FOOTER COMPLETO EXACTO */}
+      <footer className="bg-[#050b14] text-slate-300 pt-16 pb-8 border-t border-slate-800">
+        <div className="max-w-[1240px] w-full mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 pb-12">
+            {/* Col 1: Brand (Span 3) */}
+            <div className="lg:col-span-3 space-y-3">
+              <Link href="/" className="inline-block">
+                <img
+                  src="/images/logo-conecta-nav.png"
+                  alt="CONECTA 360"
+                  className="h-8 w-auto brightness-200 contrast-200 object-contain"
+                />
+              </Link>
+              <p className="text-xs text-slate-400 leading-relaxed max-w-xs">
+                Conecta lo que necesitas con quien puede hacerlo.
+              </p>
+            </div>
+
+            {/* Col 2: Enlaces rápidos (Span 2) */}
+            <div className="lg:col-span-2 space-y-3">
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                Enlaces rápidos
+              </h4>
+              <ul className="space-y-2 text-xs text-slate-400 font-medium">
+                <li><Link href="/" className="hover:text-white transition-colors">Inicio</Link></li>
+                <li><Link href="#servicios" className="hover:text-white transition-colors">Servicios</Link></li>
+                <li><Link href="#categorias" className="hover:text-white transition-colors">Categorías</Link></li>
+                <li><Link href="#como-funciona" className="hover:text-white transition-colors">Cómo funciona</Link></li>
+                <li><Link href="/admin" className="hover:text-white transition-colors">Planes</Link></li>
+                <li><Link href="/login" className="hover:text-white transition-colors">Contacto</Link></li>
+              </ul>
+            </div>
+
+            {/* Col 3: Categorías (Span 3) */}
+            <div className="lg:col-span-3 space-y-3">
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                Categorías
+              </h4>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-slate-400 font-medium">
+                <div><Link href="#servicios" className="hover:text-white transition-colors">Cerrajería</Link></div>
+                <div><Link href="#servicios" className="hover:text-white transition-colors">Salud</Link></div>
+                <div><Link href="#servicios" className="hover:text-white transition-colors">Electricidad</Link></div>
+                <div><Link href="#servicios" className="hover:text-white transition-colors">Otros</Link></div>
+                <div><Link href="#servicios" className="hover:text-white transition-colors">Tecnología</Link></div>
+                <div className="hidden sm:block"></div>
+                <div><Link href="#servicios" className="hover:text-white transition-colors">Reparaciones</Link></div>
+                <div className="hidden sm:block"></div>
+                <div><Link href="#servicios" className="hover:text-white transition-colors">Educación</Link></div>
+                <div className="hidden sm:block"></div>
+                <div><Link href="#servicios" className="hover:text-white transition-colors">Diseño</Link></div>
+              </div>
+            </div>
+
+            {/* Col 4: Síguenos (Span 2) */}
+            <div className="lg:col-span-2 space-y-3">
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                Síguenos
+              </h4>
+              <div className="flex items-center space-x-2">
+                {/* Facebook */}
+                <a
+                  href="#"
+                  className="w-8 h-8 rounded-full bg-slate-800 hover:bg-[#0056d2] text-slate-300 hover:text-white flex items-center justify-center transition-colors"
+                  title="Facebook"
+                >
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                  </svg>
+                </a>
+                {/* Instagram */}
+                <a
+                  href="#"
+                  className="w-8 h-8 rounded-full bg-slate-800 hover:bg-[#e1306c] text-slate-300 hover:text-white flex items-center justify-center transition-colors"
+                  title="Instagram"
+                >
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                  </svg>
+                </a>
+                {/* TikTok */}
+                <a
+                  href="#"
+                  className="w-8 h-8 rounded-full bg-slate-800 hover:bg-black text-slate-300 hover:text-white flex items-center justify-center transition-colors"
+                  title="TikTok"
+                >
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.24 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/>
+                  </svg>
+                </a>
+                {/* YouTube */}
+                <a
+                  href="#"
+                  className="w-8 h-8 rounded-full bg-slate-800 hover:bg-[#ff0000] text-slate-300 hover:text-white flex items-center justify-center transition-colors"
+                  title="YouTube"
+                >
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                  </svg>
+                </a>
+                {/* LinkedIn */}
+                <a
+                  href="#"
+                  className="w-8 h-8 rounded-full bg-slate-800 hover:bg-[#0077b5] text-slate-300 hover:text-white flex items-center justify-center transition-colors"
+                  title="LinkedIn"
+                >
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                  </svg>
+                </a>
+              </div>
+            </div>
+
+            {/* Col 5: Descarga nuestra app (Span 2) */}
+            <div className="lg:col-span-2 space-y-3">
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                Descarga nuestra app
+              </h4>
+              <div className="space-y-2">
+                <a
+                  href="#"
+                  className="flex items-center space-x-2 bg-black text-white px-2.5 py-1.5 rounded-lg border border-slate-700 hover:border-slate-500 transition-colors w-full"
+                >
+                  <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
+                    <path d="M3.609 1.814L13.793 12 3.61 22.186a2.37 2.37 0 0 1-.22-.324 2.128 2.128 0 0 1-.2-.93V3.068c0-.342.069-.66.2-.93a2.37 2.37 0 0 1 .219-.324zm11.23 11.23l2.096-2.096-12.06-6.963 9.964 9.059zm1.042-1.042l3.242 1.872a1.764 1.764 0 0 1 0 3.052l-3.242 1.872-2.146-2.146 2.146-2.65zm-1.042 3.136l-9.964 9.059 12.06-6.963-2.096-2.096z"/>
+                  </svg>
+                  <div>
+                    <div className="text-[7px] uppercase tracking-wider text-slate-400 leading-none">Disponible en</div>
+                    <div className="text-[10px] font-bold leading-tight">Google Play</div>
+                  </div>
+                </a>
+                <a
+                  href="#"
+                  className="flex items-center space-x-2 bg-black text-white px-2.5 py-1.5 rounded-lg border border-slate-700 hover:border-slate-500 transition-colors w-full"
+                >
+                  <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
+                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.87c.61-.75 1.04-1.8 0.92-2.87-.92.04-2.01.62-2.65 1.37-.56.65-1.06 1.71-.93 2.74 1.03.08 2.06-.52 2.66-1.24z"/>
+                  </svg>
+                  <div>
+                    <div className="text-[7px] uppercase tracking-wider text-slate-400 leading-none">Consíguelo en el</div>
+                    <div className="text-[10px] font-bold leading-tight">App Store</div>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Bar con Desarrollado por SarriaTech Solutions S.A.S */}
+          <div className="border-t border-slate-800/80 pt-6 mt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-3">
+            <p>© 2025 Conecta360. Todos los derechos reservados.</p>
+            <p className="text-slate-300 font-semibold">
+              Desarrollado por SarriaTech Solutions S.A.S
+            </p>
+          </div>
+        </div>
       </footer>
     </div>
   );
