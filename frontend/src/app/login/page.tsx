@@ -111,23 +111,23 @@ function LoginContent() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/40 to-slate-100 flex flex-col justify-between font-sans">
       {/* Top Simple Header */}
-      <header className="px-6 py-4 border-b border-slate-200/80 bg-white/90 backdrop-blur-md flex items-center justify-between">
+      <header className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-200/80 bg-white/90 backdrop-blur-md flex items-center justify-between">
         <Link href="/" className="flex items-center">
           <img
             src="/images/logo-conecta-nav.png"
             alt="CONECTA 360"
-            className="h-8 sm:h-9 w-auto object-contain"
+            className="h-7 sm:h-9 w-auto object-contain"
           />
         </Link>
-        <div className="text-xs text-slate-500 flex items-center space-x-1">
-          <MapPin className="w-3.5 h-3.5 text-[#0056d2]" />
-          <span>Red Colombia &bull; Sede Principal Cali</span>
+        <div className="text-[10px] sm:text-xs text-slate-500 flex items-center space-x-1">
+          <MapPin className="w-3 h-3 text-[#0056d2]" />
+          <span>Red Colombia &bull; Cali</span>
         </div>
       </header>
 
       {/* Main Login Form Container */}
-      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 my-6">
-        <div className="max-w-md w-full bg-white rounded-3xl shadow-xl shadow-blue-900/5 border border-slate-200/80 p-8 space-y-6">
+      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 my-4 sm:my-6">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-xl shadow-blue-900/5 border border-slate-200/80 p-5 sm:p-8 space-y-5 sm:space-y-6">
           <div className="text-center space-y-2">
             <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-blue-50 text-[#0056d2] mb-1">
               <User className="w-6 h-6" />

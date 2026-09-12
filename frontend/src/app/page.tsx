@@ -27,6 +27,7 @@ import {
   Calendar,
   LogOut,
   X,
+  Menu,
   Filter
 } from 'lucide-react';
 import { getCurrentUser, setCurrentUser, UserSession } from '@/lib/auth';
@@ -97,6 +98,7 @@ export default function Home() {
   const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
   const [citySearchTerm, setCitySearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     // 1. Obtener usuario de la sesión actual
@@ -728,25 +730,25 @@ export default function Home() {
           </nav>
 
           {/* Controles de la Barra Superior: Dinámicos según estado de inicio de sesión */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2 sm:space-x-3">
             {user ? (
               // Usuario autenticado
               <div className="flex items-center space-x-2">
                 <Link
                   href="/dashboard"
-                  className="px-3.5 py-2 rounded-full bg-blue-50 hover:bg-blue-100 text-[#0056d2] text-xs sm:text-sm font-bold flex items-center space-x-2 border border-blue-200 transition-all shadow-xs"
+                  className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-full bg-blue-50 hover:bg-blue-100 text-[#0056d2] text-xs sm:text-sm font-bold flex items-center space-x-1.5 sm:space-x-2 border border-blue-200 transition-all shadow-xs"
                 >
                   <span
                     className={`w-2 h-2 rounded-full ${
                       user.isVerified ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'
                     }`}
                   />
-                  <span>Mi Panel ({user.firstName})</span>
+                  <span className="max-w-[100px] sm:max-w-none truncate">{user.firstName}</span>
                 </Link>
 
                 <Link
                   href="/dashboard?action=new-service"
-                  className="px-4 py-2 rounded-full bg-[#0056d2] hover:bg-[#0046a8] text-white text-xs sm:text-sm font-bold flex items-center space-x-1.5 shadow-sm transition-all hidden sm:flex"
+                  className="px-4 py-2 rounded-full bg-[#0056d2] hover:bg-[#0046a8] text-white text-xs sm:text-sm font-bold items-center space-x-1.5 shadow-sm transition-all hidden sm:flex"
                 >
                   <Wrench className="w-3.5 h-3.5" />
                   <span>Ofrecer Servicios</span>
@@ -754,7 +756,7 @@ export default function Home() {
 
                 <button
                   onClick={handleLogout}
-                  className="p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-red-600 transition-colors"
+                  className="p-1.5 sm:p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-red-600 transition-colors"
                   title="Cerrar sesión"
                 >
                   <LogOut className="w-4 h-4" />
@@ -762,17 +764,17 @@ export default function Home() {
               </div>
             ) : (
               // Usuario no autenticado
-              <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="flex items-center space-x-1.5 sm:space-x-3">
                 <Link
                   href="/login"
-                  className="px-3 py-2 text-xs sm:text-sm font-bold text-slate-700 hover:text-[#0056d2] transition-colors"
+                  className="px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-bold text-slate-700 hover:text-[#0056d2] transition-colors"
                 >
-                  Iniciar Sesión
+                  Ingresar
                 </Link>
 
                 <Link
                   href="/register?role=provider"
-                  className="px-4 py-2 rounded-full border border-[#0056d2] text-[#0056d2] hover:bg-blue-50 text-xs sm:text-sm font-bold flex items-center space-x-1.5 transition-all hidden sm:flex"
+                  className="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full border border-[#0056d2] text-[#0056d2] hover:bg-blue-50 text-xs sm:text-sm font-bold items-center space-x-1.5 transition-all hidden sm:flex"
                 >
                   <Wrench className="w-3.5 h-3.5" />
                   <span>Quiero ofrecer</span>
@@ -780,15 +782,85 @@ export default function Home() {
 
                 <Link
                   href="/register"
-                  className="px-4 py-2 rounded-full bg-[#0056d2] hover:bg-[#0046a8] text-white text-xs sm:text-sm font-bold flex items-center space-x-1.5 shadow-sm transition-all"
+                  className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-[#0056d2] hover:bg-[#0046a8] text-white text-xs sm:text-sm font-bold flex items-center space-x-1.5 shadow-sm transition-all"
                 >
                   <User className="w-3.5 h-3.5" />
-                  <span>Registrarse</span>
+                  <span>Registro</span>
                 </Link>
               </div>
             )}
+
+            {/* Botón de Menú Móvil */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors"
+              aria-label="Abrir menú"
+            >
+              {isMobileMenuOpen ? (
+                <X className="w-5 h-5 text-slate-800" />
+              ) : (
+                <Menu className="w-5 h-5 text-slate-800" />
+              )}
+            </button>
           </div>
         </div>
+
+        {/* Desplegable de Navegación Móvil */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-slate-200 shadow-xl px-5 py-4 space-y-3 z-50">
+            <nav className="flex flex-col space-y-1.5 text-sm font-semibold text-slate-700">
+              <Link
+                href="/"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="py-2 px-3 rounded-lg bg-blue-50 text-[#0056d2] font-bold"
+              >
+                Inicio
+              </Link>
+              <Link
+                href="#servicios"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="py-2 px-3 rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                Servicios
+              </Link>
+              <Link
+                href="#categorias"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="py-2 px-3 rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                Categorías
+              </Link>
+              <Link
+                href="#como-funciona"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="py-2 px-3 rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                Cómo funciona
+              </Link>
+              <Link
+                href="/admin"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="py-2 px-3 rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                Panel Admin
+              </Link>
+            </nav>
+
+            <div className="pt-2 border-t border-slate-100 flex flex-col space-y-2">
+              <Link
+                href={user ? '/dashboard?action=new-service' : '/register?role=provider'}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="w-full py-2.5 px-4 rounded-xl bg-[#0056d2] text-white text-xs font-bold flex items-center justify-center space-x-2 shadow-sm"
+              >
+                <Wrench className="w-4 h-4" />
+                <span>Quiero ofrecer servicios</span>
+              </Link>
+              <div className="text-[11px] text-center text-slate-400 font-medium pt-0.5">
+                📍 Operando en Cali y principales ciudades de Colombia
+              </div>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* 2. HERO BANNER INTEGRADO COMPLETAMENTE EN EL FONDO */}
@@ -820,26 +892,26 @@ export default function Home() {
                   className="w-full h-full object-contain"
                 />
               </div>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-none text-white">
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-none text-white">
                 CONECTA <span className="text-[#ef4444]">360</span>
               </h1>
             </div>
 
             {/* Slogans */}
             <div className="space-y-1 pt-1">
-              <p className="text-2xl sm:text-3xl font-extrabold text-white leading-tight drop-shadow-sm">
+              <p className="text-xl sm:text-3xl font-extrabold text-white leading-tight drop-shadow-sm">
                 Conecta lo que necesitas <br />
                 con quien puede hacerlo.
               </p>
-              <p className="text-base sm:text-lg font-medium text-slate-200 drop-shadow-xs">
+              <p className="text-sm sm:text-lg font-medium text-slate-200 drop-shadow-xs">
                 Necesitas. Encuentras. Contratas en Cali y toda Colombia.
               </p>
             </div>
 
             {/* Search Pill Bar con Selector de Ciudades de Colombia (Inicialmente Cali) */}
             <div className="pt-3 relative">
-              <div className="bg-white rounded-full p-1.5 shadow-2xl flex flex-col sm:flex-row items-center border border-white max-w-lg">
-                <div className="flex items-center px-4 py-2 flex-1 w-full text-slate-700">
+              <div className="bg-white rounded-2xl sm:rounded-full p-2 sm:p-1.5 shadow-2xl flex flex-col sm:flex-row items-stretch sm:items-center border border-white max-w-lg gap-2 sm:gap-0">
+                <div className="flex items-center px-3 sm:px-4 py-1.5 sm:py-2 flex-1 w-full text-slate-700">
                   <Search className="w-4 h-4 text-slate-400 mr-2.5 shrink-0" />
                   <input
                     type="text"
@@ -850,26 +922,29 @@ export default function Home() {
                   />
                 </div>
 
+                <div className="h-px w-full bg-slate-100 sm:hidden"></div>
                 <div className="h-6 w-px bg-slate-200 hidden sm:block"></div>
 
                 {/* Dropdown de Ciudades de Colombia */}
                 <div
                   onClick={() => setIsCityDropdownOpen(!isCityDropdownOpen)}
-                  className="flex items-center px-4 py-2 text-slate-700 text-xs sm:text-sm font-semibold cursor-pointer shrink-0 hover:bg-slate-50 rounded-full transition-colors relative"
+                  className="flex items-center justify-between sm:justify-start px-3 sm:px-4 py-1.5 sm:py-2 text-slate-700 text-xs sm:text-sm font-semibold cursor-pointer shrink-0 hover:bg-slate-50 rounded-xl sm:rounded-full transition-colors relative"
                 >
-                  <MapPin className="w-3.5 h-3.5 text-[#0056d2] mr-1.5" />
-                  <span className="font-bold">{selectedCity}</span>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-1.5" />
+                  <div className="flex items-center">
+                    <MapPin className="w-3.5 h-3.5 text-[#0056d2] mr-1.5 shrink-0" />
+                    <span className="font-bold truncate max-w-[120px] sm:max-w-none">{selectedCity}</span>
+                  </div>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-1.5 shrink-0" />
                 </div>
 
-                <button className="w-full sm:w-auto px-7 py-3 bg-[#ef4444] hover:bg-[#dc2626] text-white text-xs sm:text-sm font-extrabold rounded-full transition-all shadow-md shrink-0">
+                <button className="w-full sm:w-auto px-6 sm:px-7 py-2.5 sm:py-3 bg-[#ef4444] hover:bg-[#dc2626] text-white text-xs sm:text-sm font-extrabold rounded-xl sm:rounded-full transition-all shadow-md shrink-0">
                   Buscar
                 </button>
               </div>
 
               {/* Menú desplegable de Ciudades de Colombia conectadas por transporte */}
               {isCityDropdownOpen && (
-                <div className="absolute left-0 sm:left-auto sm:right-28 top-full mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-slate-200 p-3 z-50 text-slate-800 space-y-2">
+                <div className="absolute left-0 right-0 sm:right-auto sm:left-auto sm:right-28 top-full mt-2 max-w-[calc(100vw-2.5rem)] sm:w-72 bg-white rounded-2xl shadow-2xl border border-slate-200 p-3 z-50 text-slate-800 space-y-2">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                     <span className="text-xs font-bold text-slate-600">
                       Ciudades y Transportes
@@ -958,23 +1033,23 @@ export default function Home() {
       </section>
 
       {/* 3. DUAL ACTION CARDS & 4 TRUST PILLARS */}
-      <section className="max-w-[1240px] w-full mx-auto px-4 sm:px-6 -mt-8 relative z-20">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+      <section className="max-w-[1240px] w-full mx-auto px-4 sm:px-6 -mt-6 sm:-mt-8 relative z-20">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-5">
           {/* Card: Necesito algo */}
           <Link
             href="#servicios"
-            className="md:col-span-3.5 lg:col-span-4 bg-[#eff6ff] border border-blue-100 rounded-2xl p-5 shadow-lg flex items-center space-x-4 hover:shadow-xl transition-all group"
+            className="md:col-span-3.5 lg:col-span-4 bg-[#eff6ff] border border-blue-100 rounded-2xl p-4 sm:p-5 shadow-lg flex items-center space-x-3.5 sm:space-x-4 hover:shadow-xl transition-all group"
           >
-            <div className="w-13 h-13 rounded-full bg-[#0056d2] text-white flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
-              <User className="w-7 h-7 fill-white" />
+            <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-[#0056d2] text-white flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
+              <User className="w-6 h-6 sm:w-7 sm:h-7 fill-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-base font-black text-slate-900 leading-tight">Necesito algo</h3>
+              <h3 className="text-sm sm:text-base font-black text-slate-900 leading-tight">Necesito algo</h3>
               <p className="text-[11px] text-slate-500 font-medium mt-1 leading-snug">
                 Busca personas en Cali por categoría, experiencia, precio en COP y verificación.
               </p>
             </div>
-            <div className="w-7 h-7 rounded-full bg-blue-100 text-[#0056d2] flex items-center justify-center shrink-0">
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-blue-100 text-[#0056d2] flex items-center justify-center shrink-0">
               <ArrowRight className="w-3.5 h-3.5" />
             </div>
           </Link>
@@ -982,41 +1057,41 @@ export default function Home() {
           {/* Card: Quiero ofrecer */}
           <Link
             href={user ? '/dashboard' : '/register?role=provider'}
-            className="md:col-span-3.5 lg:col-span-4 bg-[#fef2f2] border border-red-100 rounded-2xl p-5 shadow-lg flex items-center space-x-4 hover:shadow-xl transition-all group"
+            className="md:col-span-3.5 lg:col-span-4 bg-[#fef2f2] border border-red-100 rounded-2xl p-4 sm:p-5 shadow-lg flex items-center space-x-3.5 sm:space-x-4 hover:shadow-xl transition-all group"
           >
-            <div className="w-13 h-13 rounded-full bg-[#ef4444] text-white flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
-              <Wrench className="w-6 h-6" />
+            <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-[#ef4444] text-white flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
+              <Wrench className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-base font-black text-slate-900 leading-tight">Quiero ofrecer</h3>
+              <h3 className="text-sm sm:text-base font-black text-slate-900 leading-tight">Quiero ofrecer</h3>
               <p className="text-[11px] text-slate-500 font-medium mt-1 leading-snug">
                 Registra tus servicios en Cali y consigue clientes. Plan gratis con 1 servicio.
               </p>
             </div>
-            <div className="w-7 h-7 rounded-full bg-red-100 text-[#ef4444] flex items-center justify-center shrink-0">
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-red-100 text-[#ef4444] flex items-center justify-center shrink-0">
               <ArrowRight className="w-3.5 h-3.5" />
             </div>
           </Link>
 
           {/* Trust 4 Pillars Block */}
-          <div className="md:col-span-5 lg:col-span-4 bg-white border border-slate-200 rounded-2xl p-4 shadow-lg grid grid-cols-4 gap-2 text-center items-center">
+          <div className="md:col-span-5 lg:col-span-4 bg-white border border-slate-200 rounded-2xl p-4 shadow-lg grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-2 text-center items-center">
             <div className="flex flex-col items-center">
-              <Shield className="w-5 h-5 text-[#0056d2] mb-1.5" />
+              <Shield className="w-5 h-5 text-[#0056d2] mb-1" />
               <p className="text-xs font-bold text-slate-900 leading-tight">Seguridad</p>
               <p className="text-[10px] text-slate-400 font-medium">Perfiles verificados</p>
             </div>
             <div className="flex flex-col items-center">
-              <Star className="w-5 h-5 text-[#0056d2] mb-1.5" />
+              <Star className="w-5 h-5 text-[#0056d2] mb-1" />
               <p className="text-xs font-bold text-slate-900 leading-tight">Calidad</p>
               <p className="text-[10px] text-slate-400 font-medium">Calificaciones reales</p>
             </div>
             <div className="flex flex-col items-center">
-              <FastIcon className="w-5 h-5 text-[#0056d2] mb-1.5" />
+              <FastIcon className="w-5 h-5 text-[#0056d2] mb-1" />
               <p className="text-xs font-bold text-slate-900 leading-tight">Rapidez</p>
               <p className="text-[10px] text-slate-400 font-medium">En minutos</p>
             </div>
             <div className="flex flex-col items-center">
-              <MapPin className="w-5 h-5 text-[#0056d2] mb-1.5" />
+              <MapPin className="w-5 h-5 text-[#0056d2] mb-1" />
               <p className="text-xs font-bold text-slate-900 leading-tight">Cercanía</p>
               <p className="text-[10px] text-slate-400 font-medium">Sede Cali y Valle</p>
             </div>
@@ -1308,42 +1383,42 @@ export default function Home() {
 
             {/* Right 4 Cols: App Móvil Card */}
             <div className="lg:col-span-4">
-              <div className="bg-[#002f6c] text-white rounded-2xl p-5 sm:p-6 shadow-xl relative overflow-hidden flex items-center gap-4">
-                <div className="w-[45%] shrink-0">
+              <div className="bg-[#002f6c] text-white rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
+                <div className="w-36 sm:w-[45%] shrink-0 mx-auto">
                   <img
                     src="/images/app-banner-mobile.png"
                     alt="Lleva Conecta360 siempre contigo"
-                    className="w-full h-auto object-contain drop-shadow-lg"
+                    className="w-full h-auto object-contain drop-shadow-lg max-h-48 sm:max-h-none mx-auto"
                   />
                 </div>
-                <div className="w-[55%] space-y-2">
+                <div className="w-full sm:w-[55%] space-y-2">
                   <h3 className="text-base sm:text-lg font-black leading-tight text-white">
                     Lleva Conecta360 siempre contigo
                   </h3>
                   <p className="text-[11px] text-blue-100 leading-snug">
                     Descarga nuestra app y accede a todos los servicios desde tu celular.
                   </p>
-                  <div className="space-y-1.5 pt-1">
+                  <div className="grid grid-cols-2 sm:grid-cols-1 gap-2 pt-1">
                     <a
                       href="#"
-                      className="inline-flex items-center space-x-2 bg-black/90 hover:bg-black text-white px-2.5 py-1.5 rounded-lg border border-white/20 transition-all text-[10px] w-full"
+                      className="inline-flex items-center justify-center sm:justify-start space-x-1.5 sm:space-x-2 bg-black/90 hover:bg-black text-white px-2.5 py-2 rounded-lg border border-white/20 transition-all text-[10px] w-full"
                     >
                       <svg className="w-3.5 h-3.5 fill-current shrink-0" viewBox="0 0 24 24">
                         <path d="M3.609 1.814L13.793 12 3.61 22.186a2.37 2.37 0 0 1-.22-.324 2.128 2.128 0 0 1-.2-.93V3.068c0-.342.069-.66.2-.93a2.37 2.37 0 0 1 .219-.324zm11.23 11.23l2.096-2.096-12.06-6.963 9.964 9.059zm1.042-1.042l3.242 1.872a1.764 1.764 0 0 1 0 3.052l-3.242 1.872-2.146-2.146 2.146-2.65zm-1.042 3.136l-9.964 9.059 12.06-6.963-2.096-2.096z"/>
                       </svg>
-                      <div>
+                      <div className="text-left">
                         <div className="text-[7px] uppercase tracking-wider text-slate-300 leading-none">Disponible en</div>
                         <div className="text-[10px] font-bold leading-tight">Google Play</div>
                       </div>
                     </a>
                     <a
                       href="#"
-                      className="inline-flex items-center space-x-2 bg-black/90 hover:bg-black text-white px-2.5 py-1.5 rounded-lg border border-white/20 transition-all text-[10px] w-full"
+                      className="inline-flex items-center justify-center sm:justify-start space-x-1.5 sm:space-x-2 bg-black/90 hover:bg-black text-white px-2.5 py-2 rounded-lg border border-white/20 transition-all text-[10px] w-full"
                     >
                       <svg className="w-3.5 h-3.5 fill-current shrink-0" viewBox="0 0 24 24">
                         <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.87c.61-.75 1.04-1.8 0.92-2.87-.92.04-2.01.62-2.65 1.37-.56.65-1.06 1.71-.93 2.74 1.03.08 2.06-.52 2.66-1.24z"/>
                       </svg>
-                      <div>
+                      <div className="text-left">
                         <div className="text-[7px] uppercase tracking-wider text-slate-300 leading-none">Consíguelo en el</div>
                         <div className="text-[10px] font-bold leading-tight">App Store</div>
                       </div>
@@ -1466,10 +1541,10 @@ export default function Home() {
       </section>
 
       {/* 9. CALL TO ACTION BANNER */}
-      <section className="max-w-[1240px] w-full mx-auto px-4 sm:px-6 my-12 sm:my-16">
-        <div className="bg-[#002f6c] text-white rounded-3xl p-6 sm:p-10 shadow-2xl flex flex-col lg:flex-row items-center justify-between gap-6 relative overflow-hidden">
+      <section className="max-w-[1240px] w-full mx-auto px-4 sm:px-6 my-10 sm:my-16">
+        <div className="bg-[#002f6c] text-white rounded-3xl p-6 sm:p-10 shadow-2xl flex flex-col lg:flex-row items-center justify-between gap-6 relative overflow-hidden text-center sm:text-left">
           {/* Logo Circular con Slogan */}
-          <div className="flex items-center space-x-4 sm:space-x-5">
+          <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-5">
             <div className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 relative drop-shadow-md">
               <img
                 src="/images/logo-conecta-hero-icon.png"
@@ -1488,10 +1563,10 @@ export default function Home() {
           </div>
 
           {/* Botones de Acción */}
-          <div className="flex items-center space-x-3 shrink-0 w-full sm:w-auto justify-end">
+          <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full sm:w-auto justify-end">
             <Link
               href="#servicios"
-              className="flex-1 sm:flex-initial px-6 py-3 rounded-full bg-[#ef4444] hover:bg-[#dc2626] text-white text-xs sm:text-sm font-extrabold flex items-center justify-center space-x-2 shadow-lg shadow-red-600/30 transition-all"
+              className="w-full sm:w-auto px-6 py-3 rounded-full bg-[#ef4444] hover:bg-[#dc2626] text-white text-xs sm:text-sm font-extrabold flex items-center justify-center space-x-2 shadow-lg shadow-red-600/30 transition-all"
             >
               <Search className="w-4 h-4" />
               <span>Necesito algo</span>
@@ -1499,7 +1574,7 @@ export default function Home() {
 
             <Link
               href={user ? '/dashboard' : '/register?role=provider'}
-              className="flex-1 sm:flex-initial px-6 py-3 rounded-full border border-white/70 hover:bg-white/10 text-white text-xs sm:text-sm font-extrabold flex items-center justify-center space-x-2 transition-all"
+              className="w-full sm:w-auto px-6 py-3 rounded-full border border-white/70 hover:bg-white/10 text-white text-xs sm:text-sm font-extrabold flex items-center justify-center space-x-2 transition-all"
             >
               <Wrench className="w-4 h-4" />
               <span>Quiero ofrecer</span>
@@ -1509,16 +1584,16 @@ export default function Home() {
       </section>
 
       {/* 10. FOOTER COMPLETO EXACTO */}
-      <footer className="bg-[#050b14] text-slate-300 pt-16 pb-8 border-t border-slate-800">
+      <footer className="bg-[#050b14] text-slate-300 pt-12 sm:pt-16 pb-8 border-t border-slate-800">
         <div className="max-w-[1240px] w-full mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 pb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-8 pb-10 sm:pb-12">
             {/* Col 1: Brand (Span 3) */}
-            <div className="lg:col-span-3 space-y-3">
+            <div className="sm:col-span-2 lg:col-span-3 space-y-3">
               <Link href="/" className="inline-block">
                 <img
                   src="/images/logo-conecta-nav.png"
                   alt="CONECTA 360"
-                  className="h-8 w-auto brightness-200 contrast-200 object-contain"
+                  className="h-7 sm:h-8 w-auto brightness-200 contrast-200 object-contain"
                 />
               </Link>
               <p className="text-xs text-slate-400 leading-relaxed max-w-xs">
@@ -1621,11 +1696,11 @@ export default function Home() {
             </div>
 
             {/* Col 5: Descarga nuestra app (Span 2) */}
-            <div className="lg:col-span-2 space-y-3">
+            <div className="sm:col-span-2 lg:col-span-2 space-y-3">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider">
                 Descarga nuestra app
               </h4>
-              <div className="space-y-2">
+              <div className="grid grid-cols-2 sm:grid-cols-1 gap-2">
                 <a
                   href="#"
                   className="flex items-center space-x-2 bg-black text-white px-2.5 py-1.5 rounded-lg border border-slate-700 hover:border-slate-500 transition-colors w-full"
@@ -1655,7 +1730,7 @@ export default function Home() {
           </div>
 
           {/* Bottom Bar con Desarrollado por SarriaTech Solutions S.A.S */}
-          <div className="border-t border-slate-800/80 pt-6 mt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-3">
+          <div className="border-t border-slate-800/80 pt-6 mt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-3 text-center sm:text-left">
             <p>© 2025 Conecta360. Todos los derechos reservados.</p>
             <p className="text-slate-300 font-semibold">
               Desarrollado por SarriaTech Solutions S.A.S
