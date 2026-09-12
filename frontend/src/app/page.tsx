@@ -791,15 +791,8 @@ export default function Home() {
                 </button>
               </div>
             ) : (
-              // Usuario no autenticado
-              <div className="flex items-center space-x-1.5 sm:space-x-3">
-                <Link
-                  href="/login"
-                  className="px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-bold text-slate-700 hover:text-[#0056d2] transition-colors"
-                >
-                  Ingresar
-                </Link>
-
+              // Usuario no autenticado: botón único de acceso "Ingresar" y "Quiero ofrecer"
+              <div className="flex items-center space-x-2 sm:space-x-3">
                 <Link
                   href="/login?redirect=/dashboard?action=new-service&action_type=offer"
                   className="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full border border-[#0056d2] text-[#0056d2] hover:bg-blue-50 text-xs sm:text-sm font-bold items-center space-x-1.5 transition-all hidden sm:flex"
@@ -809,11 +802,11 @@ export default function Home() {
                 </Link>
 
                 <Link
-                  href="/register"
-                  className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-[#0056d2] hover:bg-[#0046a8] text-white text-xs sm:text-sm font-bold flex items-center space-x-1.5 shadow-sm transition-all"
+                  href="/login"
+                  className="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-[#0056d2] hover:bg-[#0046a8] text-white text-xs sm:text-sm font-bold flex items-center space-x-1.5 shadow-sm transition-all"
                 >
                   <User className="w-3.5 h-3.5" />
-                  <span>Registro</span>
+                  <span>Ingresar</span>
                 </Link>
               </div>
             )}
@@ -875,6 +868,16 @@ export default function Home() {
             </nav>
 
             <div className="pt-2 border-t border-slate-100 flex flex-col space-y-2">
+              {!user && (
+                <Link
+                  href="/login"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="w-full py-2.5 px-4 rounded-xl border border-slate-200 hover:border-[#0056d2] text-slate-700 hover:text-[#0056d2] text-xs font-bold flex items-center justify-center space-x-2 transition-colors"
+                >
+                  <User className="w-4 h-4" />
+                  <span>Ingresar a mi cuenta</span>
+                </Link>
+              )}
               <Link
                 href={user ? '/dashboard?action=new-service' : '/login?redirect=/dashboard?action=new-service&action_type=offer'}
                 onClick={() => setIsMobileMenuOpen(false)}
