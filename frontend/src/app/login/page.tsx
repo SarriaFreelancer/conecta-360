@@ -20,6 +20,7 @@ function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectUrl = searchParams.get('redirect') || '/';
+  const actionType = searchParams.get('action_type') || searchParams.get('reason');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -123,6 +124,31 @@ function LoginContent() {
               Accede a tu cuenta de <span className="font-bold text-[#0056d2]">CONECTA 360</span>
             </p>
           </div>
+
+          {/* Banners de autenticación requerida para contratar o brindar servicios */}
+          {actionType === 'hire' && (
+            <div className="p-4 rounded-2xl bg-blue-50/90 border border-blue-200 text-xs text-blue-950 flex items-start space-x-3 shadow-xs">
+              <ShieldCheck className="w-5 h-5 text-[#0056d2] shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-extrabold text-slate-900 text-sm">Autenticación requerida para contratar</p>
+                <p className="text-slate-600 leading-relaxed">
+                  Por seguridad y garantía de pago, debes iniciar sesión o registrarte como cliente para solicitar este servicio en Conecta 360.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {actionType === 'offer' && (
+            <div className="p-4 rounded-2xl bg-amber-50/90 border border-amber-200 text-xs text-amber-950 flex items-start space-x-3 shadow-xs">
+              <Briefcase className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-extrabold text-slate-900 text-sm">Autenticación requerida para ofrecer servicios</p>
+                <p className="text-slate-600 leading-relaxed">
+                  Para publicar tus servicios profesionales y recibir clientes en Cali, inicia sesión en tu cuenta o regístrate como prestador.
+                </p>
+              </div>
+            </div>
+          )}
 
           {error && (
             <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-center space-x-2">

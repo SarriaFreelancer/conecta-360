@@ -12,11 +12,61 @@ export class UsersService {
     return userWithoutPassword;
   }
 
-  async findAll() {
+  async findAll(role?: string, category?: string, search?: string) {
+    const where: any = {};
+
+    if (role && role !== 'ALL') {
+      if (role === 'PROVIDER') {
+        where.providerProfile = { isNot: null };
+      } else if (role === 'CLIENT' || role === 'USER') {
+        where.providerProfile = null;
+      } else {
+        where.role = { name: role };
+      }
+    }
+
+    if (category && category !== 'ALL') {
+      where.providerProfile = {
+        providerServices: {
+          some: {
+            service: {
+              category: {
+                name: { contains: category },
+              },
+            },
+          },
+        },
+      };
+    }
+
+    if (search && search.trim()) {
+      const q = search.trim();
+      where.OR = [
+        { firstName: { contains: q } },
+        { lastName: { contains: q } },
+        { email: { contains: q } },
+        { phone: { contains: q } },
+      ];
+    }
+
     const users = await this.prisma.user.findMany({
+      where,
       include: {
         role: true,
         profile: true,
+        providerProfile: {
+          include: {
+            providerServices: {
+              include: {
+                service: {
+                  include: {
+                    category: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -30,7 +80,19 @@ export class UsersService {
       include: {
         role: true,
         profile: true,
-        providerProfile: true,
+        providerProfile: {
+          include: {
+            providerServices: {
+              include: {
+                service: {
+                  include: {
+                    category: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 

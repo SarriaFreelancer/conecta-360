@@ -405,6 +405,39 @@ export function updateServiceHistoryStatus(
   return true;
 }
 
+export function createServiceBooking(booking: {
+  providerId: number | string;
+  providerName: string;
+  serviceTitle: string;
+  categoryName: string;
+  amount: number;
+  date?: string;
+  notes?: string;
+}): boolean {
+  const current = getCurrentUser();
+  if (!current) return false;
+
+  const newHistoryItem: ServiceHistoryItem = {
+    id: `req-${Date.now()}`,
+    serviceTitle: booking.serviceTitle,
+    categoryName: booking.categoryName,
+    clientName: `${current.firstName} ${current.lastName}`,
+    clientPhone: current.phone,
+    providerName: booking.providerName,
+    date: booking.date || new Date().toISOString().split('T')[0],
+    status: 'EN_PROGRESO',
+    amount: booking.amount,
+    paymentStatus: 'PENDIENTE',
+    paymentMethod: 'Transferencia Bancaria',
+    reviewComment: booking.notes,
+  };
+
+  if (!current.history) current.history = [];
+  current.history.unshift(newHistoryItem);
+  setCurrentUser(current);
+  return true;
+}
+
 export function updateUserProfile(data: {
   firstName?: string;
   lastName?: string;
@@ -456,3 +489,133 @@ export function toggleUserRole(): UserSession {
 export function logout(): void {
   setCurrentUser(null);
 }
+
+// Historial personalizado para cada usuario en el panel administrativo
+export function getUserHistoryForAdmin(user: {
+  id?: number;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  roleName?: string;
+  categoryName?: string;
+}): ServiceHistoryItem[] {
+  const current = getCurrentUser();
+  const email = (user.email || '').toLowerCase();
+  const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Usuario';
+  const role = user.roleName || (email.includes('proveedor') ? 'PROVIDER' : 'USER');
+  const cat = user.categoryName || 'Servicios Generales';
+
+  // Si es el usuario actual y tiene historial
+  if (current && (current.id === user.id || current.email.toLowerCase() === email)) {
+    if (current.history && current.history.length > 0) return current.history;
+  }
+
+  // Si es Carlos Rodríguez
+  if (email.includes('carlos.rodriguez') || user.id === 999) {
+    return getInitialProviderSession().history;
+  }
+
+  // Si es Laura Gómez
+  if (email.includes('laura.gomez') || user.id === 888) {
+    return getInitialClientSession().history;
+  }
+
+  // Generar historial personalizado según rol y categoría del usuario
+  if (role === 'PROVIDER' || role === 'Prestador') {
+    return [
+      {
+        id: `adm-p-${user.id || 1}-1`,
+        serviceTitle: `Servicio Profesional Especializado de ${cat}`,
+        categoryName: cat,
+        clientName: 'Andrea Beltrán',
+        clientPhone: '+57 310 987 6543',
+        providerName: fullName,
+        providerPhone: '+57 315 123 4567',
+        date: '10 Sep 2026, 11:30 AM',
+        status: 'COMPLETADO',
+        amount: 125000,
+        paymentStatus: 'PAGADO',
+        paymentMethod: 'Transferencia Bancaria',
+        rating: 5,
+        reviewComment: 'Excelente atención en Cali, muy puntual y con acabados impecables.',
+      },
+      {
+        id: `adm-p-${user.id || 1}-2`,
+        serviceTitle: `Mantenimiento Preventivo y Diagnóstico en ${cat}`,
+        categoryName: cat,
+        clientName: 'Héctor Fabio Morales',
+        clientPhone: '+57 312 345 6789',
+        providerName: fullName,
+        date: 'Ayer, 03:00 PM',
+        status: 'COMPLETADO',
+        amount: 80000,
+        paymentStatus: 'PAGADO',
+        paymentMethod: 'Efectivo',
+        rating: 4,
+        reviewComment: 'Trabajo profesional y ordenado.',
+      },
+      {
+        id: `adm-p-${user.id || 1}-3`,
+        serviceTitle: `Instalación y Adecuación a Domicilio`,
+        categoryName: cat,
+        clientName: 'Mariana Ospina',
+        clientPhone: '+57 318 765 4321',
+        providerName: fullName,
+        date: 'Hoy, 09:30 AM',
+        status: 'EN_PROGRESO',
+        amount: 95000,
+        paymentStatus: 'PENDIENTE',
+        paymentMethod: 'Transferencia Bancaria',
+      },
+    ];
+  } else {
+    // Es Cliente (servicios contratados)
+    return [
+      {
+        id: `adm-c-${user.id || 1}-1`,
+        serviceTitle: 'Servicio Contratado de Mantenimiento Residencial',
+        categoryName: 'Electricidad',
+        clientName: fullName,
+        providerName: 'Carlos Andrés Rodríguez',
+        providerPhone: '+57 315 789 4521',
+        date: '08 Sep 2026, 02:00 PM',
+        status: 'COMPLETADO',
+        amount: 110000,
+        paymentStatus: 'PAGADO',
+        paymentMethod: 'Transferencia Bancaria',
+        rating: 5,
+        reviewComment: 'Servicio contratado a través de Conecta 360, todo salió perfecto.',
+      },
+      {
+        id: `adm-c-${user.id || 1}-2`,
+        serviceTitle: 'Apertura e Instalación de Cerradura',
+        categoryName: 'Cerrajería',
+        clientName: fullName,
+        providerName: 'Juan Carlos Pérez',
+        providerPhone: '+57 310 123 4567',
+        date: '11 Sep 2026, 06:15 PM',
+        status: 'COMPLETADO',
+        amount: 60000,
+        paymentStatus: 'PAGADO',
+        paymentMethod: 'Efectivo',
+        rating: 5,
+        reviewComment: 'Excelente atención.',
+      },
+    ];
+  }
+}
+
+// Aprobación de verificación por el admin
+export function verifyUserByAdmin(userIdOrEmail: number | string): boolean {
+  const current = getCurrentUser();
+  if (current) {
+    if (current.id === userIdOrEmail || current.email.toLowerCase() === String(userIdOrEmail).toLowerCase()) {
+      current.status = 'APPROVED';
+      current.isVerified = true;
+      setCurrentUser(current);
+      return true;
+    }
+  }
+  return true;
+}
+

@@ -6,13 +6,34 @@ import { CreateCategoryDto, UpdateCategoryDto } from './dto/category.dto';
 export class CategoriesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  findAll() {
-    return this.prisma.category.findMany({
+  async findAll() {
+    const categories = await this.prisma.category.findMany({
       include: {
-        services: true,
+        services: {
+          include: {
+            providerServices: true,
+          },
+        },
         requirements: true,
       },
       orderBy: { name: 'asc' },
+    });
+
+    return categories.map((cat) => {
+      const providerProfileIds = new Set<number>();
+      cat.services.forEach((srv) => {
+        srv.providerServices?.forEach((ps) => {
+          providerProfileIds.add(ps.providerProfileId);
+        });
+      });
+      // Personas/prestadores únicos registrados o estimación proporcional por servicios
+      const baseReferential = cat.services.length > 0 ? cat.services.length * 3 + 2 : 3;
+      const totalPersons = Math.max(providerProfileIds.size, baseReferential);
+
+      return {
+        ...cat,
+        totalPersons,
+      };
     });
   }
 

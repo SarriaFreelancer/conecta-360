@@ -633,7 +633,7 @@ export default function Home() {
               <Heart className="w-3.5 h-3.5 hover:text-red-500 transition-colors" />
             </div>
 
-            {/* Estado de verificación: Verificado vs Pendiente */}
+            {/* Estado de verificación: Verificado vs Sin verificar */}
             {prov.isVerified ? (
               <div className="absolute top-2 right-2 bg-[#0056d2] text-white text-[9px] font-bold px-2.5 py-0.5 rounded-full flex items-center space-x-1 shadow-sm">
                 <Check className="w-2.5 h-2.5 stroke-[3]" />
@@ -642,7 +642,7 @@ export default function Home() {
             ) : (
               <div className="absolute top-2 right-2 bg-amber-500 text-white text-[9px] font-bold px-2.5 py-0.5 rounded-full flex items-center space-x-1 shadow-sm">
                 <Clock className="w-2.5 h-2.5 stroke-[3]" />
-                <span>Pendiente</span>
+                <span>Sin verificar</span>
               </div>
             )}
           </div>
@@ -686,20 +686,32 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Footer de la tarjeta: Precio y botón */}
-        <div className="p-3.5 pt-0 border-t border-slate-100 mt-2 flex items-center justify-between">
+        {/* Footer de la tarjeta: Precio y botones con autenticación previa */}
+        <div className="p-3.5 pt-0 border-t border-slate-100 mt-2 flex items-center justify-between gap-2">
           <div>
             <span className="text-[10px] text-slate-400 block font-semibold">Tarifa hora</span>
             <span className="text-xs font-black text-[#0056d2]">
               {formatRate(prov.hourlyRate)}/h
             </span>
           </div>
-          <Link
-            href={`/profile/${prov.userId}`}
-            className="px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-[#0056d2] hover:text-white text-[#0056d2] text-xs font-bold transition-all shadow-2xs"
-          >
-            Ver perfil
-          </Link>
+          <div className="flex items-center space-x-1.5">
+            <Link
+              href={`/profile/${prov.userId}`}
+              className="px-2.5 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-bold transition-all"
+            >
+              Perfil
+            </Link>
+            <Link
+              href={
+                user
+                  ? `/profile/${prov.userId}?action=hire`
+                  : `/login?redirect=/profile/${prov.userId}&action_type=hire`
+              }
+              className="px-3 py-1.5 rounded-lg bg-[#0056d2] hover:bg-[#0046a8] text-white text-xs font-bold transition-all shadow-xs"
+            >
+              Contratar
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -789,7 +801,7 @@ export default function Home() {
                 </Link>
 
                 <Link
-                  href="/register?role=provider"
+                  href="/login?redirect=/dashboard?action=new-service&action_type=offer"
                   className="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full border border-[#0056d2] text-[#0056d2] hover:bg-blue-50 text-xs sm:text-sm font-bold items-center space-x-1.5 transition-all hidden sm:flex"
                 >
                   <Wrench className="w-3.5 h-3.5" />
@@ -864,7 +876,7 @@ export default function Home() {
 
             <div className="pt-2 border-t border-slate-100 flex flex-col space-y-2">
               <Link
-                href={user ? '/dashboard?action=new-service' : '/register?role=provider'}
+                href={user ? '/dashboard?action=new-service' : '/login?redirect=/dashboard?action=new-service&action_type=offer'}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="w-full py-2.5 px-4 rounded-xl bg-[#0056d2] text-white text-xs font-bold flex items-center justify-center space-x-2 shadow-sm"
               >
