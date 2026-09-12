@@ -743,7 +743,7 @@ export default function Home() {
             <Link href="/" className="text-[#0056d2] font-bold border-b-2 border-[#0056d2] pb-1">
               Inicio
             </Link>
-            <Link href="#servicios" className="hover:text-[#0056d2] transition-colors">
+            <Link href="/services" className="hover:text-[#0056d2] transition-colors">
               Servicios
             </Link>
             <Link href="#categorias" className="hover:text-[#0056d2] transition-colors">
@@ -838,7 +838,7 @@ export default function Home() {
                 Inicio
               </Link>
               <Link
-                href="#servicios"
+                href="/services"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="py-2 px-3 rounded-lg hover:bg-slate-50 transition-colors"
               >
@@ -1242,14 +1242,27 @@ export default function Home() {
                 setSelectedCategory(null);
                 setSearchQuery('');
               }}
-              className="px-5 py-2.5 bg-[#0056d2] text-white font-bold text-xs rounded-xl shadow-md"
+              className="px-5 py-2.5 bg-[#0056d2] text-white font-bold text-xs rounded-xl shadow-md cursor-pointer"
             >
               Restablecer a Cali
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-            {filteredProviders.map((prov, idx) => renderProviderCard(prov, idx))}
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+              {filteredProviders.map((prov, idx) => renderProviderCard(prov, idx))}
+            </div>
+
+            {/* Botón Ver más servicios */}
+            <div className="pt-6 pb-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link
+                href="/services"
+                className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-[#002f6c] via-[#0056d2] to-indigo-700 hover:from-[#002353] hover:to-[#0046a8] text-white text-sm font-extrabold shadow-lg hover:shadow-xl transition-all flex items-center space-x-2.5 group"
+              >
+                <span>Ver más servicios y profesionales</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+              </Link>
+            </div>
           </div>
         )}
       </section>
