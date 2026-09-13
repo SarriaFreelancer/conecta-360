@@ -43,6 +43,7 @@ import {
   PricingModel
 } from '@/lib/cuadrillas-data';
 import { getCurrentUser, UserSession } from '@/lib/auth';
+import { API_BASE_URL } from '@/lib/admin-data';
 
 export default function CuadrillasPage() {
   const [user, setUser] = useState<UserSession | null>(null);
@@ -139,7 +140,7 @@ export default function CuadrillasPage() {
   };
 
   const loadBackendData = () => {
-    fetch('http://localhost:3003/cuadrillas', { signal: AbortSignal.timeout(2000) })
+    fetch(`${API_BASE_URL}/cuadrillas`, { signal: AbortSignal.timeout(2000) })
       .then((res) => {
         if (res.ok) return res.json();
         return null;
@@ -152,7 +153,7 @@ export default function CuadrillasPage() {
       })
       .catch(() => {});
 
-    fetch('http://localhost:3003/cuadrillas/proposals/all', { signal: AbortSignal.timeout(2000) })
+    fetch(`${API_BASE_URL}/cuadrillas/proposals/all`, { signal: AbortSignal.timeout(2000) })
       .then((res) => {
         if (res.ok) return res.json();
         return null;
@@ -251,7 +252,7 @@ export default function CuadrillasPage() {
     // 2. Persistencia en Base de Datos MySQL (Prisma)
     const numId = Number(proposalModalCuadrilla.id);
     if (!isNaN(numId)) {
-      fetch(`http://localhost:3003/cuadrillas/${numId}/proposals`, {
+      fetch(`${API_BASE_URL}/cuadrillas/${numId}/proposals`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -282,7 +283,7 @@ export default function CuadrillasPage() {
     updateProposalStatus(proposalId, 'ACEPTAR');
     const numId = Number(proposalId);
     if (!isNaN(numId)) {
-      fetch(`http://localhost:3003/cuadrillas/proposals/${numId}/status`, {
+      fetch(`${API_BASE_URL}/cuadrillas/proposals/${numId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'ACUERDO_PACTADO' }),
@@ -333,7 +334,7 @@ export default function CuadrillasPage() {
     saveStoredCuadrilla(newTeam);
 
     // Enviar a la base de datos MySQL (Prisma)
-    fetch('http://localhost:3003/cuadrillas', {
+    fetch(`${API_BASE_URL}/cuadrillas`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

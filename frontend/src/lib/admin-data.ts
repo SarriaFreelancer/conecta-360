@@ -1,7 +1,8 @@
 // Centralized Admin Data Service for Conecta 360
 // Connects to backend on port 3003 with offline-first resilient fallback
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003';
+const apiPort = process.env.NEXT_PUBLIC_API_PORT || '3003';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || `http://localhost:${apiPort}`;
 
 export interface AdminCategory {
   id: number;

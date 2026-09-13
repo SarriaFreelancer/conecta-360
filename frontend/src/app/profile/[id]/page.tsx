@@ -28,6 +28,7 @@ import {
   MessageCircle
 } from 'lucide-react';
 import { getCurrentUser, createServiceBooking, UserSession } from '@/lib/auth';
+import { API_BASE_URL } from '@/lib/admin-data';
 
 interface ServiceDetail {
   id: number;
@@ -106,8 +107,7 @@ function ProfileContent() {
 
     if (!id) return;
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003';
-    fetch(`${apiUrl}/users/${id}`)
+    fetch(`${API_BASE_URL}/users/${id}`, { signal: AbortSignal.timeout(2000) })
       .then((res) => res.json())
       .then((data) => {
         if (data && data.id) {
@@ -119,8 +119,7 @@ function ProfileContent() {
         }
         setLoading(false);
       })
-      .catch((err) => {
-        console.error('Error cargando usuario:', err);
+      .catch(() => {
         setUser(getDetailedProviderData(Number(id)));
         setLoading(false);
       });
