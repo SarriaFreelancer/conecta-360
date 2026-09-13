@@ -1,0 +1,24 @@
+{
+  "name": "Conecta 360 — Servicios y Cuadrillas en Colombia",
+  "short_name": "Conecta 360",
+  "description": "Plataforma de contratación de profesionales, servicios y cuadrillas en Cali y Colombia.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#002f6c",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/images/logo-conecta-hero-icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/logo-conecta-hero-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
