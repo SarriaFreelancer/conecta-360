@@ -837,3 +837,56 @@ export async function updateDocumentStatusBackend(
   return null;
 }
 
+// ==========================================
+// 10. SUSCRIPCIONES Y COMISIONES FINANCIERAS
+// ==========================================
+export interface FinancialSummary {
+  totalTransactions: number;
+  totalVolume: number;
+  totalCommissionEarned: number;
+  totalDebtPending: number;
+}
+
+export async function fetchAllBookingsBackend(status?: string, debtStatus?: string): Promise<any[]> {
+  try {
+    const params = new URLSearchParams();
+    if (status) params.append('status', status);
+    if (debtStatus) params.append('debtStatus', debtStatus);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    const res = await fetch(`${API_BASE_URL}/bookings${qs}`, {
+      signal: AbortSignal.timeout(4000),
+    });
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('[Conecta360 API] Error consultando reservas para comisiones:', err);
+  }
+  return [];
+}
+
+export async function fetchFinancialSummaryBackend(): Promise<FinancialSummary | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/bookings/financial-summary`, {
+      signal: AbortSignal.timeout(4000),
+    });
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('[Conecta360 API] Error consultando resumen financiero:', err);
+  }
+  return null;
+}
+
+export async function payPlatformDebtBackend(bookingId: number) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/bookings/${bookingId}/pay-debt`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+      signal: AbortSignal.timeout(4000),
+    });
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('[Conecta360 API] Error liquidando deuda en backend:', err);
+  }
+  return null;
+}
+

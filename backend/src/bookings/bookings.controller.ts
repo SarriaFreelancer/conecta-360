@@ -5,6 +5,7 @@ import {
   Patch,
   Param,
   Body,
+  Query,
   ParseIntPipe,
 } from '@nestjs/common';
 import { BookingsService } from './bookings.service';
@@ -13,6 +14,19 @@ import { CreateBookingDto, UpdateBookingStatusDto, PayPlatformDebtDto } from './
 @Controller('bookings')
 export class BookingsController {
   constructor(private readonly bookingsService: BookingsService) {}
+
+  @Get()
+  findAll(
+    @Query('status') status?: string,
+    @Query('debtStatus') debtStatus?: string,
+  ) {
+    return this.bookingsService.findAll(status, debtStatus);
+  }
+
+  @Get('financial-summary')
+  getFinancialSummary() {
+    return this.bookingsService.getFinancialSummary();
+  }
 
   @Post()
   create(@Body() dto: CreateBookingDto) {

@@ -97,6 +97,63 @@ export class BookingsService {
     return booking;
   }
 
+  async findAll(status?: string, debtStatus?: string) {
+    const where: any = {};
+    if (status && status !== 'ALL') {
+      where.status = status;
+    }
+    if (debtStatus && debtStatus !== 'ALL') {
+      where.platformDebtStatus = debtStatus;
+    }
+
+    return this.prisma.booking.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        client: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
+            profile: true,
+          },
+        },
+        provider: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
+            profile: true,
+            providerProfile: true,
+          },
+        },
+      },
+    });
+  }
+
+  async getFinancialSummary() {
+    const bookings = await this.prisma.booking.findMany();
+    const totalTransactions = bookings.length;
+    const totalVolume = bookings.reduce((acc, b) => acc + Number(b.amount || 0), 0);
+    const totalCommissionEarned = bookings
+      .filter((b) => b.platformDebtStatus === 'AL_DIA' || b.paymentStatus === 'PAGADO')
+      .reduce((acc, b) => acc + Number(b.platformFee || 0), 0);
+    const totalDebtPending = bookings
+      .filter((b) => b.platformDebtStatus === 'EN_DEUDA')
+      .reduce((acc, b) => acc + Number(b.platformFee || 0), 0);
+
+    return {
+      totalTransactions,
+      totalVolume,
+      totalCommissionEarned,
+      totalDebtPending,
+    };
+  }
+
   async findByClient(clientId: number) {
     return this.prisma.booking.findMany({
       where: { clientId },
