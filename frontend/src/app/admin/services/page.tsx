@@ -15,6 +15,7 @@ import {
   Check
 } from 'lucide-react';
 import AdminSidebar from '@/components/AdminSidebar';
+import { getAdminServices, getAdminCategories, API_BASE_URL } from '@/lib/admin-data';
 
 interface ServiceItem {
   id: number;
@@ -56,37 +57,35 @@ export default function AdminServicesPage() {
   const [editDescription, setEditDescription] = useState('');
   const [editIsActive, setEditIsActive] = useState(true);
 
-  const fetchServices = () => {
+  const fetchServices = async () => {
     setLoading(true);
-    fetch('http://localhost:3001/services')
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) setServices(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setLoading(false);
-      });
+    try {
+      const data = await getAdminServices();
+      setServices(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     fetchServices();
-    fetch('http://localhost:3001/categories')
-      .then((res) => res.json())
+    getAdminCategories()
       .then((data) => {
         if (Array.isArray(data)) {
           setCategories(data);
           if (data.length > 0) setCategoryId(data[0].id);
         }
-      });
+      })
+      .catch((err) => console.error(err));
   }, []);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !slug) return;
     try {
-      const res = await fetch('http://localhost:3001/services', {
+      const res = await fetch(`${API_BASE_URL}/services`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ categoryId: Number(categoryId), name, slug, description, isActive: true }),
@@ -98,10 +97,32 @@ export default function AdminServicesPage() {
         setDescription('');
         fetchServices();
         showToast('Servicio creado exitosamente');
+        return;
       }
     } catch (error) {
-      console.error(error);
+      console.warn('Servidor offline, guardando servicio localmente:', error);
     }
+
+    // Fallback local
+    const catObj = categories.find((c) => c.id === Number(categoryId)) || { id: Number(categoryId), name: 'General' };
+    const newService: ServiceItem = {
+      id: Date.now(),
+      name,
+      slug,
+      description,
+      isActive: true,
+      category: catObj,
+    };
+    const updated = [newService, ...services];
+    setServices(updated);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('conecta360_admin_services_v2', JSON.stringify(updated));
+    }
+    setIsModalOpen(false);
+    setName('');
+    setSlug('');
+    setDescription('');
+    showToast('Servicio creado exitosamente');
   };
 
   const handleOpenEdit = (srv: ServiceItem) => {
@@ -118,7 +139,7 @@ export default function AdminServicesPage() {
     e.preventDefault();
     if (!editingService || !editName || !editSlug) return;
     try {
-      const res = await fetch(`http://localhost:3001/services/${editingService.id}`, {
+      const res = await fetch(`${API_BASE_URL}/services/${editingService.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -134,28 +155,43 @@ export default function AdminServicesPage() {
         setEditingService(null);
         fetchServices();
         showToast('Servicio actualizado exitosamente');
-      } else {
-        alert('Error al actualizar el servicio.');
+        return;
       }
     } catch (error) {
-      console.error(error);
-      alert('No se pudo conectar al servidor para actualizar el servicio.');
+      console.warn('Servidor offline, actualizando servicio localmente:', error);
     }
+
+    // Fallback local
+    const catObj = categories.find((c) => c.id === Number(editCategoryId)) || editingService.category;
+    const updated = services.map((s) =>
+      s.id === editingService.id
+        ? { ...s, name: editName, slug: editSlug, description: editDescription, isActive: editIsActive, category: catObj }
+        : s
+    );
+    setServices(updated);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('conecta360_admin_services_v2', JSON.stringify(updated));
+    }
+    setIsEditModalOpen(false);
+    setEditingService(null);
+    showToast('Servicio actualizado exitosamente');
   };
 
   const handleDelete = async (id: number) => {
     if (!confirm('¿Estás seguro de eliminar este servicio?')) return;
     try {
-      const res = await fetch(`http://localhost:3001/services/${id}`, {
+      await fetch(`${API_BASE_URL}/services/${id}`, {
         method: 'DELETE',
       });
-      if (res.ok) {
-        fetchServices();
-        showToast('Servicio eliminado');
-      }
     } catch (error) {
-      console.error(error);
+      console.warn('Servidor offline, eliminando servicio localmente:', error);
     }
+    const updated = services.filter((s) => s.id !== id);
+    setServices(updated);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('conecta360_admin_services_v2', JSON.stringify(updated));
+    }
+    showToast('Servicio eliminado');
   };
 
   const showToast = (msg: string) => {

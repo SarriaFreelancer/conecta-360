@@ -28,6 +28,7 @@ import {
 import AdminSidebar from '@/components/AdminSidebar';
 import { getUserHistoryForAdmin, verifyUserByAdmin, calculateUserPlatformDebt, ServiceHistoryItem } from '@/lib/auth';
 import { getGlobalSettings } from '@/lib/system-settings';
+import { getAdminUsers, getAdminCategories, API_BASE_URL } from '@/lib/admin-data';
 
 interface UserItem {
   id: number;
@@ -81,35 +82,22 @@ export default function AdminUsersPage() {
   const [userHistory, setUserHistory] = useState<ServiceHistoryItem[]>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const fetchUsers = () => {
+  const fetchUsers = async () => {
     setLoading(true);
-    let url = 'http://localhost:3001/users';
-    const params = new URLSearchParams();
-    if (roleFilter !== 'ALL') params.append('role', roleFilter);
-    if (categoryFilter !== 'ALL') params.append('category', categoryFilter);
-    if (searchTerm.trim()) params.append('search', searchTerm.trim());
-
-    if (params.toString()) {
-      url += `?${params.toString()}`;
+    try {
+      const data = await getAdminUsers(roleFilter, categoryFilter, searchTerm);
+      setUsers(data as any);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-
-    fetch(url)
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) setUsers(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setLoading(false);
-      });
   };
 
   useEffect(() => {
     setMounted(true);
     // Cargar categorías disponibles para los filtros
-    fetch('http://localhost:3001/categories')
-      .then((res) => res.json())
+    getAdminCategories()
       .then((data) => {
         if (Array.isArray(data)) {
           const names = data.map((c: any) => c.name);

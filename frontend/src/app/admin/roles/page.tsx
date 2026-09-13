@@ -12,23 +12,16 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import AdminSidebar from '@/components/AdminSidebar';
-
-interface RoleItem {
-  id: number;
-  name: string;
-  description: string;
-  createdAt: string;
-}
+import { getAdminRoles, AdminRole } from '@/lib/admin-data';
 
 export default function AdminRolesPage() {
-  const [roles, setRoles] = useState<RoleItem[]>([]);
+  const [roles, setRoles] = useState<AdminRole[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:3001/roles')
-      .then((res) => res.json())
+    getAdminRoles()
       .then((data) => {
-        if (Array.isArray(data)) setRoles(data);
+        setRoles(data);
         setLoading(false);
       })
       .catch((err) => {

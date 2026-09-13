@@ -39,7 +39,8 @@ import {
   CheckSquare,
   Square,
   ShieldAlert,
-  AlertCircle
+  AlertCircle,
+  LayoutDashboard
 } from 'lucide-react';
 import {
   getCurrentUser,
@@ -540,6 +541,16 @@ function UserDashboardContent() {
               <span className="px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-950 text-[9px] font-black uppercase">
                 Nuevo
               </span>
+            </Link>
+
+            {/* Acceso directo al Panel de Administración (Categorías, Servicios, Usuarios) */}
+            <Link
+              href="/admin"
+              className="text-xs sm:text-sm font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-3 py-1.5 rounded-xl hidden sm:flex items-center space-x-1.5 transition-all shadow-sm"
+              title="Panel Administrativo de Categorías, Servicios y Usuarios"
+            >
+              <LayoutDashboard className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Panel Admin</span>
             </Link>
 
             {/* Campana de Notificaciones del Sistema */}

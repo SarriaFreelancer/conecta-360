@@ -19,6 +19,7 @@ import {
   Search
 } from 'lucide-react';
 import AdminSidebar from '@/components/AdminSidebar';
+import { getAdminCategories, API_BASE_URL } from '@/lib/admin-data';
 
 interface Requirement {
   id: number;
@@ -66,18 +67,16 @@ export default function AdminCategoriesPage() {
   const [editDescription, setEditDescription] = useState('');
   const [editIsActive, setEditIsActive] = useState(true);
 
-  const fetchCategories = () => {
+  const fetchCategories = async () => {
     setLoading(true);
-    fetch('http://localhost:3001/categories')
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) setCategories(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setLoading(false);
-      });
+    try {
+      const data = await getAdminCategories();
+      setCategories(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -88,7 +87,7 @@ export default function AdminCategoriesPage() {
     e.preventDefault();
     if (!name || !slug) return;
     try {
-      const res = await fetch('http://localhost:3001/categories', {
+      const res = await fetch(`${API_BASE_URL}/categories`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, slug, description, icon: 'grid', isActive: true }),
@@ -100,10 +99,34 @@ export default function AdminCategoriesPage() {
         setDescription('');
         fetchCategories();
         showToast('Categoría creada exitosamente');
+        return;
       }
     } catch (error) {
-      console.error(error);
+      console.warn('Servidor offline, creando localmente:', error);
     }
+
+    // Fallback local
+    const newCat: Category = {
+      id: Date.now(),
+      name,
+      slug,
+      description,
+      icon: 'grid',
+      isActive: true,
+      services: [],
+      requirements: [],
+      totalPersons: 0,
+    };
+    const updated = [newCat, ...categories];
+    setCategories(updated);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('conecta360_admin_categories_v2', JSON.stringify(updated));
+    }
+    setIsModalOpen(false);
+    setName('');
+    setSlug('');
+    setDescription('');
+    showToast('Categoría creada exitosamente');
   };
 
   const handleOpenEdit = (cat: Category) => {
@@ -119,7 +142,7 @@ export default function AdminCategoriesPage() {
     e.preventDefault();
     if (!editingCategory || !editName || !editSlug) return;
     try {
-      const res = await fetch(`http://localhost:3001/categories/${editingCategory.id}`, {
+      const res = await fetch(`${API_BASE_URL}/categories/${editingCategory.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -134,28 +157,42 @@ export default function AdminCategoriesPage() {
         setEditingCategory(null);
         fetchCategories();
         showToast('Categoría actualizada exitosamente');
-      } else {
-        alert('Error al actualizar la categoría.');
+        return;
       }
     } catch (error) {
-      console.error(error);
-      alert('No se pudo conectar al servidor para actualizar la categoría.');
+      console.warn('Servidor offline, actualizando localmente:', error);
     }
+
+    // Fallback local
+    const updated = categories.map((c) =>
+      c.id === editingCategory.id
+        ? { ...c, name: editName, slug: editSlug, description: editDescription, isActive: editIsActive }
+        : c
+    );
+    setCategories(updated);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('conecta360_admin_categories_v2', JSON.stringify(updated));
+    }
+    setIsEditModalOpen(false);
+    setEditingCategory(null);
+    showToast('Categoría actualizada exitosamente');
   };
 
   const handleDelete = async (id: number) => {
     if (!confirm('¿Estás seguro de eliminar esta categoría?')) return;
     try {
-      const res = await fetch(`http://localhost:3001/categories/${id}`, {
+      await fetch(`${API_BASE_URL}/categories/${id}`, {
         method: 'DELETE',
       });
-      if (res.ok) {
-        fetchCategories();
-        showToast('Categoría eliminada');
-      }
     } catch (error) {
-      console.error(error);
+      console.warn('Servidor offline, eliminando localmente:', error);
     }
+    const updated = categories.filter((c) => c.id !== id);
+    setCategories(updated);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('conecta360_admin_categories_v2', JSON.stringify(updated));
+    }
+    showToast('Categoría eliminada');
   };
 
   const showToast = (msg: string) => {

@@ -106,7 +106,8 @@ function ProfileContent() {
 
     if (!id) return;
 
-    fetch(`http://localhost:3001/users/${id}`)
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003';
+    fetch(`${apiUrl}/users/${id}`)
       .then((res) => res.json())
       .then((data) => {
         if (data && data.id) {
