@@ -131,8 +131,8 @@ export default function Home() {
 
   const handleOpenTeamModal = () => {
     if (!user) {
-      alert('Debes iniciar sesión para solicitar un equipo de trabajo.');
-      window.location.href = '/login?redirect=/?action=team';
+      alert('Debes iniciar sesión para solicitar un equipo de trabajo o cuadrilla.');
+      window.location.href = `/login?redirect=${encodeURIComponent('/?action=team')}&action_type=cuadrilla`;
       return;
     }
     if (selectedTeamProviderIds.length === 0 && providers.length > 0) {
@@ -911,7 +911,7 @@ export default function Home() {
               href={
                 user
                   ? `/profile/${prov.userId}?action=hire`
-                  : `/login?redirect=/profile/${prov.userId}&action_type=hire`
+                  : `/login?redirect=${encodeURIComponent(`/profile/${prov.userId}?action=hire`)}&action_type=hire`
               }
               className="px-3 py-1.5 rounded-lg bg-[#0056d2] hover:bg-[#0046a8] text-white text-xs font-bold transition-all shadow-xs"
             >

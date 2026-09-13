@@ -101,6 +101,10 @@ function ProfileContent() {
   const [bookingNotes, setBookingNotes] = useState('');
   const [bookingSuccess, setBookingSuccess] = useState(false);
 
+  // Modal de Autenticación Requerida para Contratar Servicio
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalMessage, setAuthModalMessage] = useState('');
+
   useEffect(() => {
     const session = getCurrentUser();
     setCurrentUserState(session);
@@ -125,7 +129,7 @@ function ProfileContent() {
       });
   }, [id]);
 
-  // Si viene con ?action=hire, abrir modal o redirigir al login
+  // Si viene con ?action=hire, abrir modal si está autenticado o mostrar modal de inicio de sesión
   useEffect(() => {
     if (initialAction === 'hire' && !loading && user) {
       handleOpenBooking();
@@ -135,8 +139,8 @@ function ProfileContent() {
   const handleOpenBooking = () => {
     const session = getCurrentUser();
     if (!session) {
-      // Regla: antes de ingresar a cualquier acción de solicitar servicio o brindar servicios, pedir autenticación en el login
-      router.push(`/login?redirect=/profile/${id}?action=hire&action_type=hire`);
+      setAuthModalMessage(`Para solicitar y contratar los servicios de ${user?.firstName || 'este profesional'}, debes iniciar sesión o crear una cuenta.`);
+      setAuthModalOpen(true);
       return;
     }
     setIsBookingOpen(true);
@@ -145,6 +149,14 @@ function ProfileContent() {
   const handleConfirmBooking = (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+
+    const session = getCurrentUser();
+    if (!session) {
+      setIsBookingOpen(false);
+      setAuthModalMessage('Debes iniciar sesión para confirmar y registrar esta solicitud de servicio.');
+      setAuthModalOpen(true);
+      return;
+    }
 
     const rateNum = Number(user.providerProfile?.hourlyRate) || 45000;
     const servTitle = selectedService || user.providerProfile?.title || 'Servicio Profesional';
@@ -805,6 +817,57 @@ function ProfileContent() {
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE AUTENTICACIÓN REQUERIDA */}
+      {authModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-md w-full p-6 sm:p-7 space-y-5 animate-scale-up text-center">
+            <div className="w-14 h-14 rounded-2xl bg-blue-100 text-[#0056d2] flex items-center justify-center mx-auto shadow-sm">
+              <Shield className="w-7 h-7" />
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-xl font-black text-slate-900">Inicio de Sesión Requerido</h3>
+              <p className="text-xs text-slate-600 leading-relaxed max-w-sm mx-auto">
+                {authModalMessage || `Para solicitar y contratar los servicios de ${user?.firstName || 'este profesional'}, debes iniciar sesión o registrarte en Conecta 360.`}
+              </p>
+            </div>
+
+            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 text-left text-xs text-slate-600 space-y-1.5">
+              <div className="flex items-center space-x-2 text-slate-800 font-bold">
+                <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span>Seguimiento de orden y confirmación en tiempo real</span>
+              </div>
+              <div className="flex items-center space-x-2 text-slate-800 font-bold">
+                <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span>Respaldo oficial y garantía del servicio en Cali</span>
+              </div>
+            </div>
+
+            <div className="space-y-2 pt-2">
+              <Link
+                href={`/login?redirect=${encodeURIComponent(`/profile/${id}?action=hire`)}&action_type=hire`}
+                className="w-full py-3 rounded-xl bg-[#0056d2] hover:bg-[#0046a8] text-white font-extrabold text-xs shadow-md transition-all flex items-center justify-center space-x-2"
+              >
+                <User className="w-4 h-4" />
+                <span>Iniciar Sesión Ahora</span>
+              </Link>
+              <Link
+                href={`/register?redirect=${encodeURIComponent(`/profile/${id}?action=hire`)}`}
+                className="w-full py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-xs transition-all flex items-center justify-center space-x-2"
+              >
+                <span>¿No tienes cuenta? Regístrate gratis</span>
+              </Link>
+              <button
+                onClick={() => setAuthModalOpen(false)}
+                className="w-full py-2 text-xs font-semibold text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                Volver al perfil
+              </button>
+            </div>
           </div>
         </div>
       )}

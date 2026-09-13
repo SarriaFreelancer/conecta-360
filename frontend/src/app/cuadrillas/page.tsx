@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Users,
   ArrowLeft,
@@ -46,10 +47,15 @@ import { getCurrentUser, UserSession } from '@/lib/auth';
 import { API_BASE_URL } from '@/lib/admin-data';
 
 export default function CuadrillasPage() {
+  const router = useRouter();
   const [user, setUser] = useState<UserSession | null>(null);
   const [cuadrillas, setCuadrillas] = useState<CuadrillaTeam[]>([]);
   const [proposals, setProposals] = useState<CuadrillaProposal[]>([]);
   const [activeTab, setActiveTab] = useState<'catalogo' | 'acuerdos' | 'ofrecer'>('catalogo');
+
+  // Modal de Autenticación Requerida para Contratos de Cuadrilla
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalMessage, setAuthModalMessage] = useState('Para realizar un contrato de cuadrilla o enviar una propuesta de trabajo, debes iniciar sesión o registrarte.');
 
   // Filtros
   const [selectedPricingModel, setSelectedPricingModel] = useState<string>('TODOS');
@@ -212,6 +218,11 @@ export default function CuadrillasPage() {
   });
 
   const handleOpenProposalModal = (cuad: CuadrillaTeam) => {
+    if (!user) {
+      setAuthModalMessage(`Para realizar un contrato de cuadrilla o enviar una propuesta de trabajo a "${cuad.title}", debes iniciar sesión o crear una cuenta.`);
+      setAuthModalOpen(true);
+      return;
+    }
     setProposalModalCuadrilla(cuad);
     setProposalPricingModel(cuad.pricingModel);
     if (cuad.pricingModel === 'POR_DIA') {
@@ -230,10 +241,15 @@ export default function CuadrillasPage() {
 
   const handleSendProposal = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      setAuthModalMessage('Debes iniciar sesión para formalizar y enviar este contrato de cuadrilla.');
+      setAuthModalOpen(true);
+      return;
+    }
     if (!proposalModalCuadrilla) return;
 
-    const clientName = user ? `${user.firstName} ${user.lastName}` : 'Cliente Solicitante';
-    const clientPhone = user?.phone || '+57 312 000 0000';
+    const clientName = `${user.firstName} ${user.lastName}`;
+    const clientPhone = user.phone || '+57 312 000 0000';
 
     // 1. Guardado local inmediato
     saveCuadrillaProposal({
@@ -280,6 +296,11 @@ export default function CuadrillasPage() {
   };
 
   const handleAcceptProposal = (proposalId: string) => {
+    if (!user) {
+      setAuthModalMessage('Debes iniciar sesión para pactar y cerrar este acuerdo de cuadrilla.');
+      setAuthModalOpen(true);
+      return;
+    }
     updateProposalStatus(proposalId, 'ACEPTAR');
     const numId = Number(proposalId);
     if (!isNaN(numId)) {
@@ -295,8 +316,22 @@ export default function CuadrillasPage() {
     }
   };
 
+  const handleSelectOfrecerTab = () => {
+    if (!user) {
+      setAuthModalMessage('Para ofrecer y publicar una cuadrilla de trabajo en Conecta 360, debes iniciar sesión con tu cuenta de prestador.');
+      setAuthModalOpen(true);
+      return;
+    }
+    setActiveTab('ofrecer');
+  };
+
   const handleCreateNewCuadrilla = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      setAuthModalMessage('Debes iniciar sesión para registrar una cuadrilla.');
+      setAuthModalOpen(true);
+      return;
+    }
     if (!newCuadTitle.trim()) return;
 
     const acts = newCuadActivities.split(',').map((s) => s.trim()).filter(Boolean);
@@ -307,8 +342,8 @@ export default function CuadrillasPage() {
       slug: newCuadTitle.toLowerCase().replace(/\\s+/g, '-'),
       description: newCuadDesc.trim() || 'Cuadrilla profesional multidisciplinaria de alto rendimiento.',
       category: newCuadCategory,
-      leaderName: newCuadLeaderName.trim() || (user ? `${user.firstName} ${user.lastName}` : 'Líder de Cuadrilla'),
-      leaderPhone: newCuadLeaderPhone.trim() || (user?.phone || '+57 310 000 0000'),
+      leaderName: newCuadLeaderName.trim() || `${user.firstName} ${user.lastName}`,
+      leaderPhone: newCuadLeaderPhone.trim() || (user.phone || '+57 310 000 0000'),
       city: 'Cali',
       department: 'Valle del Cauca',
       membersCount: Number(newCuadMembersCount) || 3,
@@ -496,7 +531,7 @@ export default function CuadrillasPage() {
             </button>
 
             <button
-              onClick={() => setActiveTab('ofrecer')}
+              onClick={handleSelectOfrecerTab}
               className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center space-x-2 ${
                 activeTab === 'ofrecer'
                   ? 'bg-amber-400 text-slate-950 shadow-lg scale-105'
@@ -1219,6 +1254,57 @@ export default function CuadrillasPage() {
                 className="px-4 py-2 bg-[#0056d2] text-white text-xs font-bold rounded-xl shadow-sm"
               >
                 Proponer Acuerdo a este Equipo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE AUTENTICACIÓN REQUERIDA */}
+      {authModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-md w-full p-6 sm:p-7 space-y-5 animate-scale-up text-center">
+            <div className="w-14 h-14 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto shadow-sm">
+              <Shield className="w-7 h-7" />
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-xl font-black text-slate-900">Inicio de Sesión Requerido</h3>
+              <p className="text-xs text-slate-600 leading-relaxed max-w-sm mx-auto">
+                {authModalMessage}
+              </p>
+            </div>
+
+            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 text-left text-xs text-slate-600 space-y-1.5">
+              <div className="flex items-center space-x-2 text-slate-800 font-bold">
+                <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span>Garantía de cumplimiento y respaldo oficial Conecta 360</span>
+              </div>
+              <div className="flex items-center space-x-2 text-slate-800 font-bold">
+                <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span>Negociación transparente de horas, días y cumplimiento</span>
+              </div>
+            </div>
+
+            <div className="space-y-2 pt-2">
+              <Link
+                href={`/login?redirect=${encodeURIComponent('/cuadrillas')}&action_type=cuadrilla`}
+                className="w-full py-3 rounded-xl bg-[#0056d2] hover:bg-[#0046a8] text-white font-extrabold text-xs shadow-md transition-all flex items-center justify-center space-x-2"
+              >
+                <User className="w-4 h-4" />
+                <span>Iniciar Sesión Ahora</span>
+              </Link>
+              <Link
+                href={`/register?redirect=${encodeURIComponent('/cuadrillas')}`}
+                className="w-full py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-xs transition-all flex items-center justify-center space-x-2"
+              >
+                <span>¿No tienes cuenta? Regístrate gratis</span>
+              </Link>
+              <button
+                onClick={() => setAuthModalOpen(false)}
+                className="w-full py-2 text-xs font-semibold text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                Continuar explorando
               </button>
             </div>
           </div>

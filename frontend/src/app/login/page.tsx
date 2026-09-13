@@ -12,7 +12,8 @@ import {
   Sparkles,
   MapPin,
   Briefcase,
-  AlertCircle
+  AlertCircle,
+  Users
 } from 'lucide-react';
 import {
   getCurrentUser,
@@ -37,15 +38,17 @@ function LoginContent() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Si ya está logueado, redirigir
+    // Si ya está logueado, redirigir al destino deseado
     const current = getCurrentUser();
     if (current) {
-      if (current.role === 'SUPERADMIN' || current.role === 'ADMIN') {
+      if (redirectUrl && redirectUrl !== '/') {
+        router.push(redirectUrl);
+      } else if (current.role === 'SUPERADMIN' || current.role === 'ADMIN') {
         router.push('/admin');
       } else if (current.role === 'PROVIDER') {
         router.push('/dashboard');
       } else {
-        router.push(redirectUrl);
+        router.push('/');
       }
     }
   }, [router, redirectUrl]);
@@ -61,28 +64,28 @@ function LoginContent() {
       if (em === 'superadmin@conecta360.com') {
         const session = getInitialSuperAdminSession();
         setCurrentUser(session);
-        router.push('/admin');
+        router.push(redirectUrl && redirectUrl !== '/' ? redirectUrl : '/admin');
         return;
       }
 
       if (em === 'admin@conecta360.com') {
         const session = getInitialAdminSession();
         setCurrentUser(session);
-        router.push('/admin');
+        router.push(redirectUrl && redirectUrl !== '/' ? redirectUrl : '/admin');
         return;
       }
 
       if (em === 'carlos.rodriguez@conecta360.co' || em.includes('electricista') || em.includes('proveedor')) {
         const session = getInitialProviderSession();
         setCurrentUser(session);
-        router.push('/dashboard');
+        router.push(redirectUrl && redirectUrl !== '/' ? redirectUrl : '/dashboard');
         return;
       }
 
       if (em === 'laura.gomez@gmail.com' || em.includes('cliente')) {
         const session = getInitialClientSession();
         setCurrentUser(session);
-        router.push(redirectUrl);
+        router.push(redirectUrl && redirectUrl !== '/' ? redirectUrl : '/');
         return;
       }
 
@@ -110,7 +113,8 @@ function LoginContent() {
           platformDebt: 0,
         };
         setCurrentUser(session);
-        router.push(session.role === 'PROVIDER' ? '/dashboard' : redirectUrl);
+        const destination = redirectUrl && redirectUrl !== '/' ? redirectUrl : (session.role === 'PROVIDER' ? '/dashboard' : '/');
+        router.push(destination);
       } else {
         setError('Por favor ingresa tu correo y contraseña.');
         setLoading(false);
@@ -123,19 +127,19 @@ function LoginContent() {
     if (role === 'SUPERADMIN') {
       const session = getInitialSuperAdminSession();
       setCurrentUser(session);
-      router.push('/admin');
+      router.push(redirectUrl && redirectUrl !== '/' ? redirectUrl : '/admin');
     } else if (role === 'ADMIN') {
       const session = getInitialAdminSession();
       setCurrentUser(session);
-      router.push('/admin');
+      router.push(redirectUrl && redirectUrl !== '/' ? redirectUrl : '/admin');
     } else if (role === 'PROVIDER') {
       const providerSession = getInitialProviderSession();
       setCurrentUser(providerSession);
-      router.push('/dashboard');
+      router.push(redirectUrl && redirectUrl !== '/' ? redirectUrl : '/dashboard');
     } else {
       const clientSession = getInitialClientSession();
       setCurrentUser(clientSession);
-      router.push(redirectUrl);
+      router.push(redirectUrl && redirectUrl !== '/' ? redirectUrl : '/');
     }
   };
 
@@ -184,6 +188,18 @@ function LoginContent() {
                 <p className="font-extrabold text-slate-900 text-sm">Autenticación requerida para contratar</p>
                 <p className="text-slate-600 leading-relaxed">
                   Por seguridad y garantía de pago, debes iniciar sesión o registrarte como cliente para solicitar este servicio en Conecta 360.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {actionType === 'cuadrilla' && (
+            <div className="p-4 rounded-2xl bg-amber-50/90 border border-amber-200 text-xs text-amber-950 flex items-start space-x-3 shadow-xs">
+              <Users className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-extrabold text-slate-900 text-sm">Autenticación requerida para cuadrillas</p>
+                <p className="text-slate-600 leading-relaxed">
+                  Para contratar una cuadrilla, enviar propuestas de trabajo o coordinar equipos, debes iniciar sesión o crear una cuenta en Conecta 360.
                 </p>
               </div>
             </div>
