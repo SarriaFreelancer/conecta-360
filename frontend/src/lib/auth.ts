@@ -29,6 +29,9 @@ export interface ServiceHistoryItem {
   teamProjectName?: string;
   teamMembersCount?: number;
   messageNotes?: string;
+  pricingModel?: 'POR_HORA' | 'POR_DIA' | 'POR_CUMPLIMIENTO';
+  durationAgreed?: string; // ej: "3 días", "Jornadas de 8 horas", "Por entrega de metas"
+  proposalStatus?: 'PROPUESTA_ENVIADA' | 'EN_NEGOCIACION' | 'ACUERDO_PACTADO' | 'RECHAZADA';
 }
 
 export interface AppNotification {
@@ -86,6 +89,9 @@ export interface ProviderServiceItem {
   categoryId: number;
   categoryName: string;
   hourlyRate: number;
+  dailyRate?: number; // Tarifa por día / jornada completa (8 horas)
+  fulfillmentRate?: number; // Tarifa por cumplimiento / entrega de obra cerrada
+  pricingModel?: 'POR_HORA' | 'POR_DIA' | 'POR_CUMPLIMIENTO';
   activities: string[]; // Límite máximo de 10 actividades
   featuredActivities?: string[]; // Hasta 4 actividades elegidas para exhibir en la tarjeta pública
   city: string;

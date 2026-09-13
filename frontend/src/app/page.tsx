@@ -68,6 +68,9 @@ interface ProviderData {
   userId: number | string;
   title: string | null;
   hourlyRate: string | number | null;
+  dailyRate?: number;
+  fulfillmentRate?: number;
+  pricingModel?: 'POR_HORA' | 'POR_DIA' | 'POR_CUMPLIMIENTO';
   isVerified: boolean;
   rating: number;
   totalReviews: number;
@@ -106,6 +109,7 @@ export default function Home() {
   const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
   const [citySearchTerm, setCitySearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedPricingModel, setSelectedPricingModel] = useState<string>('TODOS');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Modal para Solicitar Equipo de Trabajo / Cuadrilla Multi-Profesional
@@ -547,7 +551,23 @@ export default function Home() {
   const baseProviders = providers.length >= 16 ? providers : fallbackProviders;
   const allProviders = [...userPublishedCards, ...baseProviders];
 
-  // Filtrado por Ciudad (Cali por defecto) y búsqueda
+  const getProviderPricingModel = (prov: ProviderData): 'POR_HORA' | 'POR_DIA' | 'POR_CUMPLIMIENTO' => {
+    if (prov.pricingModel) return prov.pricingModel;
+    if (user && user.role === 'PROVIDER' && String(prov.userId) === String(user.id)) {
+      const s = user.services.find((srv) => srv.id === prov.id) || user.services[0];
+      if (s && s.pricingModel) return s.pricingModel;
+    }
+    const titleLower = (prov.title || '').toLowerCase();
+    if (titleLower.includes('pint') || titleLower.includes('constr') || titleLower.includes('repar') || titleLower.includes('carp')) {
+      return 'POR_DIA';
+    }
+    if (titleLower.includes('destape') || titleLower.includes('diseñ') || titleLower.includes('web') || titleLower.includes('market') || titleLower.includes('instalac')) {
+      return 'POR_CUMPLIMIENTO';
+    }
+    return 'POR_HORA';
+  };
+
+  // Filtrado por Ciudad (Cali por defecto), categoría, cobro y búsqueda
   const filteredProviders = allProviders.filter((prov) => {
     const city = prov.user.profile?.city?.toLowerCase() || '';
     const dept = prov.user.profile?.department?.toLowerCase() || '';
@@ -564,6 +584,12 @@ export default function Home() {
     if (selectedCategory) {
       const matchCat = title.includes(selectedCategory.toLowerCase());
       if (!matchCat) return false;
+    }
+
+    // Filtro de modalidad de cobro (Por Horas, Por Día, Por Cumplimiento)
+    if (selectedPricingModel !== 'TODOS') {
+      const model = getProviderPricingModel(prov);
+      if (model !== selectedPricingModel) return false;
     }
 
     // Filtro de búsqueda por texto
@@ -672,14 +698,32 @@ export default function Home() {
     return User;
   };
 
-  // Formatear precio a Pesos Colombianos (COP)
+  // Formatear precio y modalidad de cobro (Por Horas, Por Día, Por Cumplimiento)
+  const getModelBadge = (model: 'POR_HORA' | 'POR_DIA' | 'POR_CUMPLIMIENTO') => {
+    if (model === 'POR_DIA') return { label: 'Por Día', suffix: '/día', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
+    if (model === 'POR_CUMPLIMIENTO') return { label: 'Por Cumplimiento', suffix: '/meta', color: 'bg-purple-50 text-purple-700 border-purple-200' };
+    return { label: 'Por Horas', suffix: '/h', color: 'bg-blue-50 text-blue-700 border-blue-200' };
+  };
+
   const formatRate = (rate: string | number | null) => {
     const num = Number(rate) || 45000;
     if (num < 1000) {
-      // Si venía en USD pequeño, convertir a COP base
       return `$${(num * 2000).toLocaleString('es-CO')} COP`;
     }
     return `$${num.toLocaleString('es-CO')} COP`;
+  };
+
+  const formatRateWithModel = (rate: string | number | null, model: 'POR_HORA' | 'POR_DIA' | 'POR_CUMPLIMIENTO') => {
+    let num = Number(rate) || 45000;
+    if (model === 'POR_DIA') {
+      if (num < 100000) num = num * 6; // jornada de 8h
+      return `$${num.toLocaleString('es-CO')} COP/día`;
+    }
+    if (model === 'POR_CUMPLIMIENTO') {
+      if (num < 150000) num = num * 12; // precio meta cerrada
+      return `$${num.toLocaleString('es-CO')} COP/obra`;
+    }
+    return `$${num.toLocaleString('es-CO')} COP/h`;
   };
 
   // Obtener las actividades principales (hasta 4) de la persona para mostrar en la tarjeta exterior
@@ -737,6 +781,8 @@ export default function Home() {
     const photoUrl = getDefaultPhoto(prov, idx);
     const CatIcon = getCategoryIcon(categoryTitle);
     const activitiesToShow = getProviderFeaturedActivities(prov);
+    const pricingModel = getProviderPricingModel(prov);
+    const modelBadge = getModelBadge(pricingModel);
 
     return (
       <div
@@ -756,6 +802,13 @@ export default function Home() {
             {/* Botón de favorito */}
             <div className="absolute top-2 left-2 w-6 h-6 rounded-full bg-white/80 backdrop-blur-xs flex items-center justify-center text-slate-600 shadow-xs">
               <Heart className="w-3.5 h-3.5 hover:text-red-500 transition-colors" />
+            </div>
+
+            {/* Modalidad de cobro (Por hora, por día, por cumplimiento) */}
+            <div className="absolute bottom-2 left-2">
+              <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border shadow-xs ${modelBadge.color}`}>
+                {modelBadge.label}
+              </span>
             </div>
 
             {/* Estado de verificación: Verificado vs Sin verificar */}
@@ -829,9 +882,9 @@ export default function Home() {
         {/* Footer de la tarjeta: Precio y botones con autenticación previa */}
         <div className="p-3 sm:p-3.5 pt-0 border-t border-slate-100 mt-1.5 flex items-center justify-between gap-2">
           <div>
-            <span className="text-[9.5px] text-slate-400 block font-semibold">Tarifa hora</span>
+            <span className="text-[9.5px] text-slate-400 block font-semibold">Tarifa {modelBadge.label.toLowerCase()}</span>
             <span className="text-xs font-black text-[#0056d2]">
-              {formatRate(prov.hourlyRate)}/h
+              {formatRateWithModel(prov.hourlyRate, pricingModel)}
             </span>
           </div>
           <div className="flex items-center space-x-1.5">
@@ -885,6 +938,12 @@ export default function Home() {
             </Link>
             <Link href="/services" className="hover:text-[#0056d2] transition-colors">
               Servicios
+            </Link>
+            <Link href="/cuadrillas" className="hover:text-[#0056d2] transition-colors flex items-center space-x-1.5">
+              <span>Cuadrillas</span>
+              <span className="px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black uppercase">
+                Nuevo
+              </span>
             </Link>
             <Link href="#categorias" className="hover:text-[#0056d2] transition-colors">
               Categorías
@@ -983,6 +1042,16 @@ export default function Home() {
                 className="py-2 px-3 rounded-lg hover:bg-slate-50 transition-colors"
               >
                 Servicios
+              </Link>
+              <Link
+                href="/cuadrillas"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="py-2 px-3 rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-between"
+              >
+                <span>Cuadrillas & Equipos</span>
+                <span className="px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black uppercase">
+                  Nuevo
+                </span>
               </Link>
               <Link
                 href="#categorias"
@@ -1364,6 +1433,42 @@ export default function Home() {
               Toda Colombia
             </button>
           </div>
+        </div>
+
+        {/* Filtros por Modalidad de Cobro: Por Horas, Por Día, Por Cumplimiento */}
+        <div className="mb-6 flex flex-wrap items-center gap-2">
+          <span className="text-xs font-bold text-slate-500 mr-1 flex items-center gap-1">
+            <Filter className="w-3.5 h-3.5" />
+            Modalidad:
+          </span>
+          {[
+            { id: 'TODOS', label: 'Todas las Modalidades', icon: '✨' },
+            { id: 'POR_HORA', label: 'Por Horas', icon: '⏱️', desc: 'Cobro por hora de servicio' },
+            { id: 'POR_DIA', label: 'Por Día (Jornada)', icon: '📅', desc: 'Tarifa diaria o jornada de trabajo' },
+            { id: 'POR_CUMPLIMIENTO', label: 'Por Cumplimiento', icon: '🏆', desc: 'Precio cerrado por meta o trabajo entregado' },
+          ].map((mod) => (
+            <button
+              key={mod.id}
+              onClick={() => setSelectedPricingModel(mod.id)}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 shadow-xs ${
+                selectedPricingModel === mod.id
+                  ? 'bg-slate-900 text-white shadow-sm ring-2 ring-slate-900/20'
+                  : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'
+              }`}
+              title={mod.desc}
+            >
+              <span>{mod.icon}</span>
+              <span>{mod.label}</span>
+            </button>
+          ))}
+          {selectedPricingModel !== 'TODOS' && (
+            <button
+              onClick={() => setSelectedPricingModel('TODOS')}
+              className="text-xs text-red-600 hover:text-red-700 font-bold px-2 py-1 ml-1 transition-colors"
+            >
+              Limpiar filtro
+            </button>
+          )}
         </div>
 
         {/* Banner Especial: Solicitar Equipo de Trabajo / Cuadrilla Multi-Profesional */}

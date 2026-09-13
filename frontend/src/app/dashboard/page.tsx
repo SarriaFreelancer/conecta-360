@@ -119,7 +119,10 @@ function UserDashboardContent() {
   // Estado del formulario de agregar servicio
   const [selectedCategoryId, setSelectedCategoryId] = useState<number>(1);
   const [serviceTitle, setServiceTitle] = useState('');
+  const [pricingModel, setPricingModel] = useState<'POR_HORA' | 'POR_DIA' | 'POR_CUMPLIMIENTO'>('POR_HORA');
   const [hourlyRate, setHourlyRate] = useState<number>(globalSettings.defaultHourlyRate);
+  const [dailyRate, setDailyRate] = useState<number>(220000);
+  const [fulfillmentRate, setFulfillmentRate] = useState<number>(350000);
   const [department, setDepartment] = useState(DEFAULT_DEPARTMENT);
   const [city, setCity] = useState(DEFAULT_CITY);
   const [availableCities, setAvailableCities] = useState<string[]>([]);
@@ -213,7 +216,10 @@ function UserDashboardContent() {
 
     setServiceTitle('');
     setSelectedCategoryId(1);
+    setPricingModel('POR_HORA');
     setHourlyRate(globalSettings.defaultHourlyRate);
+    setDailyRate(220000);
+    setFulfillmentRate(350000);
     setActivities(['Instalación y mantenimiento', 'Servicio a domicilio']);
     setTitleCertification('');
     setCertificateFileName('');
@@ -237,6 +243,9 @@ function UserDashboardContent() {
       categoryId: activeCategory.id,
       categoryName: activeCategory.name,
       hourlyRate: Number(hourlyRate) || globalSettings.defaultHourlyRate,
+      dailyRate: Number(dailyRate) || 220000,
+      fulfillmentRate: Number(fulfillmentRate) || 350000,
+      pricingModel,
       activities: activities.slice(0, 10),
       city,
       department,
@@ -513,7 +522,24 @@ function UserDashboardContent() {
               href="/"
               className="text-xs sm:text-sm font-semibold text-slate-600 hover:text-[#0056d2] px-2 py-1 hidden sm:block"
             >
-              Ver Portal Público
+              Inicio
+            </Link>
+
+            <Link
+              href="/services"
+              className="text-xs sm:text-sm font-semibold text-slate-600 hover:text-[#0056d2] px-2 py-1 hidden sm:block"
+            >
+              Servicios
+            </Link>
+
+            <Link
+              href="/cuadrillas"
+              className="text-xs sm:text-sm font-semibold text-slate-600 hover:text-[#0056d2] px-2 py-1 hidden sm:flex items-center space-x-1"
+            >
+              <span>Cuadrillas</span>
+              <span className="px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-950 text-[9px] font-black uppercase">
+                Nuevo
+              </span>
             </Link>
 
             {/* Campana de Notificaciones del Sistema */}
@@ -1126,9 +1152,24 @@ function UserDashboardContent() {
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="space-y-1">
-                          <span className="inline-block bg-blue-50 text-[#0056d2] text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                            {service.categoryName}
-                          </span>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="inline-block bg-blue-50 text-[#0056d2] text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                              {service.categoryName}
+                            </span>
+                            <span className={`inline-block text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider border ${
+                              service.pricingModel === 'POR_DIA'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : service.pricingModel === 'POR_CUMPLIMIENTO'
+                                ? 'bg-purple-50 text-purple-700 border-purple-200'
+                                : 'bg-blue-50 text-blue-700 border-blue-200'
+                            }`}>
+                              {service.pricingModel === 'POR_DIA'
+                                ? '📅 Por Día'
+                                : service.pricingModel === 'POR_CUMPLIMIENTO'
+                                ? '🏆 Por Cumplimiento'
+                                : '⏱️ Por Horas'}
+                            </span>
+                          </div>
                           <h4 className="text-lg font-black text-slate-900 leading-tight">
                             {service.title}
                           </h4>
@@ -1141,9 +1182,19 @@ function UserDashboardContent() {
                         </div>
 
                         <div className="text-right shrink-0">
-                          <span className="text-xs text-slate-400 block font-semibold">Tarifa/hora</span>
+                          <span className="text-xs text-slate-400 block font-semibold">
+                            {service.pricingModel === 'POR_DIA'
+                              ? 'Tarifa / Día'
+                              : service.pricingModel === 'POR_CUMPLIMIENTO'
+                              ? 'Tarifa / Entrega'
+                              : 'Tarifa / Hora'}
+                          </span>
                           <span className="text-lg font-black text-[#0056d2]">
-                            ${Number(service.hourlyRate).toLocaleString('es-CO')} COP
+                            {service.pricingModel === 'POR_DIA'
+                              ? `$${Number(service.dailyRate || Number(service.hourlyRate) * 6).toLocaleString('es-CO')} COP`
+                              : service.pricingModel === 'POR_CUMPLIMIENTO'
+                              ? `$${Number(service.fulfillmentRate || Number(service.hourlyRate) * 12).toLocaleString('es-CO')} COP`
+                              : `$${Number(service.hourlyRate).toLocaleString('es-CO')} COP`}
                           </span>
                         </div>
                       </div>
@@ -2075,36 +2126,127 @@ function UserDashboardContent() {
                 />
               </div>
 
-              {/* Tarifa de Cobro con valor configurado por Admin */}
-              <div className="p-4 bg-blue-50/60 border border-blue-100 rounded-2xl space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-[#0056d2] uppercase tracking-wide">
-                    Tarifa de Cobro por Hora (COP) *
+              {/* Modalidad de Cobro y Tarifa */}
+              <div className="p-4 bg-blue-50/60 border border-blue-100 rounded-2xl space-y-3">
+                <div>
+                  <label className="block text-xs font-bold text-[#0056d2] uppercase tracking-wide mb-1.5">
+                    Modalidad de Cobro del Servicio *
                   </label>
-                  <span className="text-[10px] font-bold bg-[#0056d2] text-white px-2 py-0.5 rounded-full">
-                    Sugerida por Admin
-                  </span>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: 'POR_HORA', label: 'Por Horas', icon: '⏱️', desc: 'Cobro por hora' },
+                      { id: 'POR_DIA', label: 'Por Día', icon: '📅', desc: 'Jornada laboral' },
+                      { id: 'POR_CUMPLIMIENTO', label: 'Cumplimiento', icon: '🏆', desc: 'Meta / Obra' },
+                    ].map((mod) => (
+                      <button
+                        type="button"
+                        key={mod.id}
+                        onClick={() => setPricingModel(mod.id as any)}
+                        className={`p-2.5 rounded-xl border text-left transition-all ${
+                          pricingModel === mod.id
+                            ? 'bg-[#0056d2] text-white border-[#0056d2] shadow-sm'
+                            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-1 font-bold text-xs">
+                          <span>{mod.icon}</span>
+                          <span>{mod.label}</span>
+                        </div>
+                        <span className={`text-[10px] block mt-0.5 ${pricingModel === mod.id ? 'text-blue-100' : 'text-slate-400'}`}>
+                          {mod.desc}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-lg font-black text-slate-500">$</span>
-                  <input
-                    type="number"
-                    value={hourlyRate}
-                    onChange={(e) => setHourlyRate(Number(e.target.value))}
-                    min={globalSettings.minHourlyRate}
-                    step={1000}
-                    required
-                    className="w-full px-3.5 py-2 text-base font-black bg-white border border-slate-200 rounded-xl focus:border-[#0056d2] outline-none text-slate-900"
-                  />
-                  <span className="text-xs font-bold text-slate-600 shrink-0">COP / hora</span>
-                </div>
-                <p className="text-[11px] text-slate-500">
-                  La tarifa base establecida globalmente por el superadministrador es de{' '}
-                  <span className="font-bold text-[#0056d2]">
-                    ${globalSettings.defaultHourlyRate.toLocaleString('es-CO')} COP/h
-                  </span>
-                  . Puedes confirmarla o ajustarla a tu oferta.
-                </p>
+
+                {/* Input condicional según modalidad elegida */}
+                {pricingModel === 'POR_HORA' && (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wide">
+                        Tarifa por Hora (COP) *
+                      </label>
+                      <span className="text-[10px] font-bold bg-[#0056d2] text-white px-2 py-0.5 rounded-full">
+                        Sugerida por Admin
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg font-black text-slate-500">$</span>
+                      <input
+                        type="number"
+                        value={hourlyRate}
+                        onChange={(e) => setHourlyRate(Number(e.target.value))}
+                        min={globalSettings.minHourlyRate}
+                        step={1000}
+                        required
+                        className="w-full px-3.5 py-2 text-base font-black bg-white border border-slate-200 rounded-xl focus:border-[#0056d2] outline-none text-slate-900"
+                      />
+                      <span className="text-xs font-bold text-slate-600 shrink-0">COP / hora</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500">
+                      Tarifa base recomendada por Conecta 360: ${globalSettings.defaultHourlyRate.toLocaleString('es-CO')} COP/h.
+                    </p>
+                  </div>
+                )}
+
+                {pricingModel === 'POR_DIA' && (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wide">
+                        Tarifa por Día / Jornada (COP) *
+                      </label>
+                      <span className="text-[10px] font-bold bg-emerald-600 text-white px-2 py-0.5 rounded-full">
+                        Jornada Estándar (8h)
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg font-black text-slate-500">$</span>
+                      <input
+                        type="number"
+                        value={dailyRate}
+                        onChange={(e) => setDailyRate(Number(e.target.value))}
+                        min={50000}
+                        step={5000}
+                        required
+                        className="w-full px-3.5 py-2 text-base font-black bg-white border border-slate-200 rounded-xl focus:border-[#0056d2] outline-none text-slate-900"
+                      />
+                      <span className="text-xs font-bold text-slate-600 shrink-0">COP / día</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500">
+                      Equivalente a una jornada diurna de 8 horas con transporte y herramientas básicas.
+                    </p>
+                  </div>
+                )}
+
+                {pricingModel === 'POR_CUMPLIMIENTO' && (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wide">
+                        Tarifa por Meta / Obra Terminada (COP) *
+                      </label>
+                      <span className="text-[10px] font-bold bg-purple-600 text-white px-2 py-0.5 rounded-full">
+                        Precio Cerrado
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg font-black text-slate-500">$</span>
+                      <input
+                        type="number"
+                        value={fulfillmentRate}
+                        onChange={(e) => setFulfillmentRate(Number(e.target.value))}
+                        min={50000}
+                        step={10000}
+                        required
+                        className="w-full px-3.5 py-2 text-base font-black bg-white border border-slate-200 rounded-xl focus:border-[#0056d2] outline-none text-slate-900"
+                      />
+                      <span className="text-xs font-bold text-slate-600 shrink-0">COP / entrega</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500">
+                      Precio pactado contra entrega de la obra o cumplimiento total de la meta acordada con el cliente.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Ubicación en Colombia con Cali */}

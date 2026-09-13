@@ -59,6 +59,9 @@ interface ProviderData {
   userId: number;
   title: string | null;
   hourlyRate: string | number | null;
+  dailyRate?: number;
+  fulfillmentRate?: number;
+  pricingModel?: 'POR_HORA' | 'POR_DIA' | 'POR_CUMPLIMIENTO';
   isVerified: boolean;
   rating: number;
   totalReviews: number;
@@ -372,6 +375,7 @@ function ServicesDirectoryContent() {
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [verificationFilter, setVerificationFilter] = useState<'ALL' | 'VERIFIED' | 'UNVERIFIED'>('ALL');
   const [sortBy, setSortBy] = useState<'rating' | 'price_asc' | 'price_desc'>('rating');
+  const [selectedPricingModel, setSelectedPricingModel] = useState<string>('TODOS');
 
   useEffect(() => {
     setUser(getCurrentUser());
@@ -416,6 +420,41 @@ function ServicesDirectoryContent() {
   // Combinar proveedores
   const allProvidersList = providers.length >= 16 ? providers : fallbackProviders;
 
+  const getProviderPricingModel = (prov: ProviderData): 'POR_HORA' | 'POR_DIA' | 'POR_CUMPLIMIENTO' => {
+    if (prov.pricingModel) return prov.pricingModel;
+    if (user && user.role === 'PROVIDER' && String(prov.userId) === String(user.id)) {
+      const s = user.services.find((srv) => srv.id === prov.id) || user.services[0];
+      if (s && s.pricingModel) return s.pricingModel;
+    }
+    const titleLower = (prov.title || '').toLowerCase();
+    if (titleLower.includes('pint') || titleLower.includes('constr') || titleLower.includes('repar') || titleLower.includes('carp')) {
+      return 'POR_DIA';
+    }
+    if (titleLower.includes('destape') || titleLower.includes('diseñ') || titleLower.includes('web') || titleLower.includes('market') || titleLower.includes('instalac')) {
+      return 'POR_CUMPLIMIENTO';
+    }
+    return 'POR_HORA';
+  };
+
+  const getModelBadge = (model: 'POR_HORA' | 'POR_DIA' | 'POR_CUMPLIMIENTO') => {
+    if (model === 'POR_DIA') return { label: 'Por Día', suffix: '/día', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
+    if (model === 'POR_CUMPLIMIENTO') return { label: 'Por Cumplimiento', suffix: '/meta', color: 'bg-purple-50 text-purple-700 border-purple-200' };
+    return { label: 'Por Horas', suffix: '/h', color: 'bg-blue-50 text-blue-700 border-blue-200' };
+  };
+
+  const formatRateWithModel = (rate: string | number | null, model: 'POR_HORA' | 'POR_DIA' | 'POR_CUMPLIMIENTO') => {
+    let num = Number(rate) || 45000;
+    if (model === 'POR_DIA') {
+      if (num < 100000) num = num * 6;
+      return `$${num.toLocaleString('es-CO')} COP/día`;
+    }
+    if (model === 'POR_CUMPLIMIENTO') {
+      if (num < 150000) num = num * 12;
+      return `$${num.toLocaleString('es-CO')} COP/obra`;
+    }
+    return `$${num.toLocaleString('es-CO')} COP/h`;
+  };
+
   // Filtrado
   const filtered = allProvidersList.filter((prov) => {
     const city = (prov.user.profile?.city || '').toLowerCase();
@@ -436,6 +475,12 @@ function ServicesDirectoryContent() {
           ps.service?.category?.name?.toLowerCase().includes(selectedCategory.toLowerCase())
         );
       if (!matchCat) return false;
+    }
+
+    // Filtro por modalidad de cobro (Por Horas, Por Día, Por Cumplimiento)
+    if (selectedPricingModel !== 'TODOS') {
+      const model = getProviderPricingModel(prov);
+      if (model !== selectedPricingModel) return false;
     }
 
     // Filtro por verificación
@@ -552,6 +597,12 @@ function ServicesDirectoryContent() {
             </Link>
             <Link href="/services" className="text-[#0056d2] font-bold border-b-2 border-[#0056d2] pb-1">
               Servicios
+            </Link>
+            <Link href="/cuadrillas" className="hover:text-[#0056d2] transition-colors flex items-center space-x-1.5">
+              <span>Cuadrillas</span>
+              <span className="px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black uppercase">
+                Nuevo
+              </span>
             </Link>
             <Link href="/#categorias" className="hover:text-[#0056d2] transition-colors">
               Categorías
@@ -727,6 +778,43 @@ function ServicesDirectoryContent() {
               Mostrando <span className="font-bold text-slate-800">{sorted.length}</span> servicios disponibles
             </div>
           </div>
+
+          {/* Filtro por Modalidad de Cobro */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="font-bold text-slate-500 mr-1 flex items-center gap-1">
+                <Filter className="w-3.5 h-3.5 text-slate-400" />
+                Modalidad de Cobro:
+              </span>
+              {[
+                { id: 'TODOS', label: 'Todas', icon: '✨' },
+                { id: 'POR_HORA', label: 'Por Horas', icon: '⏱️' },
+                { id: 'POR_DIA', label: 'Por Día (Jornada)', icon: '📅' },
+                { id: 'POR_CUMPLIMIENTO', label: 'Por Cumplimiento', icon: '🏆' },
+              ].map((mod) => (
+                <button
+                  key={mod.id}
+                  onClick={() => setSelectedPricingModel(mod.id)}
+                  className={`px-3 py-1 rounded-lg font-bold text-xs transition-all flex items-center space-x-1 ${
+                    selectedPricingModel === mod.id
+                      ? 'bg-slate-900 text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  <span>{mod.icon}</span>
+                  <span>{mod.label}</span>
+                </button>
+              ))}
+              {selectedPricingModel !== 'TODOS' && (
+                <button
+                  onClick={() => setSelectedPricingModel('TODOS')}
+                  className="text-xs text-red-600 hover:text-red-700 font-bold px-1.5 py-0.5 ml-1"
+                >
+                  Limpiar
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -760,7 +848,8 @@ function ServicesDirectoryContent() {
                 ? `${prov.user.profile.city}, ${prov.user.profile.department || 'Valle del Cauca'}`
                 : 'Cali, Valle del Cauca';
               const photoUrl = getDefaultPhoto(prov, idx);
-              const rateNum = Number(prov.hourlyRate) || 45000;
+              const pricingModel = getProviderPricingModel(prov);
+              const modelBadge = getModelBadge(pricingModel);
 
               return (
                 <div
@@ -776,6 +865,13 @@ function ServicesDirectoryContent() {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent"></div>
+
+                      {/* Modalidad de cobro */}
+                      <div className="absolute bottom-2 left-2">
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border shadow-xs ${modelBadge.color}`}>
+                          {modelBadge.label}
+                        </span>
+                      </div>
 
                       {/* Badge de Verificación */}
                       {prov.isVerified ? (
@@ -840,9 +936,9 @@ function ServicesDirectoryContent() {
                   {/* Footer Tarjeta */}
                   <div className="p-4 pt-0 border-t border-slate-100 mt-2 flex items-center justify-between gap-2">
                     <div>
-                      <span className="text-[10px] text-slate-400 block font-semibold">Tarifa hora</span>
+                      <span className="text-[10px] text-slate-400 block font-semibold">Tarifa {modelBadge.label.toLowerCase()}</span>
                       <span className="text-xs font-black text-[#0056d2]">
-                        ${rateNum.toLocaleString('es-CO')} COP/h
+                        {formatRateWithModel(prov.hourlyRate, pricingModel)}
                       </span>
                     </div>
 
