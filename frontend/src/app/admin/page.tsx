@@ -41,10 +41,11 @@ import {
   Briefcase,
   Eye,
   Star,
-  FileText
+  FileText,
+  LogOut
 } from 'lucide-react';
 import AdminSidebar from '@/components/AdminSidebar';
-import { getAllBookings, reassignBookingByAdmin, ServiceHistoryItem } from '@/lib/auth';
+import { getAllBookings, reassignBookingByAdmin, ServiceHistoryItem, destroySession } from '@/lib/auth';
 import {
   getAdminCategories,
   getAdminServices,
@@ -208,6 +209,13 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleLogout = () => {
+    if (typeof window !== 'undefined' && window.confirm('¿Deseas cerrar la sesión y salir del Panel Administrativo?')) {
+      destroySession();
+      window.location.href = '/login';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-100 flex font-sans">
       {/* Sidebar - Displays all 8 modules */}
@@ -231,6 +239,17 @@ export default function AdminDashboard() {
                 <p className="text-[10px] text-slate-500 font-medium">superadmin@conecta360.com</p>
               </div>
             </div>
+
+            {/* Botón Cerrar Sesión */}
+            <button
+              onClick={handleLogout}
+              type="button"
+              className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 hover:border-rose-300 font-bold text-xs transition-all active:scale-95 shadow-xs cursor-pointer"
+              title="Cerrar Sesión de Administración"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Cerrar Sesión</span>
+            </button>
           </div>
         </header>
 

@@ -1183,8 +1183,33 @@ export function toggleUserRole(): UserSession {
   }
 }
 
+export function destroySession(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    setCurrentUser(null);
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    localStorage.removeItem('conecta360_auth_user');
+    localStorage.removeItem('token');
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('user_session');
+
+    sessionStorage.clear();
+
+    // Eliminar cookies asociadas a la sesión
+    document.cookie.split(';').forEach((c) => {
+      const eqPos = c.indexOf('=');
+      const name = eqPos > -1 ? c.substring(0, eqPos).trim() : c.trim();
+      if (name) {
+        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;`;
+      }
+    });
+  } catch (err) {
+    console.error('Error al destruir sesión:', err);
+  }
+}
+
 export function logout(): void {
-  setCurrentUser(null);
+  destroySession();
 }
 
 // Historial personalizado para cada usuario en el panel administrativo

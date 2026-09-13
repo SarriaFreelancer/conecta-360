@@ -15,8 +15,10 @@ import {
   ChevronLeft,
   ChevronRight,
   User,
-  Home
+  Home,
+  LogOut
 } from 'lucide-react';
+import { destroySession } from '@/lib/auth';
 
 interface AdminSidebarProps {
   currentPath?: string;
@@ -62,6 +64,13 @@ export default function AdminSidebar({ currentPath }: AdminSidebarProps) {
       return activeRoute === '/admin';
     }
     return activeRoute.startsWith(href);
+  };
+
+  const handleLogout = () => {
+    if (typeof window !== 'undefined' && window.confirm('¿Estás seguro de que deseas cerrar la sesión de administración?')) {
+      destroySession();
+      window.location.href = '/login';
+    }
   };
 
   return (
@@ -164,6 +173,19 @@ export default function AdminSidebar({ currentPath }: AdminSidebarProps) {
           <Home className="w-4 h-4 shrink-0" />
           {!isCollapsed && <span className="truncate">Sitio Web</span>}
         </Link>
+
+        {/* Botón Cerrar Sesión */}
+        <button
+          onClick={handleLogout}
+          type="button"
+          title="Cerrar Sesión de Administrador"
+          className={`w-full py-2 rounded-xl bg-rose-500/10 hover:bg-rose-600 border border-rose-500/20 hover:border-rose-600 text-rose-400 hover:text-white font-bold text-xs transition-all flex items-center cursor-pointer shadow-xs ${
+            isCollapsed ? 'justify-center px-2' : 'justify-center space-x-2 px-3'
+          }`}
+        >
+          <LogOut className="w-4 h-4 shrink-0" />
+          {!isCollapsed && <span className="truncate">Cerrar Sesión</span>}
+        </button>
       </div>
     </aside>
   );
