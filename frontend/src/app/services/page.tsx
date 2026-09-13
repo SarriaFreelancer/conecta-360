@@ -31,6 +31,7 @@ import {
 import { getCurrentUser, UserSession } from '@/lib/auth';
 import { ALL_COLOMBIAN_CITIES, DEFAULT_CITY } from '@/lib/colombia-data';
 import { getAdminCategories, API_BASE_URL } from '@/lib/admin-data';
+import MainFooter from '@/components/MainFooter';
 
 interface Requirement {
   id: number;
@@ -999,15 +1000,8 @@ function ServicesDirectoryContent() {
         )}
       </div>
 
-      {/* Footer */}
-      <footer className="bg-slate-900 text-slate-400 py-8 px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20 border-t border-slate-800 text-xs text-center">
-        <p className="font-semibold text-slate-300">
-          CONECTA 360 © 2026 • Plataforma de Servicios y Profesionales de Colombia
-        </p>
-        <p className="text-slate-500 mt-1">
-          Operando en Cali, Valle del Cauca y principales terminales y ciudades del país.
-        </p>
-      </footer>
+      {/* Footer Principal Conecta 360 */}
+      <MainFooter />
     </div>
   );
 }

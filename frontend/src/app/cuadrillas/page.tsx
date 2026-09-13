@@ -45,6 +45,7 @@ import {
 } from '@/lib/cuadrillas-data';
 import { getCurrentUser, UserSession } from '@/lib/auth';
 import { API_BASE_URL } from '@/lib/admin-data';
+import MainFooter from '@/components/MainFooter';
 
 export default function CuadrillasPage() {
   const router = useRouter();
@@ -1329,15 +1330,8 @@ export default function CuadrillasPage() {
         </div>
       )}
 
-      {/* 4. FOOTER */}
-      <footer className="bg-slate-900 text-slate-400 py-8 px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20 border-t border-slate-800 text-xs text-center">
-        <p className="font-semibold text-slate-300">
-          CONECTA 360 © 2026 • Plataforma de Cuadrillas y Servicios de Colombia
-        </p>
-        <p className="text-slate-500 mt-1">
-          Contratación de cuadrillas por horas, por día y por cumplimiento con propuestas de valor en Cali y Valle del Cauca.
-        </p>
-      </footer>
+      {/* 4. FOOTER PRINCIPAL CONECTA 360 */}
+      <MainFooter />
     </div>
   );
 }

@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { getCurrentUser, createServiceBooking, UserSession } from '@/lib/auth';
 import { API_BASE_URL } from '@/lib/admin-data';
+import MainFooter from '@/components/MainFooter';
 
 interface ServiceDetail {
   id: number;
@@ -871,6 +872,9 @@ function ProfileContent() {
           </div>
         </div>
       )}
+
+      {/* Footer Principal Conecta 360 */}
+      <MainFooter />
     </div>
   );
 }
