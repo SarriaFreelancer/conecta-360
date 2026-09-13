@@ -65,7 +65,7 @@ import {
   ProviderServiceItem,
   ServiceHistoryItem
 } from '@/lib/auth';
-import { getGlobalSettings } from '@/lib/system-settings';
+import { getGlobalSettings, getRejectionReasons, RejectionReasonItem } from '@/lib/system-settings';
 import { COLOMBIA_DEPARTMENTS, getCitiesForDepartment, DEFAULT_CITY, DEFAULT_DEPARTMENT } from '@/lib/colombia-data';
 import { fetchBookingsByClient, fetchBookingsByProvider, fetchNotificationsByUser } from '@/lib/admin-data';
 
@@ -101,6 +101,7 @@ function UserDashboardContent() {
 
   // Modal de Rechazo de Solicitud con justificación y cálculo de puntos (Modo Prestador)
   const [rejectModalItem, setRejectModalItem] = useState<ServiceHistoryItem | null>(null);
+  const [rejectionOptions, setRejectionOptions] = useState<RejectionReasonItem[]>([]);
   const [rejectReason, setRejectReason] = useState('El lugar está muy lejos de mi zona de cobertura (Fuera de perímetro)');
   const [rejectExplanation, setRejectExplanation] = useState('');
   const [penaltyWarning, setPenaltyWarning] = useState<number>(0);
@@ -157,6 +158,18 @@ function UserDashboardContent() {
     setUser(session);
     setGlobalSettings(getGlobalSettings());
     setHourlyRate(getGlobalSettings().defaultHourlyRate);
+
+    const reasons = getRejectionReasons();
+    setRejectionOptions(reasons);
+    if (reasons.length > 0) {
+      setRejectReason(reasons[0].label);
+    }
+
+    const handleReasonsEvent = () => {
+      const updated = getRejectionReasons();
+      setRejectionOptions(updated);
+    };
+    window.addEventListener('rejection-reasons-updated', handleReasonsEvent);
 
     // Llenar formulario de edición de perfil
     if (session) {
@@ -443,8 +456,12 @@ function UserDashboardContent() {
       return;
     }
 
-    const isFarLocation = rejectReason.toLowerCase().includes('lejos') || rejectReason.toLowerCase().includes('cobertura');
-    const penaltyToApply = (isFarLocation || rejectExplanation.trim().length >= 15) && !rejectReason.includes('Sin justificación') ? 0 : 10;
+    const matchedReason = rejectionOptions.find((r) => r.label === rejectReason);
+    const penaltyToApply = matchedReason
+      ? (matchedReason.isJustified ? 0 : (matchedReason.penaltyPoints ?? 10))
+      : (rejectReason.toLowerCase().includes('lejos') || rejectExplanation.trim().length >= 15) && !rejectReason.includes('Sin justificación')
+      ? 0
+      : 10;
 
     const success = rejectServiceBooking(rejectModalItem.id, {
       reason: rejectReason,
@@ -1599,20 +1616,26 @@ function UserDashboardContent() {
 
                         {/* Pago del Servicio */}
                         <div className="text-right space-y-1">
-                          <div className="text-base font-black text-slate-900">
+                          <div className={`text-base font-black ${item.status === 'RECHAZADO' ? 'text-slate-400 line-through' : 'text-slate-900'}`}>
                             ${item.amount.toLocaleString('es-CO')} COP
                           </div>
                           <div className="text-[11px] font-bold flex items-center justify-end space-x-1">
-                            <span
-                              className={item.paymentStatus === 'PAGADO' ? 'text-emerald-600' : 'text-amber-600'}
-                            >
-                              ● {item.paymentStatus === 'PAGADO' ? 'Pagado' : 'Pago Pendiente'}
-                            </span>
+                            {item.status === 'RECHAZADO' ? (
+                              <span className="text-slate-400 font-bold">
+                                ● Sin cobro (Servicio no realizado)
+                              </span>
+                            ) : (
+                              <span
+                                className={item.paymentStatus === 'PAGADO' ? 'text-emerald-600' : 'text-amber-600'}
+                              >
+                                ● {item.paymentStatus === 'PAGADO' ? 'Pagado' : 'Pago Pendiente'}
+                              </span>
+                            )}
                             <span className="text-slate-400 font-normal">({item.paymentMethod})</span>
                           </div>
 
-                          {/* Comisión Conecta 360 y Deuda del Servicio */}
-                          {item.platformFee && (
+                          {/* Comisión Conecta 360 y Deuda del Servicio (únicamente si el servicio no fue rechazado) */}
+                          {item.status !== 'RECHAZADO' && item.platformFee && (
                             <div className="flex flex-col items-end pt-1 space-y-1">
                               <span className="text-[11px] text-slate-500 font-medium">
                                 Comisión Conecta 360: <strong className="text-slate-800">${item.platformFee.toLocaleString('es-CO')} COP</strong> (5%)
@@ -1792,12 +1815,18 @@ function UserDashboardContent() {
                     </div>
 
                     <div className="text-right shrink-0">
-                      <span className="text-base font-black text-[#0056d2] block">
+                      <span className={`text-base font-black block ${item.status === 'RECHAZADO' ? 'text-slate-400 line-through' : 'text-[#0056d2]'}`}>
                         ${item.amount.toLocaleString('es-CO')} COP
                       </span>
-                      <span className="text-xs font-bold text-emerald-600">
-                        ● {item.paymentStatus} via {item.paymentMethod}
-                      </span>
+                      {item.status === 'RECHAZADO' ? (
+                        <span className="text-xs font-bold text-slate-400">
+                          ● Sin cobro (Servicio no realizado)
+                        </span>
+                      ) : (
+                        <span className={`text-xs font-bold ${item.paymentStatus === 'PAGADO' ? 'text-emerald-600' : 'text-amber-600'}`}>
+                          ● {item.paymentStatus === 'PAGADO' ? 'Pagado' : 'Pago Pendiente'} via {item.paymentMethod}
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -2845,21 +2874,12 @@ function UserDashboardContent() {
                   onChange={(e) => handleSelectRejectReason(e.target.value)}
                   className="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#0056d2]"
                 >
-                  <option value="El lugar está muy lejos de mi zona de cobertura (Fuera de perímetro)">
-                    📍 El lugar está muy lejos de mi zona de cobertura (Fuera de perímetro) [Válido - 0 pts negativos]
-                  </option>
-                  <option value="Cruce de horarios / Sin disponibilidad en esa fecha">
-                    ⏰ Cruce de horarios / Ya tengo otro servicio asignado [Válido con explicación]
-                  </option>
-                  <option value="No cuento con las herramientas o repuestos especializados requeridos">
-                    🛠️ No cuento con repuestos o herramientas especializadas [Válido con explicación]
-                  </option>
-                  <option value="Motivo de fuerza mayor o salud">
-                    🩺 Motivo de fuerza mayor o salud [Válido con explicación]
-                  </option>
-                  <option value="Sin justificación / No deseo tomar el servicio">
-                    ⚠️ Sin justificación / No deseo tomar el servicio [Incurre en -10 puntos negativos]
-                  </option>
+                  {rejectionOptions.map((opt) => (
+                    <option key={opt.id} value={opt.label}>
+                      {opt.isJustified ? '📍 ' : '⚠️ '}
+                      {opt.label} {opt.isJustified ? '[Válido - 0 pts negativos]' : `[Incurre en -${opt.penaltyPoints ?? 10} pts]`}
+                    </option>
+                  ))}
                   <option value="Otro motivo (Especificar detalladamente)">
                     📝 Otro motivo (Especificar detalladamente)
                   </option>

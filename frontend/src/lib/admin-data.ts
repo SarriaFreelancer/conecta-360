@@ -266,7 +266,7 @@ export const INITIAL_SERVICES: AdminService[] = [
 export const INITIAL_USERS: AdminUser[] = [
   {
     id: 1,
-    email: 'superadmin@conecta360.com',
+    email: 'superadmin@conecta360.com.co',
     firstName: 'Super',
     lastName: 'Admin',
     phone: '+57 300 000 0001',
@@ -278,7 +278,7 @@ export const INITIAL_USERS: AdminUser[] = [
   },
   {
     id: 2,
-    email: 'admin@conecta360.com',
+    email: 'admin@conecta360.com.co',
     firstName: 'Admin',
     lastName: 'Operaciones',
     phone: '+57 300 000 0002',

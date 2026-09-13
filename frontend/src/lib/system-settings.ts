@@ -117,4 +117,109 @@ export function calculatePlatformFee(amount: number): number {
   return Math.max(feeByPercent, settings.minPlatformFee || 2500);
 }
 
+// ----------------------------------------------------
+// Gestión de Motivos de Rechazo de Servicios (Admin Panel)
+// ----------------------------------------------------
+export interface RejectionReasonItem {
+  id: string;
+  label: string;
+  isJustified: boolean; // Si es true, 0 puntos negativos; si es false, incurre en penalización
+  penaltyPoints?: number;
+  description?: string;
+  createdAt?: string;
+}
+
+export const DEFAULT_REJECTION_REASONS: RejectionReasonItem[] = [
+  {
+    id: 'reason-1',
+    label: 'El lugar está muy lejos de mi zona de cobertura (Fuera de perímetro)',
+    isJustified: true,
+    penaltyPoints: 0,
+    description: 'Válido - 0 puntos negativos si la ubicación excede el radio pactado.',
+  },
+  {
+    id: 'reason-2',
+    label: 'Cruce de horarios / Ya tengo otro servicio asignado',
+    isJustified: true,
+    penaltyPoints: 0,
+    description: 'Válido con explicación clara de agenda.',
+  },
+  {
+    id: 'reason-3',
+    label: 'No cuento con repuestos o herramientas especializadas requeridas',
+    isJustified: true,
+    penaltyPoints: 0,
+    description: 'Válido si requiere insumos técnicos no disponibles.',
+  },
+  {
+    id: 'reason-4',
+    label: 'Motivo de fuerza mayor, calamidad o salud',
+    isJustified: true,
+    penaltyPoints: 0,
+    description: 'Válido por incapacidad o imprevisto mayor.',
+  },
+  {
+    id: 'reason-5',
+    label: 'Sin justificación / No deseo tomar el servicio',
+    isJustified: false,
+    penaltyPoints: 10,
+    description: 'Injustificado - Aplica -10 puntos negativos a la reputación.',
+  },
+];
+
+const REJECTION_REASONS_STORAGE_KEY = 'conecta360_rejection_reasons';
+
+export function getRejectionReasons(): RejectionReasonItem[] {
+  if (typeof window === 'undefined') return DEFAULT_REJECTION_REASONS;
+  try {
+    const saved = localStorage.getItem(REJECTION_REASONS_STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.error('Error reading rejection reasons:', e);
+  }
+  return DEFAULT_REJECTION_REASONS;
+}
+
+export function saveRejectionReasons(reasons: RejectionReasonItem[]): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(REJECTION_REASONS_STORAGE_KEY, JSON.stringify(reasons));
+    window.dispatchEvent(new Event('rejection-reasons-updated'));
+  } catch (e) {
+    console.error('Error saving rejection reasons:', e);
+  }
+}
+
+export function addRejectionReason(
+  label: string,
+  isJustified: boolean,
+  penaltyPoints: number = 0,
+  description?: string
+): RejectionReasonItem {
+  const current = getRejectionReasons();
+  const newItem: RejectionReasonItem = {
+    id: `reason-${Date.now()}`,
+    label: label.trim(),
+    isJustified,
+    penaltyPoints: isJustified ? 0 : Math.max(0, penaltyPoints),
+    description: description?.trim() || (isJustified ? 'Causa justificada (0 pts negativos)' : `Aplica -${penaltyPoints} pts negativos`),
+    createdAt: new Date().toISOString(),
+  };
+  const updated = [...current, newItem];
+  saveRejectionReasons(updated);
+  return newItem;
+}
+
+export function deleteRejectionReason(id: string): void {
+  const current = getRejectionReasons();
+  const updated = current.filter((r) => r.id !== id);
+  saveRejectionReasons(updated.length > 0 ? updated : DEFAULT_REJECTION_REASONS);
+}
+
+
 

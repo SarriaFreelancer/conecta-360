@@ -91,12 +91,17 @@ function LoginContent() {
       console.warn('[Login] Backend auth notice:', backendErr.message);
       // Si fue error de credenciales explícito y no es cuenta demo rápida, mostrar el error
       const isDemoAccount =
+        em === 'superadmin@conecta360.com.co' ||
         em === 'superadmin@conecta360.com' ||
+        em === 'admin@conecta360.com.co' ||
         em === 'admin@conecta360.com' ||
+        em === 'david.cuero@conecta360.com.co' ||
         em === 'carlos.rodriguez@conecta360.co' ||
+        em === 'andrea.cuero@conecta360.com.co' ||
         em === 'laura.gomez@gmail.com' ||
         em.includes('proveedor') ||
         em.includes('electricista') ||
+        em.includes('servidor') ||
         em.includes('cliente');
 
       if (!isDemoAccount) {
@@ -107,28 +112,28 @@ function LoginContent() {
     }
 
     // 2. Fallback de soporte y compatibilidad para cuentas demo precargadas
-    if (em === 'superadmin@conecta360.com') {
+    if (em === 'superadmin@conecta360.com.co' || em === 'superadmin@conecta360.com') {
       const session = getInitialSuperAdminSession();
       setCurrentUser(session);
       router.push(redirectUrl && redirectUrl !== '/' ? redirectUrl : '/admin');
       return;
     }
 
-    if (em === 'admin@conecta360.com') {
+    if (em === 'admin@conecta360.com.co' || em === 'admin@conecta360.com') {
       const session = getInitialAdminSession();
       setCurrentUser(session);
       router.push(redirectUrl && redirectUrl !== '/' ? redirectUrl : '/admin');
       return;
     }
 
-    if (em === 'carlos.rodriguez@conecta360.co' || em.includes('electricista') || em.includes('proveedor')) {
+    if (em === 'david.cuero@conecta360.com.co' || em === 'carlos.rodriguez@conecta360.co' || em.includes('electricista') || em.includes('proveedor') || em.includes('servidor')) {
       const session = getInitialProviderSession();
       setCurrentUser(session);
       router.push(redirectUrl && redirectUrl !== '/' ? redirectUrl : '/dashboard');
       return;
     }
 
-    if (em === 'laura.gomez@gmail.com' || em.includes('cliente')) {
+    if (em === 'andrea.cuero@conecta360.com.co' || em === 'laura.gomez@gmail.com' || em.includes('cliente')) {
       const session = getInitialClientSession();
       setCurrentUser(session);
       router.push(redirectUrl && redirectUrl !== '/' ? redirectUrl : '/');
@@ -328,7 +333,7 @@ function LoginContent() {
                   <ShieldCheck className="w-3.5 h-3.5" />
                   <span>SuperAdmin</span>
                 </div>
-                <p className="text-[10px] text-slate-500 mt-0.5 truncate">superadmin@conecta360.com</p>
+                <p className="text-[10px] text-slate-500 mt-0.5 truncate">superadmin@conecta360.com.co</p>
               </button>
 
               {/* Admin */}
@@ -341,7 +346,7 @@ function LoginContent() {
                   <ShieldCheck className="w-3.5 h-3.5" />
                   <span>Admin Operaciones</span>
                 </div>
-                <p className="text-[10px] text-slate-500 mt-0.5 truncate">admin@conecta360.com</p>
+                <p className="text-[10px] text-slate-500 mt-0.5 truncate">admin@conecta360.com.co</p>
               </button>
 
               {/* Prestador */}
@@ -354,7 +359,7 @@ function LoginContent() {
                   <Briefcase className="w-3.5 h-3.5" />
                   <span>Prestador (Cali)</span>
                 </div>
-                <p className="text-[10px] text-slate-500 mt-0.5 truncate">carlos.rodriguez@conecta360.co</p>
+                <p className="text-[10px] text-slate-500 mt-0.5 truncate">david.cuero@conecta360.com.co</p>
               </button>
 
               {/* Cliente */}
@@ -367,32 +372,48 @@ function LoginContent() {
                   <User className="w-3.5 h-3.5" />
                   <span>Cliente Solicitante</span>
                 </div>
-                <p className="text-[10px] text-slate-500 mt-0.5 truncate">laura.gomez@gmail.com</p>
+                <p className="text-[10px] text-slate-500 mt-0.5 truncate">andrea.cuero@conecta360.com.co</p>
               </button>
             </div>
 
             {/* Accordion / Info Box con las contraseñas exactas */}
             <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 text-[11px] text-slate-600 space-y-1.5 font-mono">
               <div className="flex items-center justify-between text-slate-700 font-sans font-bold text-[10px] uppercase tracking-wide">
-                <span>Tabla de Accesos de Prueba</span>
-                <span className="text-slate-400 font-normal lowercase">(o haz click arriba)</span>
+                <span>Tabla de Accesos Oficiales</span>
+                <span className="text-slate-400 font-normal lowercase">(click para auto-rellenar)</span>
               </div>
               <div className="space-y-1 text-[10px]">
-                <div className="flex justify-between items-center py-0.5 border-b border-slate-100">
+                <div
+                  onClick={() => fillCredentials('superadmin@conecta360.com.co', 'Superadmin123')}
+                  className="flex justify-between items-center py-1 px-1.5 rounded hover:bg-purple-100/50 cursor-pointer border-b border-slate-100 transition-colors"
+                  title="Click para rellenar en el formulario"
+                >
                   <span className="font-semibold text-purple-800 font-sans">Superadmin:</span>
-                  <span className="text-slate-700 select-all">superadmin@conecta360.com &bull; SuperSecretPassword123!</span>
+                  <span className="text-slate-700 select-all">superadmin@conecta360.com.co &bull; Superadmin123</span>
                 </div>
-                <div className="flex justify-between items-center py-0.5 border-b border-slate-100">
+                <div
+                  onClick={() => fillCredentials('admin@conecta360.com.co', 'Admin123')}
+                  className="flex justify-between items-center py-1 px-1.5 rounded hover:bg-indigo-100/50 cursor-pointer border-b border-slate-100 transition-colors"
+                  title="Click para rellenar en el formulario"
+                >
                   <span className="font-semibold text-indigo-800 font-sans">Admin:</span>
-                  <span className="text-slate-700 select-all">admin@conecta360.com &bull; AdminSecretPassword123!</span>
+                  <span className="text-slate-700 select-all">admin@conecta360.com.co &bull; Admin123</span>
                 </div>
-                <div className="flex justify-between items-center py-0.5 border-b border-slate-100">
-                  <span className="font-semibold text-[#0056d2] font-sans">Prestador:</span>
-                  <span className="text-slate-700 select-all">carlos.rodriguez@conecta360.co &bull; Provider123!</span>
+                <div
+                  onClick={() => fillCredentials('david.cuero@conecta360.com.co', 'Servidor123')}
+                  className="flex justify-between items-center py-1 px-1.5 rounded hover:bg-blue-100/50 cursor-pointer border-b border-slate-100 transition-colors"
+                  title="Click para rellenar en el formulario"
+                >
+                  <span className="font-semibold text-[#0056d2] font-sans">Servidor:</span>
+                  <span className="text-slate-700 select-all">david.cuero@conecta360.com.co &bull; Servidor123</span>
                 </div>
-                <div className="flex justify-between items-center py-0.5">
+                <div
+                  onClick={() => fillCredentials('andrea.cuero@conecta360.com.co', 'Cliente123')}
+                  className="flex justify-between items-center py-1 px-1.5 rounded hover:bg-emerald-100/50 cursor-pointer transition-colors"
+                  title="Click para rellenar en el formulario"
+                >
                   <span className="font-semibold text-emerald-800 font-sans">Cliente:</span>
-                  <span className="text-slate-700 select-all">laura.gomez@gmail.com &bull; Cliente123!</span>
+                  <span className="text-slate-700 select-all">andrea.cuero@conecta360.com.co &bull; Cliente123</span>
                 </div>
               </div>
             </div>

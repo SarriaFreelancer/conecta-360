@@ -45,7 +45,7 @@ import {
   LogOut
 } from 'lucide-react';
 import AdminSidebar from '@/components/AdminSidebar';
-import { getAllBookings, reassignBookingByAdmin, ServiceHistoryItem, destroySession } from '@/lib/auth';
+import { getAllBookings, reassignBookingByAdmin, ServiceHistoryItem, destroySession, getCurrentUser, UserSession } from '@/lib/auth';
 import {
   getAdminCategories,
   getAdminServices,
@@ -68,6 +68,7 @@ const AVAILABLE_PROVIDERS = [
 ];
 
 export default function AdminDashboard() {
+  const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
   // Main data states
   const [bookings, setBookings] = useState<ServiceHistoryItem[]>([]);
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -118,6 +119,7 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
+    setCurrentUser(getCurrentUser());
     loadAllData();
   }, []);
 
@@ -235,8 +237,8 @@ export default function AdminDashboard() {
                 SA
               </div>
               <div className="text-left hidden sm:block">
-                <p className="text-xs font-bold text-slate-800">SuperAdmin</p>
-                <p className="text-[10px] text-slate-500 font-medium">superadmin@conecta360.com</p>
+                <p className="text-xs font-bold text-slate-800">{currentUser?.firstName || 'Admin'} {currentUser?.lastName || ''}</p>
+                <p className="text-[10px] text-slate-500 font-medium">{currentUser?.email || 'superadmin@conecta360.com.co'}</p>
               </div>
             </div>
 
@@ -488,6 +490,14 @@ export default function AdminDashboard() {
                     </button>
                   ))}
                 </div>
+
+                <Link
+                  href="/admin/settings"
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-all flex items-center space-x-1.5 ml-auto"
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                  <span>Configurar Motivos de Rechazo</span>
+                </Link>
               </div>
 
               {/* Search Bar */}

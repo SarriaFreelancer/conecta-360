@@ -1555,7 +1555,7 @@ export default function Home() {
                   <div className="grid grid-cols-1 sm:grid-cols-1 gap-2 pt-1">
                     <a
                       href="/api/download-apk"
-                      className="inline-flex items-center justify-start space-x-2 bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-2 rounded-lg border border-emerald-400/40 shadow-sm transition-all text-[10px] w-full"
+                      className="inline-flex lg:hidden items-center justify-start space-x-2 bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-2 rounded-lg border border-emerald-400/40 shadow-sm transition-all text-[10px] w-full"
                     >
                       <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
                         <path d="M16.61 15.15c-.46 0-.84-.38-.84-.84s.38-.84.84-.84c.46 0 .84.38.84.84s-.38.84-.84.84zm-9.22 0c-.46 0-.84-.38-.84-.84s.38-.84.84-.84.84.38.84.84-.38.84-.84.84zm9.52-5.02l1.66-2.88a.347.347 0 0 0-.13-.47.347.347 0 0 0-.47.13l-1.69 2.92A10.87 10.87 0 0 0 12 9.27c-1.55 0-3 .24-4.28.69L6.03 7.04a.347.347 0 0 0-.47-.13.347.347 0 0 0-.13.47l1.66 2.88C3.59 12.02 1.5 15.15 1.5 18.75h21c0-3.6-2.09-6.73-5.59-8.62z"/>

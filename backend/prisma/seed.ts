@@ -30,11 +30,11 @@ async function main() {
   }
 
   // Credenciales desde variables de entorno
-  const superadminEmail = process.env.SUPERADMIN_EMAIL || 'superadmin@conecta360.com';
-  const superadminPassword = process.env.SUPERADMIN_PASSWORD || 'SuperSecretPassword123!';
+  const superadminEmail = process.env.SUPERADMIN_EMAIL || 'superadmin@conecta360.com.co';
+  const superadminPassword = process.env.SUPERADMIN_PASSWORD || 'Superadmin123';
 
-  const adminEmail = process.env.ADMIN_EMAIL || 'admin@conecta360.com';
-  const adminPassword = process.env.ADMIN_PASSWORD || 'AdminSecretPassword123!';
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@conecta360.com.co';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'Admin123';
 
   // Salt de hash bcrypt
   const saltRounds = 10;
@@ -46,6 +46,7 @@ async function main() {
   const superAdmin = await prisma.user.upsert({
     where: { email: superadminEmail },
     update: {
+      password: hashedSuperPassword,
       roleId: superAdminRole,
       status: UserStatus.ACTIVE,
       isActive: true,
@@ -82,6 +83,7 @@ async function main() {
   const admin = await prisma.user.upsert({
     where: { email: adminEmail },
     update: {
+      password: hashedAdminPassword,
       roleId: adminRole,
       status: UserStatus.ACTIVE,
       isActive: true,
@@ -110,6 +112,76 @@ async function main() {
   });
 
   console.log(`✓ Admin verificado/creado: ${admin.email}`);
+
+  // 3.1. Crear Servidor/Proveedor (David Cuero)
+  const servidorRoleId = roleMap.get(RoleName.PROVIDER) || 6;
+  const hashedServidorPassword = await bcrypt.hash('Servidor123', saltRounds);
+  const providerUser = await prisma.user.upsert({
+    where: { email: 'david.cuero@conecta360.com.co' },
+    update: {
+      password: hashedServidorPassword,
+      roleId: servidorRoleId,
+      status: UserStatus.ACTIVE,
+      isActive: true,
+      emailVerified: true,
+    },
+    create: {
+      email: 'david.cuero@conecta360.com.co',
+      password: hashedServidorPassword,
+      firstName: 'David',
+      lastName: 'Cuero',
+      phone: '+573157894521',
+      roleId: servidorRoleId,
+      status: UserStatus.ACTIVE,
+      isActive: true,
+      emailVerified: true,
+      profile: {
+        create: {
+          bio: 'Especialista en instalaciones eléctricas residenciales y comerciales en Cali.',
+          city: 'Cali',
+          department: 'Valle del Cauca',
+          country: 'Colombia',
+        },
+      },
+    },
+    include: { profile: true },
+  });
+  console.log(`✓ Servidor verificado/creado: ${providerUser.email}`);
+
+  // 3.2. Crear Cliente (Andrea Cuero)
+  const clienteRoleId = roleMap.get(RoleName.USER) || 3;
+  const hashedClientePassword = await bcrypt.hash('Cliente123', saltRounds);
+  const clientUser = await prisma.user.upsert({
+    where: { email: 'andrea.cuero@conecta360.com.co' },
+    update: {
+      password: hashedClientePassword,
+      roleId: clienteRoleId,
+      status: UserStatus.ACTIVE,
+      isActive: true,
+      emailVerified: true,
+    },
+    create: {
+      email: 'andrea.cuero@conecta360.com.co',
+      password: hashedClientePassword,
+      firstName: 'Andrea',
+      lastName: 'Cuero',
+      phone: '+573124567890',
+      roleId: clienteRoleId,
+      status: UserStatus.ACTIVE,
+      isActive: true,
+      emailVerified: true,
+      profile: {
+        create: {
+          bio: 'Cliente de servicios profesionales para el hogar y proyectos en Cali.',
+          city: 'Cali',
+          department: 'Valle del Cauca',
+          country: 'Colombia',
+        },
+      },
+    },
+    include: { profile: true },
+  });
+  console.log(`✓ Cliente verificado/creado: ${clientUser.email}`);
 
   // 4. Categorías de la maqueta y sus servicios
   const categoriesData = [

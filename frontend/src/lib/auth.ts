@@ -13,7 +13,7 @@ export interface ServiceHistoryItem {
   date: string;
   status: 'SOLICITADO' | 'CONFIRMADO' | 'EN_PROGRESO' | 'COMPLETADO' | 'CANCELADO' | 'PENDIENTE' | 'RECHAZADO';
   amount: number; // Monto en COP
-  paymentStatus: 'PAGADO' | 'PENDIENTE';
+  paymentStatus: 'PAGADO' | 'PENDIENTE' | 'NO_APLICA' | 'CANCELADO';
   paymentMethod: 'Transferencia Bancaria' | 'Efectivo' | 'Tarjeta de Crédito / Débito';
   platformFee?: number; // Tarifa de descuento mínima para la plataforma
   platformDebtStatus?: 'EN_DEUDA' | 'AL_DIA' | 'NO_APLICA'; // En deuda cuando es Efectivo o Transferencia
@@ -175,9 +175,9 @@ export function getInitialProviderSession(): UserSession {
   const global = getGlobalSettings();
   return {
     id: 999,
-    email: 'carlos.rodriguez@conecta360.co',
-    firstName: 'Carlos Andrés',
-    lastName: 'Rodríguez',
+    email: 'david.cuero@conecta360.com.co',
+    firstName: 'David',
+    lastName: 'Cuero',
     phone: '+57 315 789 4521',
     role: 'PROVIDER',
     status: 'PENDING', // Al registrarse queda pendiente pero inicia sesión normal
@@ -229,7 +229,7 @@ export function getInitialProviderSession(): UserSession {
         coverageZones: 'Cali (Norte, Sur, Oeste), Jamundí, Yumbo',
         titleRequired: true,
         titleCertification: 'Tarjeta Profesional CONTE TE-1 94827',
-        certificateFileName: 'matricula_conte_carlos_rodriguez.pdf',
+        certificateFileName: 'matricula_conte_david_cuero.pdf',
         createdAt: new Date().toISOString(),
       },
     ],
@@ -239,9 +239,9 @@ export function getInitialProviderSession(): UserSession {
         id: 'hist-req-new',
         serviceTitle: 'Adecuación de Iluminación y Tomas en Apartamento',
         categoryName: 'Electricidad',
-        clientName: 'Laura Gómez',
+        clientName: 'Andrea Cuero',
         clientPhone: '+57 312 456 7890',
-        providerName: 'Carlos Andrés Rodríguez',
+        providerName: 'David Cuero',
         providerPhone: '+57 315 789 4521',
         date: 'Hoy, 08:30 AM',
         status: 'SOLICITADO',
@@ -251,15 +251,15 @@ export function getInitialProviderSession(): UserSession {
         platformFee: 5500,
         platformDebtStatus: 'EN_DEUDA',
         estimatedTimeRange: '2 a 3 horas (Tarde 2:00 PM - 5:00 PM)',
-        messageNotes: 'Hola Carlos, necesitamos revisar las tomas de corriente y puntos LED en la sala.',
+        messageNotes: 'Hola David, necesitamos revisar las tomas de corriente y puntos LED en la sala.',
       },
       {
         id: 'hist-1',
         serviceTitle: 'Instalación de Cuadro Eléctrico Principal y Breakers',
         categoryName: 'Electricidad',
-        clientName: 'Laura Gómez',
+        clientName: 'Andrea Cuero',
         clientPhone: '+57 312 456 7890',
-        providerName: 'Carlos Andrés Rodríguez',
+        providerName: 'David Cuero',
         providerPhone: '+57 315 789 4521',
         date: '12 Sep 2026, 10:30 AM',
         status: 'COMPLETADO',
@@ -277,7 +277,7 @@ export function getInitialProviderSession(): UserSession {
         categoryName: 'Electricidad',
         clientName: 'Andrés Ramírez',
         clientPhone: '+57 311 987 6543',
-        providerName: 'Carlos Andrés Rodríguez',
+        providerName: 'David Cuero',
         providerPhone: '+57 315 789 4521',
         date: '10 Sep 2026, 04:15 PM',
         status: 'COMPLETADO',
@@ -295,7 +295,7 @@ export function getInitialProviderSession(): UserSession {
         categoryName: 'Electricidad',
         clientName: 'Sofía Martínez',
         clientPhone: '+57 314 234 5678',
-        providerName: 'Carlos Andrés Rodríguez',
+        providerName: 'David Cuero',
         providerPhone: '+57 315 789 4521',
         date: 'Hoy, 02:00 PM',
         status: 'EN_PROGRESO',
@@ -311,7 +311,7 @@ export function getInitialProviderSession(): UserSession {
         categoryName: 'Electricidad',
         clientName: 'Juan Camilo Osorio',
         clientPhone: '+57 316 789 0123',
-        providerName: 'Carlos Andrés Rodríguez',
+        providerName: 'David Cuero',
         providerPhone: '+57 315 789 4521',
         date: '14 Sep 2026, 09:00 AM',
         status: 'PENDIENTE',
@@ -328,7 +328,7 @@ export function getInitialProviderSession(): UserSession {
 export function getInitialSuperAdminSession(): UserSession {
   return {
     id: 100,
-    email: 'superadmin@conecta360.com',
+    email: 'superadmin@conecta360.com.co',
     firstName: 'Super',
     lastName: 'Admin',
     phone: '+57 300 000 0001',
@@ -355,7 +355,7 @@ export function getInitialSuperAdminSession(): UserSession {
 export function getInitialAdminSession(): UserSession {
   return {
     id: 101,
-    email: 'admin@conecta360.com',
+    email: 'admin@conecta360.com.co',
     firstName: 'Admin',
     lastName: 'Operaciones',
     phone: '+57 300 000 0002',
@@ -382,9 +382,9 @@ export function getInitialAdminSession(): UserSession {
 export function getInitialClientSession(): UserSession {
   return {
     id: 888,
-    email: 'laura.gomez@gmail.com',
-    firstName: 'Laura',
-    lastName: 'Gómez',
+    email: 'andrea.cuero@conecta360.com.co',
+    firstName: 'Andrea',
+    lastName: 'Cuero',
     phone: '+57 312 456 7890',
     role: 'USER',
     status: 'APPROVED',
@@ -406,9 +406,9 @@ export function getInitialClientSession(): UserSession {
         id: 'hist-c1',
         serviceTitle: 'Instalación de Cuadro Eléctrico Principal y Breakers',
         categoryName: 'Electricidad',
-        clientName: 'Laura Gómez',
+        clientName: 'Andrea Cuero',
         clientPhone: '+57 312 456 7890',
-        providerName: 'Carlos Andrés Rodríguez',
+        providerName: 'David Cuero',
         providerPhone: '+57 315 789 4521',
         date: '12 Sep 2026, 10:30 AM',
         status: 'COMPLETADO',
@@ -422,7 +422,7 @@ export function getInitialClientSession(): UserSession {
         id: 'hist-c2',
         serviceTitle: 'Apertura de Cerradura de Seguridad Domiciliaria',
         categoryName: 'Cerrajería',
-        clientName: 'Laura Gómez',
+        clientName: 'Andrea Cuero',
         clientPhone: '+57 312 456 7890',
         providerName: 'Juan Carlos Pérez',
         providerPhone: '+57 310 123 4567',
@@ -438,7 +438,7 @@ export function getInitialClientSession(): UserSession {
         id: 'hist-c3',
         serviceTitle: 'Mantenimiento Preventivo de Aire Acondicionado',
         categoryName: 'Climatización',
-        clientName: 'Laura Gómez',
+        clientName: 'Andrea Cuero',
         clientPhone: '+57 312 456 7890',
         providerName: 'Lucía Zambrano',
         providerPhone: '+57 318 678 2345',
@@ -670,9 +670,9 @@ export function getInitialSeedBookings(): ServiceHistoryItem[] {
       date: 'Hace 2 días',
       status: 'RECHAZADO',
       amount: 35000,
-      paymentStatus: 'PENDIENTE',
+      paymentStatus: 'NO_APLICA',
       paymentMethod: 'Efectivo',
-      platformFee: 1750,
+      platformFee: 0,
       platformDebtStatus: 'NO_APLICA',
       estimatedTimeRange: '2 a 3 horas',
       locationZone: 'Jamundí (Condominio campestre a 28 km)',
@@ -693,9 +693,9 @@ export function getInitialSeedBookings(): ServiceHistoryItem[] {
       date: 'Hace 3 días',
       status: 'RECHAZADO',
       amount: 40000,
-      paymentStatus: 'PENDIENTE',
+      paymentStatus: 'NO_APLICA',
       paymentMethod: 'Transferencia Bancaria',
-      platformFee: 2000,
+      platformFee: 0,
       platformDebtStatus: 'NO_APLICA',
       estimatedTimeRange: '4 a 6 horas',
       locationZone: 'Cali (Barrio San Fernando)',
@@ -926,6 +926,8 @@ export function rejectServiceBooking(
     allBookings[globalIndex].rejectionReason = rejectionData.reason;
     allBookings[globalIndex].rejectionExplanation = rejectionData.explanation.trim();
     allBookings[globalIndex].penaltyPointsApplied = penalty;
+    allBookings[globalIndex].paymentStatus = 'NO_APLICA';
+    allBookings[globalIndex].platformFee = 0;
     allBookings[globalIndex].platformDebtStatus = 'NO_APLICA';
     updatedItem = allBookings[globalIndex];
     saveAllBookings(allBookings);
@@ -940,6 +942,8 @@ export function rejectServiceBooking(
         item.rejectionReason = rejectionData.reason;
         item.rejectionExplanation = rejectionData.explanation.trim();
         item.penaltyPointsApplied = penalty;
+        item.paymentStatus = 'NO_APLICA';
+        item.platformFee = 0;
         item.platformDebtStatus = 'NO_APLICA';
         if (!updatedItem) updatedItem = item;
       }

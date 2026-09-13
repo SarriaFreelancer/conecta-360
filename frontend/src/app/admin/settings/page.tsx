@@ -21,10 +21,21 @@ import {
   Phone,
   ArrowLeft,
   ToggleLeft,
-  ToggleRight
+  ToggleRight,
+  Trash2,
+  Plus,
+  AlertCircle
 } from 'lucide-react';
 import AdminSidebar from '@/components/AdminSidebar';
-import { getGlobalSettings, saveGlobalSettings, syncGlobalSettingsFromBackend } from '@/lib/system-settings';
+import {
+  getGlobalSettings,
+  saveGlobalSettings,
+  syncGlobalSettingsFromBackend,
+  getRejectionReasons,
+  addRejectionReason,
+  deleteRejectionReason,
+  RejectionReasonItem
+} from '@/lib/system-settings';
 import { updatePlatformSettingsBackend } from '@/lib/admin-data';
 
 export default function AdminSettingsPage() {
@@ -70,6 +81,41 @@ export default function AdminSettingsPage() {
   ]);
 
   const [savedSuccess, setSavedSuccess] = useState(false);
+
+  // Motivos de rechazo gestionables por el Administrador
+  const [rejectionReasons, setRejectionReasons] = useState<RejectionReasonItem[]>([]);
+  const [newReasonLabel, setNewReasonLabel] = useState('');
+  const [newReasonJustified, setNewReasonJustified] = useState(true);
+  const [newReasonPenalty, setNewReasonPenalty] = useState(10);
+  const [newReasonDesc, setNewReasonDesc] = useState('');
+
+  useEffect(() => {
+    setRejectionReasons(getRejectionReasons());
+    const handleReasonsUpdate = () => setRejectionReasons(getRejectionReasons());
+    window.addEventListener('rejection-reasons-updated', handleReasonsUpdate);
+    return () => window.removeEventListener('rejection-reasons-updated', handleReasonsUpdate);
+  }, []);
+
+  const handleAddReason = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newReasonLabel.trim()) return;
+    addRejectionReason(
+      newReasonLabel.trim(),
+      newReasonJustified,
+      newReasonJustified ? 0 : Number(newReasonPenalty) || 10,
+      newReasonDesc.trim()
+    );
+    setRejectionReasons(getRejectionReasons());
+    setNewReasonLabel('');
+    setNewReasonDesc('');
+    setNewReasonJustified(true);
+    setNewReasonPenalty(10);
+  };
+
+  const handleDeleteReason = (id: string) => {
+    deleteRejectionReason(id);
+    setRejectionReasons(getRejectionReasons());
+  };
 
   useEffect(() => {
     syncGlobalSettingsFromBackend().then((settings) => {
@@ -406,6 +452,125 @@ export default function AdminSettingsPage() {
                     <span className="text-[10px] text-slate-400 mt-1 font-normal">{city.province}</span>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* Gestión de Motivos de Rechazo de Servicios */}
+            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-100">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
+                    <ShieldAlert className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-slate-900">Motivos Oficiales de Rechazo de Servicios</h3>
+                    <p className="text-xs text-slate-400 font-medium">Configura las opciones que los servidores ven al declinar una solicitud</p>
+                  </div>
+                </div>
+                <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold self-start sm:self-auto">
+                  {rejectionReasons.length} motivos activos
+                </span>
+              </div>
+
+              {/* Lista de motivos existentes */}
+              <div className="space-y-3">
+                {rejectionReasons.map((reason) => (
+                  <div
+                    key={reason.id}
+                    className="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 hover:bg-slate-50 transition-all flex items-start justify-between gap-3"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-bold text-slate-900">{reason.label}</span>
+                        {reason.isJustified ? (
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            ✓ Causa Justificada (0 pts negativos)
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200">
+                            ⚠️ Injustificado (-{reason.penaltyPoints || 10} pts negativos)
+                          </span>
+                        )}
+                      </div>
+                      {reason.description && (
+                        <p className="text-xs text-slate-500 font-normal">{reason.description}</p>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteReason(reason.id)}
+                      className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors shrink-0 cursor-pointer"
+                      title="Eliminar motivo"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Formulario para agregar un nuevo motivo */}
+              <div className="pt-4 border-t border-slate-100 space-y-3">
+                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center space-x-1.5">
+                  <Plus className="w-3.5 h-3.5 text-[#0056d2]" />
+                  <span>Agregar Nuevo Motivo de Rechazo</span>
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                  <div className="sm:col-span-6 space-y-1">
+                    <label className="block text-[11px] font-bold text-slate-600">
+                      Nombre o Título del Motivo *
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ej: Zona fuera de perímetro, Vehículo en mantenimiento..."
+                      value={newReasonLabel}
+                      onChange={(e) => setNewReasonLabel(e.target.value)}
+                      className="w-full text-xs font-semibold px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0056d2]"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-4 space-y-1">
+                    <label className="block text-[11px] font-bold text-slate-600">
+                      Tipo de Causa
+                    </label>
+                    <select
+                      value={newReasonJustified ? 'justified' : 'unjustified'}
+                      onChange={(e) => setNewReasonJustified(e.target.value === 'justified')}
+                      className="w-full text-xs font-semibold px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0056d2]"
+                    >
+                      <option value="justified">✓ Causa Justificada (0 pts negativos)</option>
+                      <option value="unjustified">⚠️ Injustificada (Aplica sanción)</option>
+                    </select>
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <button
+                      type="button"
+                      onClick={handleAddReason}
+                      className="w-full py-2.5 px-4 bg-[#0056d2] hover:bg-[#0046a8] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center space-x-1 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Agregar</span>
+                    </button>
+                  </div>
+                </div>
+
+                {!newReasonJustified && (
+                  <div className="flex items-center space-x-2 pt-1 text-xs text-rose-700 bg-rose-50 p-2.5 rounded-xl border border-rose-100">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>Puntos negativos a restar del prestador:</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={50}
+                      value={newReasonPenalty}
+                      onChange={(e) => setNewReasonPenalty(Number(e.target.value))}
+                      className="w-16 px-2 py-1 text-xs font-bold bg-white border border-rose-300 rounded-lg text-center"
+                    />
+                    <span>puntos de reputación.</span>
+                  </div>
+                )}
               </div>
             </div>
 

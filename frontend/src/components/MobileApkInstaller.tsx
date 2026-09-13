@@ -13,14 +13,17 @@ export default function MobileApkInstaller() {
   const [downloadStarted, setDownloadStarted] = useState(false);
 
   useEffect(() => {
-    // 1. Detectar dispositivo móvil
+    // 1. Detectar dispositivo móvil o tablet real (nunca escritorio web)
     const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
-    const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
-    const isMobileDevice = mobileRegex.test(ua) || (typeof window !== 'undefined' && window.innerWidth <= 820);
+    const mobileOrTabletRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Tablet|Silk|Kindle/i;
+    const isTouch = typeof window !== 'undefined' && ('ontouchstart' in window || (navigator.maxTouchPoints || 0) > 0);
+    const isSmallOrMediumScreen = typeof window !== 'undefined' && window.innerWidth <= 1024;
+
+    const isMobileOrTablet = mobileOrTabletRegex.test(ua) || (isTouch && isSmallOrMediumScreen);
     const androidDevice = /Android/i.test(ua);
     const iosDevice = /iPhone|iPad|iPod/i.test(ua);
 
-    setIsMobile(isMobileDevice);
+    setIsMobile(isMobileOrTablet);
     setIsAndroid(androidDevice);
     setIsIOS(iosDevice);
 
@@ -32,12 +35,13 @@ export default function MobileApkInstaller() {
       }
     }
 
-    // 2. Capturar evento de instalación nativa PWA/WebAPK de Android Chrome
+    // 2. Capturar evento de instalación PWA/WebAPK ÚNICAMENTE si es móvil o tablet
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      // Si el navegador soporta WebAPK nativo, asegurar que reconozca el móvil
-      setIsMobile(true);
+      if (isMobileOrTablet) {
+        setIsMobile(true);
+      }
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
