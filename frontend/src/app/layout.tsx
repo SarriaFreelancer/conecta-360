@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import MobileApkInstaller from "@/components/MobileApkInstaller";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -12,9 +13,22 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  themeColor: "#002f6c",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
+
 export const metadata: Metadata = {
-  title: "CONECTA 360 — Plataforma de Servicios",
+  title: "CONECTA 360 — Plataforma de Servicios y Cuadrillas",
   description: "Conecta lo que necesitas con quien puede hacerlo. Necesitas. Encuentras. Contratas.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Conecta 360",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -26,8 +40,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         {children}
+        <MobileApkInstaller />
       </body>
     </html>
-
   );
 }

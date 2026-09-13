@@ -1719,31 +1719,45 @@ export default function Home() {
                   <p className="text-[11px] text-blue-100 leading-snug">
                     Descarga nuestra app y accede a todos los servicios desde tu celular.
                   </p>
-                  <div className="grid grid-cols-2 sm:grid-cols-1 gap-2 pt-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-1 gap-2 pt-1">
                     <a
-                      href="#"
-                      className="inline-flex items-center justify-center sm:justify-start space-x-1.5 sm:space-x-2 bg-black/90 hover:bg-black text-white px-2.5 py-2 rounded-lg border border-white/20 transition-all text-[10px] w-full"
+                      href="/api/download-apk"
+                      className="inline-flex items-center justify-start space-x-2 bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-2 rounded-lg border border-emerald-400/40 shadow-sm transition-all text-[10px] w-full"
                     >
-                      <svg className="w-3.5 h-3.5 fill-current shrink-0" viewBox="0 0 24 24">
-                        <path d="M3.609 1.814L13.793 12 3.61 22.186a2.37 2.37 0 0 1-.22-.324 2.128 2.128 0 0 1-.2-.93V3.068c0-.342.069-.66.2-.93a2.37 2.37 0 0 1 .219-.324zm11.23 11.23l2.096-2.096-12.06-6.963 9.964 9.059zm1.042-1.042l3.242 1.872a1.764 1.764 0 0 1 0 3.052l-3.242 1.872-2.146-2.146 2.146-2.65zm-1.042 3.136l-9.964 9.059 12.06-6.963-2.096-2.096z"/>
+                      <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
+                        <path d="M16.61 15.15c-.46 0-.84-.38-.84-.84s.38-.84.84-.84c.46 0 .84.38.84.84s-.38.84-.84.84zm-9.22 0c-.46 0-.84-.38-.84-.84s.38-.84.84-.84.84.38.84.84-.38.84-.84.84zm9.52-5.02l1.66-2.88a.347.347 0 0 0-.13-.47.347.347 0 0 0-.47.13l-1.69 2.92A10.87 10.87 0 0 0 12 9.27c-1.55 0-3 .24-4.28.69L6.03 7.04a.347.347 0 0 0-.47-.13.347.347 0 0 0-.13.47l1.66 2.88C3.59 12.02 1.5 15.15 1.5 18.75h21c0-3.6-2.09-6.73-5.59-8.62z"/>
                       </svg>
                       <div className="text-left">
-                        <div className="text-[7px] uppercase tracking-wider text-slate-300 leading-none">Disponible en</div>
-                        <div className="text-[10px] font-bold leading-tight">Google Play</div>
+                        <div className="text-[7px] uppercase tracking-wider text-emerald-100 font-bold leading-none">Instalar Directo</div>
+                        <div className="text-[10px] font-bold leading-tight">Descargar APK Android</div>
                       </div>
                     </a>
-                    <a
-                      href="#"
-                      className="inline-flex items-center justify-center sm:justify-start space-x-1.5 sm:space-x-2 bg-black/90 hover:bg-black text-white px-2.5 py-2 rounded-lg border border-white/20 transition-all text-[10px] w-full"
-                    >
-                      <svg className="w-3.5 h-3.5 fill-current shrink-0" viewBox="0 0 24 24">
-                        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.87c.61-.75 1.04-1.8 0.92-2.87-.92.04-2.01.62-2.65 1.37-.56.65-1.06 1.71-.93 2.74 1.03.08 2.06-.52 2.66-1.24z"/>
-                      </svg>
-                      <div className="text-left">
-                        <div className="text-[7px] uppercase tracking-wider text-slate-300 leading-none">Consíguelo en el</div>
-                        <div className="text-[10px] font-bold leading-tight">App Store</div>
-                      </div>
-                    </a>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <a
+                        href="#"
+                        className="inline-flex items-center justify-center space-x-1.5 bg-black/90 hover:bg-black text-white px-2 py-1.5 rounded-lg border border-white/20 transition-all text-[9px] w-full"
+                      >
+                        <svg className="w-3 h-3 fill-current shrink-0" viewBox="0 0 24 24">
+                          <path d="M3.609 1.814L13.793 12 3.61 22.186a2.37 2.37 0 0 1-.22-.324 2.128 2.128 0 0 1-.2-.93V3.068c0-.342.069-.66.2-.93a2.37 2.37 0 0 1 .219-.324zm11.23 11.23l2.096-2.096-12.06-6.963 9.964 9.059zm1.042-1.042l3.242 1.872a1.764 1.764 0 0 1 0 3.052l-3.242 1.872-2.146-2.146 2.146-2.65zm-1.042 3.136l-9.964 9.059 12.06-6.963-2.096-2.096z"/>
+                        </svg>
+                        <div className="text-left">
+                          <div className="text-[6px] uppercase tracking-wider text-slate-300 leading-none">En</div>
+                          <div className="text-[9px] font-bold leading-tight">Google Play</div>
+                        </div>
+                      </a>
+                      <a
+                        href="#"
+                        className="inline-flex items-center justify-center space-x-1.5 bg-black/90 hover:bg-black text-white px-2 py-1.5 rounded-lg border border-white/20 transition-all text-[9px] w-full"
+                      >
+                        <svg className="w-3 h-3 fill-current shrink-0" viewBox="0 0 24 24">
+                          <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.87c.61-.75 1.04-1.8 0.92-2.87-.92.04-2.01.62-2.65 1.37-.56.65-1.06 1.71-.93 2.74 1.03.08 2.06-.52 2.66-1.24z"/>
+                        </svg>
+                        <div className="text-left">
+                          <div className="text-[6px] uppercase tracking-wider text-slate-300 leading-none">En el</div>
+                          <div className="text-[9px] font-bold leading-tight">App Store</div>
+                        </div>
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2022,6 +2036,18 @@ export default function Home() {
                 Descarga nuestra app
               </h4>
               <div className="grid grid-cols-2 sm:grid-cols-1 gap-2">
+                <a
+                  href="/api/download-apk"
+                  className="flex items-center space-x-2 bg-emerald-700/80 hover:bg-emerald-600 text-white px-2.5 py-1.5 rounded-lg border border-emerald-500/40 transition-colors w-full col-span-2 sm:col-span-1"
+                >
+                  <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
+                    <path d="M16.61 15.15c-.46 0-.84-.38-.84-.84s.38-.84.84-.84c.46 0 .84.38.84.84s-.38.84-.84.84zm-9.22 0c-.46 0-.84-.38-.84-.84s.38-.84.84-.84.84.38.84.84-.38.84-.84.84zm9.52-5.02l1.66-2.88a.347.347 0 0 0-.13-.47.347.347 0 0 0-.47.13l-1.69 2.92A10.87 10.87 0 0 0 12 9.27c-1.55 0-3 .24-4.28.69L6.03 7.04a.347.347 0 0 0-.47-.13.347.347 0 0 0-.13.47l1.66 2.88C3.59 12.02 1.5 15.15 1.5 18.75h21c0-3.6-2.09-6.73-5.59-8.62z"/>
+                  </svg>
+                  <div>
+                    <div className="text-[7px] uppercase tracking-wider text-emerald-200 font-bold leading-none">Instalar APK Directo</div>
+                    <div className="text-[10px] font-bold leading-tight">Android (conecta360.apk)</div>
+                  </div>
+                </a>
                 <a
                   href="#"
                   className="flex items-center space-x-2 bg-black text-white px-2.5 py-1.5 rounded-lg border border-slate-700 hover:border-slate-500 transition-colors w-full"
