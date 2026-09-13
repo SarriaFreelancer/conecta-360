@@ -476,6 +476,7 @@ export function setCurrentUser(user: UserSession | null): void {
       localStorage.removeItem(AUTH_STORAGE_KEY);
       localStorage.removeItem(AUTH_TOKEN_KEY);
     }
+    window.dispatchEvent(new Event('auth-change'));
   } catch (err) {
     console.error('Error storing current user:', err);
   }

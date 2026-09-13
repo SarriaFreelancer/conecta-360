@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { getCurrentUser, createServiceBooking, UserSession } from '@/lib/auth';
 import { API_BASE_URL } from '@/lib/admin-data';
+import MainNavbar from '@/components/MainNavbar';
 import MainFooter from '@/components/MainFooter';
 
 interface ServiceDetail {
@@ -250,8 +251,9 @@ function ProfileContent() {
   const coverageZones = user.providerProfile?.coverageZones || 'Cali (Norte, Sur, Oeste, Centro), Palmira y Jamundí';
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] font-sans py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
+      <MainNavbar />
+      <div className="flex-1 w-full max-w-6xl mx-auto py-8 sm:py-12 px-4 sm:px-6 lg:px-8 space-y-6">
         {/* Navigation Breadcrumb */}
         <div className="flex items-center justify-between">
           <Link

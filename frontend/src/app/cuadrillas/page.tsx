@@ -45,6 +45,7 @@ import {
 } from '@/lib/cuadrillas-data';
 import { getCurrentUser, UserSession } from '@/lib/auth';
 import { API_BASE_URL } from '@/lib/admin-data';
+import MainNavbar from '@/components/MainNavbar';
 import MainFooter from '@/components/MainFooter';
 
 export default function CuadrillasPage() {
@@ -421,79 +422,7 @@ export default function CuadrillasPage() {
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
       {/* 1. TOP NAVBAR */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-50 h-16 sm:h-20 flex items-center shadow-xs">
-        <div className="max-w-[1620px] w-full mx-auto px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20 flex items-center justify-between">
-          <Link href="/" className="flex items-center space-x-3">
-            <img
-              src="/images/logo-conecta-nav.png"
-              alt="CONECTA 360"
-              className="h-8 sm:h-9 w-auto object-contain"
-            />
-          </Link>
-
-          <nav className="hidden md:flex items-center space-x-7 text-sm font-medium text-slate-600">
-            <Link href="/" className="hover:text-[#0056d2] transition-colors">
-              Inicio
-            </Link>
-            <Link href="/services" className="hover:text-[#0056d2] transition-colors">
-              Servicios
-            </Link>
-            <Link href="/cuadrillas" className="text-[#0056d2] font-bold border-b-2 border-[#0056d2] pb-1">
-              Cuadrillas
-            </Link>
-            <Link href="/#categorias" className="hover:text-[#0056d2] transition-colors">
-              Categorías
-            </Link>
-            <Link href="/#como-funciona" className="hover:text-[#0056d2] transition-colors">
-              Cómo funciona
-            </Link>
-            <Link href="/admin" className="hover:text-[#0056d2] transition-colors">
-              Admin
-            </Link>
-          </nav>
-
-          <div className="flex items-center space-x-2 sm:space-x-3">
-            {user ? (
-              <div className="flex items-center space-x-2">
-                <Link
-                  href="/dashboard"
-                  className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-full bg-blue-50 hover:bg-blue-100 text-[#0056d2] text-xs sm:text-sm font-bold flex items-center space-x-1.5 sm:space-x-2 border border-blue-200 transition-all shadow-xs"
-                >
-                  <span className={`w-2 h-2 rounded-full ${user.isVerified ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                  <span className="max-w-[100px] sm:max-w-none truncate">{user.firstName}</span>
-                </Link>
-
-                <button
-                  onClick={() => setActiveTab('ofrecer')}
-                  className="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-[#0056d2] hover:bg-[#0046a8] text-white text-xs sm:text-sm font-bold flex items-center space-x-1.5 shadow-sm transition-all"
-                >
-                  <Wrench className="w-3.5 h-3.5" />
-                  <span className="hidden xs:inline sm:inline">Ofrecer Cuadrilla</span>
-                  <span className="xs:hidden sm:hidden">Ofrecer</span>
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center space-x-2 sm:space-x-3">
-                <Link
-                  href="/login?redirect=/cuadrillas?action=ofrecer&action_type=offer"
-                  className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-[#0056d2] text-[#0056d2] hover:bg-blue-50 text-xs sm:text-sm font-bold flex items-center space-x-1.5 transition-all"
-                >
-                  <Wrench className="w-3.5 h-3.5" />
-                  <span>Quiero ofrecer</span>
-                </Link>
-
-                <Link
-                  href="/login?redirect=/cuadrillas"
-                  className="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-[#0056d2] hover:bg-[#0046a8] text-white text-xs sm:text-sm font-bold flex items-center space-x-1.5 shadow-sm transition-all"
-                >
-                  <User className="w-3.5 h-3.5" />
-                  <span>Ingresar</span>
-                </Link>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
+      <MainNavbar />
 
       {/* 2. HERO BANNER DE CUADRILLAS */}
       <div className="bg-gradient-to-r from-slate-950 via-[#002f6c] to-indigo-950 text-white py-12 px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20 relative overflow-hidden">
