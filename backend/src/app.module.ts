@@ -13,12 +13,14 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { AuthModule } from './auth/auth.module';
 import { SettingsModule } from './settings/settings.module';
 import { UploadModule } from './upload/upload.module';
+import { TenancyModule } from './tenancy/tenancy.module';
 
 @Module({
   imports: [
     PrismaModule,
     AuthModule,
     SettingsModule,
+    TenancyModule,
     UploadModule,
     UsersModule,
     ProfilesModule,

@@ -47,9 +47,11 @@ import { getCurrentUser, UserSession } from '@/lib/auth';
 import { API_BASE_URL } from '@/lib/admin-data';
 import MainNavbar from '@/components/MainNavbar';
 import MainFooter from '@/components/MainFooter';
+import { useCountry } from '@/context/CountryContext';
 
 export default function CuadrillasPage() {
   const router = useRouter();
+  const { currentCountry, currentCities, formatCurrency } = useCountry();
   const [user, setUser] = useState<UserSession | null>(null);
   const [cuadrillas, setCuadrillas] = useState<CuadrillaTeam[]>([]);
   const [proposals, setProposals] = useState<CuadrillaProposal[]>([]);
@@ -420,7 +422,7 @@ export default function CuadrillasPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
+    <div className="min-h-screen bg-[#f8fafc] dark:bg-[#090d16] text-slate-800 dark:text-slate-100 flex flex-col font-sans transition-colors">
       {/* 1. TOP NAVBAR */}
       <MainNavbar />
 
@@ -440,7 +442,7 @@ export default function CuadrillasPage() {
               Equipos de Trabajo Multidisciplinarios
             </span>
             <span className="text-xs font-semibold text-blue-200 bg-white/10 px-3 py-1 rounded-full backdrop-blur-xs border border-white/10">
-              Operando en Cali y Valle del Cauca
+              Operando en {currentCountry.name} ({currentCountry.currency})
             </span>
           </div>
 

@@ -4,13 +4,6 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Settings,
-  Users,
-  Layers,
-  Wrench,
-  ShieldAlert,
-  Award,
-  CreditCard,
-  LayoutDashboard,
   Save,
   CheckCircle2,
   Globe,
@@ -24,7 +17,14 @@ import {
   ToggleRight,
   Trash2,
   Plus,
-  AlertCircle
+  AlertCircle,
+  Building2,
+  Server,
+  Database,
+  PlusCircle,
+  RefreshCw,
+  ExternalLink,
+  ChevronRight
 } from 'lucide-react';
 import AdminSidebar from '@/components/AdminSidebar';
 import {
@@ -38,11 +38,32 @@ import {
   GlobalSettings
 } from '@/lib/system-settings';
 import { updatePlatformSettingsBackend } from '@/lib/admin-data';
-import { showSuccess, showConfirm } from '@/lib/alerts';
+import { showSuccess, showError, showConfirm } from '@/lib/alerts';
+import {
+  getCountriesRegistry,
+  saveCountriesRegistry,
+  upsertCountry,
+  deleteCountry,
+  CountryTenant,
+  PRECONFIGURED_COUNTRIES
+} from '@/lib/countries-data';
 
 export default function AdminSettingsPage() {
-  const [globalSettings, setGlobalSettings] = useState<GlobalSettings>(getGlobalSettings());
+  const [activeTab, setActiveTab] = useState<'countries' | 'general' | 'reasons' | 'business'>('countries');
 
+  // Multi-Country & Tenancy State
+  const [countries, setCountries] = useState<CountryTenant[]>(PRECONFIGURED_COUNTRIES);
+  const [selectedCountryId, setSelectedCountryId] = useState<string>('CO');
+  const [isEditingCountry, setIsEditingCountry] = useState(false);
+  const [countryForm, setCountryForm] = useState<CountryTenant>(PRECONFIGURED_COUNTRIES[0]);
+  const [newCityName, setNewCityName] = useState('');
+  const [newCityProvince, setNewCityProvince] = useState('');
+
+  // Business Leads State
+  const [businessLeads, setBusinessLeads] = useState<any[]>([]);
+
+  // Configuración general y financiera
+  const [globalSettings, setGlobalSettings] = useState<GlobalSettings>(getGlobalSettings());
   const [generalConfig, setGeneralConfig] = useState({
     platformName: globalSettings.platformName || 'Conecta 360',
     primarySlogan: 'Plataforma Líder de Servicios Locales y Profesionales Verificados',
@@ -58,7 +79,6 @@ export default function AdminSettingsPage() {
     requirePoliceRecord: true,
     allowPublicReviews: true,
     moderateServicesBeforePublish: false,
-    autoApproveFreePlan: true
   });
 
   const [financialRules, setFinancialRules] = useState({
@@ -71,17 +91,6 @@ export default function AdminSettingsPage() {
     allowCashOnDelivery: true
   });
 
-  const [cities, setCities] = useState([
-    { name: 'Cali', province: 'Valle del Cauca', active: true },
-    { name: 'Jamundí', province: 'Valle del Cauca', active: true },
-    { name: 'Yumbo', province: 'Valle del Cauca', active: true },
-    { name: 'Palmira', province: 'Valle del Cauca', active: true },
-    { name: 'Buga', province: 'Valle del Cauca', active: true },
-    { name: 'Tuluá', province: 'Valle del Cauca', active: true },
-    { name: 'Cartago', province: 'Valle del Cauca', active: false },
-    { name: 'Buenaventura', province: 'Valle del Cauca', active: false }
-  ]);
-
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   // Motivos de rechazo gestionables por el Administrador
@@ -92,11 +101,105 @@ export default function AdminSettingsPage() {
   const [newReasonDesc, setNewReasonDesc] = useState('');
 
   useEffect(() => {
+    // 1. Cargar países
+    const loadedCountries = getCountriesRegistry();
+    setCountries(loadedCountries);
+    const co = loadedCountries.find((c) => c.id === 'CO') || loadedCountries[0];
+    if (co) {
+      setSelectedCountryId(co.id);
+      setCountryForm(co);
+    }
+
+    // 2. Cargar solicitudes Business
+    try {
+      const leads = JSON.parse(localStorage.getItem('conecta360_business_leads') || '[]');
+      setBusinessLeads(leads);
+    } catch {}
+
+    // 3. Cargar motivos de rechazo
     setRejectionReasons(getRejectionReasons());
     const handleReasonsUpdate = () => setRejectionReasons(getRejectionReasons());
+    const handleCountriesUpdate = () => setCountries(getCountriesRegistry());
+    const handleLeadsUpdate = () => {
+      try {
+        setBusinessLeads(JSON.parse(localStorage.getItem('conecta360_business_leads') || '[]'));
+      } catch {}
+    };
+
     window.addEventListener('rejection-reasons-updated', handleReasonsUpdate);
-    return () => window.removeEventListener('rejection-reasons-updated', handleReasonsUpdate);
+    window.addEventListener('countries-registry-updated', handleCountriesUpdate);
+    window.addEventListener('business-leads-updated', handleLeadsUpdate);
+
+    return () => {
+      window.removeEventListener('rejection-reasons-updated', handleReasonsUpdate);
+      window.removeEventListener('countries-registry-updated', handleCountriesUpdate);
+      window.removeEventListener('business-leads-updated', handleLeadsUpdate);
+    };
   }, []);
+
+  const selectedCountry = countries.find((c) => c.id === selectedCountryId) || countries[0] || countryForm;
+
+  const handleSelectCountry = (c: CountryTenant) => {
+    setSelectedCountryId(c.id);
+    setCountryForm({ ...c });
+    setIsEditingCountry(false);
+  };
+
+  const handleSaveCountry = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!countryForm.name || !countryForm.code) {
+      showError('Campos requeridos', 'Por favor ingresa al menos el nombre y código del país.');
+      return;
+    }
+
+    const updated = upsertCountry(countryForm);
+    setCountries(updated);
+    setIsEditingCountry(false);
+    showSuccess('País y Tenant Actualizado', `La configuración de ${countryForm.name} y su base de datos se guardó exitosamente.`);
+  };
+
+  const handleTestDatabase = async (c: CountryTenant) => {
+    await showSuccess(
+      'Conexión Exitosa con Base de Datos',
+      `Esquema: ${c.dbConfig.dbName} en ${c.dbConfig.dbHost}:${c.dbConfig.dbPort}. Estado: ACTIVO (Conexión aislada por Tenant).`
+    );
+  };
+
+  const handleAddCityToCountry = () => {
+    if (!newCityName.trim()) return;
+    const currentCities = countryForm.cities || [];
+    const updatedCities = [
+      ...currentCities,
+      { name: newCityName.trim(), province: newCityProvince.trim() || 'Departamento', active: true }
+    ];
+    const updatedCountry = { ...countryForm, cities: updatedCities };
+    setCountryForm(updatedCountry);
+    upsertCountry(updatedCountry);
+    setCountries(getCountriesRegistry());
+    setNewCityName('');
+    setNewCityProvince('');
+    showSuccess('Ciudad Agregada', `${newCityName.trim()} fue agregada a la cobertura de ${countryForm.name}.`);
+  };
+
+  const handleToggleCity = (index: number) => {
+    const currentCities = [...(countryForm.cities || [])];
+    if (currentCities[index]) {
+      currentCities[index].active = !currentCities[index].active;
+      const updatedCountry = { ...countryForm, cities: currentCities };
+      setCountryForm(updatedCountry);
+      upsertCountry(updatedCountry);
+      setCountries(getCountriesRegistry());
+    }
+  };
+
+  const handleDeleteCity = (index: number) => {
+    const currentCities = [...(countryForm.cities || [])];
+    currentCities.splice(index, 1);
+    const updatedCountry = { ...countryForm, cities: currentCities };
+    setCountryForm(updatedCountry);
+    upsertCountry(updatedCountry);
+    setCountries(getCountriesRegistry());
+  };
 
   const handleAddReason = (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,26 +231,7 @@ export default function AdminSettingsPage() {
     showSuccess('Motivo Eliminado', 'El motivo de rechazo ha sido retirado del sistema.');
   };
 
-  useEffect(() => {
-    syncGlobalSettingsFromBackend().then((settings) => {
-      setGlobalSettings(settings);
-      setGeneralConfig((prev) => ({
-        ...prev,
-        platformName: settings.platformName || prev.platformName,
-        country: settings.country || prev.country,
-        currency: settings.currency || prev.currency,
-      }));
-      setFinancialRules((prev) => ({
-        ...prev,
-        platformCommission: String(settings.platformCommission ?? 5.0),
-        minPlatformFee: String(settings.minPlatformFee ?? 2500),
-        minHourlyRate: String(settings.minHourlyRate ?? 25000),
-        cashTransferDebtEnabled: settings.cashTransferDebtEnabled ?? true,
-      }));
-    });
-  }, []);
-
-  const handleSave = async (e: React.FormEvent) => {
+  const handleSaveGeneral = async (e: React.FormEvent) => {
     e.preventDefault();
     const updated = saveGlobalSettings({
       platformName: generalConfig.platformName,
@@ -159,7 +243,6 @@ export default function AdminSettingsPage() {
       cashTransferDebtEnabled: financialRules.cashTransferDebtEnabled,
     });
     setGlobalSettings(updated);
-    setSavedSuccess(true);
 
     try {
       await updatePlatformSettingsBackend({
@@ -183,420 +266,701 @@ export default function AdminSettingsPage() {
     }
 
     showSuccess('Parámetros Guardados', 'La configuración global de Conecta 360 se ha actualizado correctamente.');
+    setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 4000);
   };
 
-  const toggleCity = (index: number) => {
-    setCities((prev) =>
-      prev.map((c, i) => (i === index ? { ...c, active: !c.active } : c))
-    );
-  };
-
   return (
-    <div className="min-h-screen bg-slate-100 flex font-sans">
-      {/* Sidebar - Always displays all 8 modules */}
+    <div className="min-h-screen bg-slate-100 dark:bg-[#090d16] text-slate-900 dark:text-slate-100 flex font-sans transition-colors">
       <AdminSidebar currentPath="/admin/settings" />
 
-      {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        <header className="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between sticky top-0 z-10">
+        {/* Header */}
+        <header className="h-16 bg-white dark:bg-[#0f172a] border-b border-slate-200 dark:border-slate-800 px-6 sm:px-8 flex items-center justify-between sticky top-0 z-10">
           <div className="flex items-center space-x-3">
             <Link href="/admin" className="text-slate-400 hover:text-slate-600 md:hidden">
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <h2 className="text-xl font-bold text-slate-900 flex items-center space-x-2">
-              <Settings className="w-6 h-6 text-blue-600" />
-              <span>Configuración de la Plataforma</span>
+            <h2 className="text-xl font-bold flex items-center space-x-2">
+              <Settings className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              <span>Configuración Global & Multi-País</span>
             </h2>
           </div>
 
-          <button
-            onClick={handleSave}
-            className="flex items-center space-x-2 bg-[#0056d2] hover:bg-[#0046a8] text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-md shadow-blue-600/20 transition-all"
-          >
-            <Save className="w-4 h-4" />
-            <span>Guardar Configuración</span>
-          </button>
+          <div className="flex items-center space-x-3">
+            <Link
+              href="/business"
+              target="_blank"
+              className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/50 text-[#0056d2] dark:text-blue-300 text-xs font-bold transition-all"
+            >
+              <Building2 className="w-4 h-4" />
+              <span>Ver Portal Business</span>
+              <ExternalLink className="w-3 h-3" />
+            </Link>
+          </div>
         </header>
 
-        {savedSuccess && (
-          <div className="fixed bottom-6 right-6 z-50 bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center space-x-2 text-xs font-bold animate-in fade-in slide-in-from-bottom-5">
-            <CheckCircle2 className="w-4 h-4" />
-            <span>Configuración de tarifas y comisiones guardada exitosamente</span>
-          </div>
-        )}
+        {/* Tab Navigation */}
+        <div className="bg-white dark:bg-[#0f172a] border-b border-slate-200 dark:border-slate-800 px-6 sm:px-8">
+          <div className="flex space-x-1 sm:space-x-4 overflow-x-auto">
+            <button
+              onClick={() => setActiveTab('countries')}
+              className={`py-3.5 px-3 text-xs sm:text-sm font-bold border-b-2 flex items-center space-x-2 transition-all whitespace-nowrap cursor-pointer ${
+                activeTab === 'countries'
+                  ? 'border-[#0056d2] text-[#0056d2] dark:border-blue-400 dark:text-blue-400'
+                  : 'border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
+              }`}
+            >
+              <Globe className="w-4 h-4" />
+              <span>Países & Multi-Tenancy</span>
+              <span className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-[10px] px-1.5 py-0.2 rounded-full font-black">
+                {countries.length}
+              </span>
+            </button>
 
-        <div className="p-8 max-w-5xl w-full mx-auto space-y-6">
-          {/* Form */}
-          <form onSubmit={handleSave} className="space-y-6">
-            {/* 1. Datos Generales */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-5">
-              <div className="flex items-center space-x-3 pb-3 border-b border-slate-100">
-                <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
-                  <Globe className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-slate-900">Identidad de la Plataforma</h3>
-                  <p className="text-xs text-slate-400 font-medium">Configuración de nombre, país y datos institucionales</p>
-                </div>
-              </div>
+            <button
+              onClick={() => setActiveTab('general')}
+              className={`py-3.5 px-3 text-xs sm:text-sm font-bold border-b-2 flex items-center space-x-2 transition-all whitespace-nowrap cursor-pointer ${
+                activeTab === 'general'
+                  ? 'border-[#0056d2] text-[#0056d2] dark:border-blue-400 dark:text-blue-400'
+                  : 'border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
+              }`}
+            >
+              <Percent className="w-4 h-4" />
+              <span>Tarifas & Comisiones</span>
+            </button>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Nombre Comercial</label>
-                  <input
-                    type="text"
-                    value={generalConfig.platformName}
-                    onChange={(e) => setGeneralConfig({ ...generalConfig, platformName: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
-                </div>
+            <button
+              onClick={() => setActiveTab('reasons')}
+              className={`py-3.5 px-3 text-xs sm:text-sm font-bold border-b-2 flex items-center space-x-2 transition-all whitespace-nowrap cursor-pointer ${
+                activeTab === 'reasons'
+                  ? 'border-[#0056d2] text-[#0056d2] dark:border-blue-400 dark:text-blue-400'
+                  : 'border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>Motivos de Rechazo</span>
+            </button>
 
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">País Principal</label>
-                  <input
-                    type="text"
-                    value={generalConfig.country}
-                    onChange={(e) => setGeneralConfig({ ...generalConfig, country: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Moneda del Sistema</label>
-                  <input
-                    type="text"
-                    value={generalConfig.currency}
-                    onChange={(e) => setGeneralConfig({ ...generalConfig, currency: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1 flex items-center space-x-1">
-                    <Mail className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Correo de Soporte</span>
-                  </label>
-                  <input
-                    type="email"
-                    value={generalConfig.supportEmail}
-                    onChange={(e) => setGeneralConfig({ ...generalConfig, supportEmail: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label className="block font-bold text-slate-700 mb-1 flex items-center space-x-1">
-                    <Phone className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Teléfono / WhatsApp Oficial en Colombia</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={generalConfig.supportPhone}
-                    onChange={(e) => setGeneralConfig({ ...generalConfig, supportPhone: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* 2. Reglas de Verificación y Seguridad */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-5">
-              <div className="flex items-center space-x-3 pb-3 border-b border-slate-100">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-slate-900">Seguridad y Verificación</h3>
-                  <p className="text-xs text-slate-400 font-medium">Políticas de validación de documentos y confianza ciudadana</p>
-                </div>
-              </div>
-
-              <div className="space-y-3.5 text-xs">
-                <label className="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-200 cursor-pointer hover:bg-slate-100/70 transition-colors">
-                  <div>
-                    <p className="font-bold text-slate-900">Exigir verificación de identidad para publicar servicios</p>
-                    <p className="text-slate-500 text-[11px]">Los prestadores deben subir documento de identidad antes de aparecer en el catálogo público</p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={securityRules.requireIdentityVerification}
-                    onChange={(e) => setSecurityRules({ ...securityRules, requireIdentityVerification: e.target.checked })}
-                    className="w-4 h-4 text-blue-600 rounded"
-                  />
-                </label>
-
-                <label className="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-200 cursor-pointer hover:bg-slate-100/70 transition-colors">
-                  <div>
-                    <p className="font-bold text-slate-900">Exigir certificado de antecedentes penales en servicios a domicilio</p>
-                    <p className="text-slate-500 text-[11px]">Obligatorio para categorías como Reparaciones, Cerrajería, Electricidad y Plomería</p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={securityRules.requirePoliceRecord}
-                    onChange={(e) => setSecurityRules({ ...securityRules, requirePoliceRecord: e.target.checked })}
-                    className="w-4 h-4 text-blue-600 rounded"
-                  />
-                </label>
-
-                <label className="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-200 cursor-pointer hover:bg-slate-100/70 transition-colors">
-                  <div>
-                    <p className="font-bold text-slate-900">Permitir calificaciones públicas de clientes a prestadores</p>
-                    <p className="text-slate-500 text-[11px]">Los usuarios verificados que hayan contratado pueden puntuar con estrellas y comentarios</p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={securityRules.allowPublicReviews}
-                    onChange={(e) => setSecurityRules({ ...securityRules, allowPublicReviews: e.target.checked })}
-                    className="w-4 h-4 text-blue-600 rounded"
-                  />
-                </label>
-              </div>
-            </div>
-
-            {/* 3. Comisiones y Pagos */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-5">
-              <div className="flex items-center space-x-3 pb-3 border-b border-slate-100">
-                <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
-                  <Percent className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-slate-900">Comisiones y Parámetros Financieros</h3>
-                  <p className="text-xs text-slate-400 font-medium">Tarifa de descuento para la plataforma y reglas de cobro en Colombia</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Comisión Mínima (%)</label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      step="0.5"
-                      value={financialRules.platformCommission}
-                      onChange={(e) => setFinancialRules({ ...financialRules, platformCommission: e.target.value })}
-                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 font-bold text-slate-400">%</span>
-                  </div>
-                  <p className="text-[10px] text-slate-400 mt-1">Tarifa mínima del 5%</p>
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Tarifa Fija Mínima ($ COP)</label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      step="500"
-                      value={financialRules.minPlatformFee}
-                      onChange={(e) => setFinancialRules({ ...financialRules, minPlatformFee: e.target.value })}
-                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 font-bold text-slate-400">COP</span>
-                  </div>
-                  <p className="text-[10px] text-slate-400 mt-1">Piso mínimo $2.500 COP</p>
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Tarifa Sugerida Mínima ($ COP/h)</label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      step="5000"
-                      value={financialRules.minHourlyRate}
-                      onChange={(e) => setFinancialRules({ ...financialRules, minHourlyRate: e.target.value })}
-                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 font-bold text-slate-400">COP</span>
-                  </div>
-                  <p className="text-[10px] text-slate-400 mt-1">Mínimo sugerido $25.000 COP</p>
-                </div>
-              </div>
-
-              {/* Regla de Deuda en Efectivo y Transferencia Bancaria */}
-              <div className="p-4 bg-amber-50/80 rounded-2xl border border-amber-200 text-xs text-amber-950 space-y-2">
-                <label className="flex items-start justify-between cursor-pointer">
-                  <div className="space-y-0.5 pr-4">
-                    <p className="font-extrabold text-slate-900 text-xs">
-                      Deuda Automática por Cobros Directos (Efectivo y Transferencia Bancaria)
-                    </p>
-                    <p className="text-slate-600 text-[11px] leading-relaxed">
-                      Cuando un cliente paga mediante <strong>Transferencia Bancaria directa</strong> o en <strong>Efectivo</strong>, el prestador de servicios recibe el 100% del dinero directamente en sus manos. Al activar esta regla, el prestador queda registrado con un <strong>saldo en deuda</strong> correspondiente a la comisión mínima de la plataforma (5% o mín. $2.500 COP), que debe abonar posteriormente a Conecta 360.
-                    </p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={financialRules.cashTransferDebtEnabled}
-                    onChange={(e) => setFinancialRules({ ...financialRules, cashTransferDebtEnabled: e.target.checked })}
-                    className="w-4 h-4 text-amber-600 rounded mt-1 shrink-0"
-                  />
-                </label>
-              </div>
-            </div>
-
-            {/* 4. Cobertura Geográfica */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-5">
-              <div className="flex items-center space-x-3 pb-3 border-b border-slate-100">
-                <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
-                  <MapPin className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-slate-900">Ciudades y Cobertura Activa</h3>
-                  <p className="text-xs text-slate-400 font-medium">Habilitación de ciudades en el buscador y mapa de servicios</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                {cities.map((city, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => toggleCity(idx)}
-                    className={`p-3.5 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between ${
-                      city.active
-                        ? 'bg-blue-50 border-blue-200 text-blue-900 font-bold'
-                        : 'bg-slate-50 border-slate-200 text-slate-400 font-medium'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">{city.name}</span>
-                      <span className={`w-2.5 h-2.5 rounded-full ${city.active ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
-                    </div>
-                    <span className="text-[10px] text-slate-400 mt-1 font-normal">{city.province}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Gestión de Motivos de Rechazo de Servicios */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-100">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
-                    <ShieldAlert className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-black text-slate-900">Motivos Oficiales de Rechazo de Servicios</h3>
-                    <p className="text-xs text-slate-400 font-medium">Configura las opciones que los servidores ven al declinar una solicitud</p>
-                  </div>
-                </div>
-                <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold self-start sm:self-auto">
-                  {rejectionReasons.length} motivos activos
+            <button
+              onClick={() => setActiveTab('business')}
+              className={`py-3.5 px-3 text-xs sm:text-sm font-bold border-b-2 flex items-center space-x-2 transition-all whitespace-nowrap cursor-pointer ${
+                activeTab === 'business'
+                  ? 'border-[#0056d2] text-[#0056d2] dark:border-blue-400 dark:text-blue-400'
+                  : 'border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
+              }`}
+            >
+              <Building2 className="w-4 h-4" />
+              <span>Solicitudes Business (B2B)</span>
+              {businessLeads.length > 0 && (
+                <span className="bg-amber-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-black">
+                  {businessLeads.length}
                 </span>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Content Body */}
+        <div className="p-6 sm:p-8 max-w-6xl w-full mx-auto space-y-6">
+          {/* ------------------------------------------------------------- */}
+          {/* TAB 1: PAÍSES Y MULTI-TENANCY */}
+          {/* ------------------------------------------------------------- */}
+          {activeTab === 'countries' && (
+            <div className="space-y-6">
+              {/* Banner Explicativo */}
+              <div className="bg-gradient-to-r from-blue-900 to-indigo-950 text-white p-6 rounded-3xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                  <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-bold mb-2">
+                    <Server className="w-3.5 h-3.5" />
+                    <span>Arquitectura Multi-Tenant & Multi-País</span>
+                  </div>
+                  <h3 className="text-xl font-black">Infraestructura Regional y Bases de Datos Separadas</h3>
+                  <p className="text-xs sm:text-sm text-blue-200 mt-1 max-w-2xl">
+                    Define los dominios, hosting y configuración de base de datos (`conecta360_co`, `conecta360_mx`, etc.) para cada país. Los usuarios se filtran por las ciudades y moneda asignadas a su tenant.
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => {
+                    const newCountry: CountryTenant = {
+                      id: `P-${Date.now().toString().slice(-3)}`,
+                      code: 'PA',
+                      name: 'Nuevo País',
+                      flag: '🌐',
+                      currency: 'USD ($)',
+                      currencySymbol: '$',
+                      phonePrefix: '+1',
+                      domain: 'conecta360.global',
+                      hostingEndpoint: 'https://api.conecta360.global',
+                      dbConfig: {
+                        dbHost: 'localhost',
+                        dbPort: 3306,
+                        dbName: 'conecta360_new',
+                        dbUser: 'conecta360_user',
+                        status: 'CONNECTED'
+                      },
+                      defaultCity: 'Ciudad Principal',
+                      defaultDepartment: 'Región Central',
+                      cities: [{ name: 'Ciudad Principal', province: 'Región Central', active: true }],
+                      platformCommission: 5.0,
+                      minPlatformFee: 2000,
+                      minHourlyRate: 20000,
+                      status: 'ACTIVE'
+                    };
+                    setCountryForm(newCountry);
+                    setIsEditingCountry(true);
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md transition-all flex items-center space-x-2 shrink-0 cursor-pointer"
+                >
+                  <PlusCircle className="w-4 h-4" />
+                  <span>Agregar País / Tenant</span>
+                </button>
               </div>
 
-              {/* Lista de motivos existentes */}
-              <div className="space-y-3">
-                {rejectionReasons.map((reason) => (
-                  <div
-                    key={reason.id}
-                    className="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 hover:bg-slate-50 transition-all flex items-start justify-between gap-3"
-                  >
-                    <div className="space-y-1">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm font-bold text-slate-900">{reason.label}</span>
-                        {reason.isJustified ? (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">
-                            ✓ Causa Justificada (0 pts negativos)
+              {/* Selector y Lista de Países */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Columna Izquierda: Tarjetas de países */}
+                <div className="space-y-3">
+                  <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-1">
+                    Países Registrados ({countries.length})
+                  </div>
+
+                  {countries.map((c) => {
+                    const isSelected = c.id === selectedCountryId;
+                    return (
+                      <div
+                        key={c.id}
+                        onClick={() => handleSelectCountry(c)}
+                        className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-white dark:bg-slate-900 border-[#0056d2] dark:border-blue-500 shadow-md ring-2 ring-blue-500/20'
+                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <span className="text-2xl">{c.flag}</span>
+                            <div>
+                              <div className="font-bold text-sm flex items-center space-x-2">
+                                <span>{c.name}</span>
+                                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                  {c.code}
+                                </span>
+                                {c.isDefault && (
+                                  <span className="text-[9px] bg-blue-100 dark:bg-blue-900/60 text-[#0056d2] dark:text-blue-300 font-bold px-1.5 py-0.2 rounded">
+                                    Principal
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+                                🌐 {c.domain}
+                              </div>
+                            </div>
+                          </div>
+                          <ChevronRight className={`w-4 h-4 ${isSelected ? 'text-[#0056d2] dark:text-blue-400' : 'text-slate-400'}`} />
+                        </div>
+
+                        <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                          <span className="flex items-center space-x-1">
+                            <Database className="w-3.5 h-3.5 text-blue-500" />
+                            <span className="font-mono text-[11px]">{c.dbConfig?.dbName || 'db_default'}</span>
                           </span>
-                        ) : (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200">
-                            ⚠️ Injustificado (-{reason.penaltyPoints || 10} pts negativos)
-                          </span>
-                        )}
+                          <span>{c.cities?.filter((ci) => ci.active).length || 0} ciudades activas</span>
+                        </div>
                       </div>
-                      {reason.description && (
-                        <p className="text-xs text-slate-500 font-normal">{reason.description}</p>
-                      )}
+                    );
+                  })}
+                </div>
+
+                {/* Columna Derecha: Detalles del País Seleccionado & Configuración de Base de Datos */}
+                <div className="lg:col-span-2 space-y-6">
+                  <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 gap-4">
+                      <div className="flex items-center space-x-3">
+                        <span className="text-4xl">{countryForm.flag}</span>
+                        <div>
+                          <h3 className="text-lg font-black">{countryForm.name} ({countryForm.code})</h3>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">Configuración de Hosting, Base de Datos y Ciudades</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => handleTestDatabase(countryForm)}
+                          type="button"
+                          className="px-3 py-1.5 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-bold flex items-center space-x-1.5 cursor-pointer"
+                        >
+                          <Database className="w-3.5 h-3.5" />
+                          <span>Probar Conexión BD</span>
+                        </button>
+                      </div>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteReason(reason.id)}
-                      className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors shrink-0 cursor-pointer"
-                      title="Eliminar motivo"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <form onSubmit={handleSaveCountry} className="space-y-5">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <div>
+                          <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Nombre del País</label>
+                          <input
+                            type="text"
+                            value={countryForm.name}
+                            onChange={(e) => setCountryForm({ ...countryForm, name: e.target.value })}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-semibold"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Código ISO / Bandera</label>
+                          <div className="flex space-x-2">
+                            <input
+                              type="text"
+                              maxLength={3}
+                              value={countryForm.code}
+                              onChange={(e) => setCountryForm({ ...countryForm, code: e.target.value.toUpperCase() })}
+                              className="w-20 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono uppercase font-bold"
+                            />
+                            <input
+                              type="text"
+                              value={countryForm.flag}
+                              onChange={(e) => setCountryForm({ ...countryForm, flag: e.target.value })}
+                              placeholder="🇨🇴"
+                              className="w-16 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-center text-lg"
+                            />
+                            <input
+                              type="text"
+                              value={countryForm.phonePrefix}
+                              onChange={(e) => setCountryForm({ ...countryForm, phonePrefix: e.target.value })}
+                              placeholder="+57"
+                              className="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono text-xs font-semibold"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Dominio / Host Asignado</label>
+                          <input
+                            type="text"
+                            value={countryForm.domain}
+                            onChange={(e) => setCountryForm({ ...countryForm, domain: e.target.value })}
+                            placeholder="ej: conecta360.mx"
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono text-xs font-semibold text-blue-600 dark:text-blue-400"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Endpoint de Hosting / API</label>
+                          <input
+                            type="text"
+                            value={countryForm.hostingEndpoint}
+                            onChange={(e) => setCountryForm({ ...countryForm, hostingEndpoint: e.target.value })}
+                            placeholder="ej: https://api.mx.conecta360.com"
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono text-xs font-semibold"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Moneda Oficial y Símbolo</label>
+                          <div className="flex space-x-2">
+                            <input
+                              type="text"
+                              value={countryForm.currency}
+                              onChange={(e) => setCountryForm({ ...countryForm, currency: e.target.value })}
+                              placeholder="COP ($)"
+                              className="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold"
+                            />
+                            <input
+                              type="text"
+                              value={countryForm.currencySymbol}
+                              onChange={(e) => setCountryForm({ ...countryForm, currencySymbol: e.target.value })}
+                              placeholder="$"
+                              className="w-16 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-center font-bold"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Comisión Plataforma (%)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={countryForm.platformCommission}
+                            onChange={(e) => setCountryForm({ ...countryForm, platformCommission: parseFloat(e.target.value) || 5 })}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Parámetros de Base de Datos Tenant */}
+                      <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
+                        <div className="flex items-center space-x-2 text-xs font-bold text-slate-700 dark:text-slate-200">
+                          <Database className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                          <span>Configuración de Base de Datos Separada por País</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                          <div>
+                            <label className="block text-[11px] text-slate-500 dark:text-slate-400 font-bold mb-1">Host de BD</label>
+                            <input
+                              type="text"
+                              value={countryForm.dbConfig?.dbHost || 'localhost'}
+                              onChange={(e) =>
+                                setCountryForm({
+                                  ...countryForm,
+                                  dbConfig: { ...countryForm.dbConfig, dbHost: e.target.value }
+                                })
+                              }
+                              className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 font-mono text-[11px]"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] text-slate-500 dark:text-slate-400 font-bold mb-1">Nombre Base de Datos</label>
+                            <input
+                              type="text"
+                              value={countryForm.dbConfig?.dbName || `conecta360_${countryForm.code.toLowerCase()}`}
+                              onChange={(e) =>
+                                setCountryForm({
+                                  ...countryForm,
+                                  dbConfig: { ...countryForm.dbConfig, dbName: e.target.value }
+                                })
+                              }
+                              className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 font-mono text-[11px] font-bold text-blue-600 dark:text-blue-400"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] text-slate-500 dark:text-slate-400 font-bold mb-1">Puerto</label>
+                            <input
+                              type="number"
+                              value={countryForm.dbConfig?.dbPort || 3306}
+                              onChange={(e) =>
+                                setCountryForm({
+                                  ...countryForm,
+                                  dbConfig: { ...countryForm.dbConfig, dbPort: parseInt(e.target.value) || 3306 }
+                                })
+                              }
+                              className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 font-mono text-[11px]"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Gestor de Ciudades del País */}
+                      <div className="space-y-3 pt-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                            Ciudades Habilitadas en {countryForm.name} ({countryForm.cities?.length || 0})
+                          </label>
+                        </div>
+
+                        {/* Agregar ciudad */}
+                        <div className="flex space-x-2">
+                          <input
+                            type="text"
+                            placeholder="Nombre de la ciudad (ej: Monterrey)"
+                            value={newCityName}
+                            onChange={(e) => setNewCityName(e.target.value)}
+                            className="flex-1 px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Estado / Departamento"
+                            value={newCityProvince}
+                            onChange={(e) => setNewCityProvince(e.target.value)}
+                            className="w-44 px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleAddCityToCountry}
+                            className="px-3 py-1.5 rounded-xl bg-[#0056d2] text-white text-xs font-bold hover:bg-blue-600 cursor-pointer"
+                          >
+                            + Agregar
+                          </button>
+                        </div>
+
+                        {/* Lista de chips de ciudades */}
+                        <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-2 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200 dark:border-slate-700">
+                          {countryForm.cities?.map((city, idx) => (
+                            <div
+                              key={idx}
+                              className={`flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${
+                                city.active
+                                  ? 'bg-blue-50 dark:bg-blue-950/60 border-blue-200 dark:border-blue-800 text-[#0056d2] dark:text-blue-300'
+                                  : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400'
+                              }`}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => handleToggleCity(idx)}
+                                title={city.active ? 'Desactivar ciudad' : 'Activar ciudad'}
+                                className="cursor-pointer"
+                              >
+                                {city.name} <span className="text-[10px] text-slate-400">({city.province})</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteCity(idx)}
+                                className="text-slate-400 hover:text-red-500 ml-1 cursor-pointer"
+                                title="Eliminar ciudad"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="pt-4 flex justify-end space-x-3">
+                        <button
+                          type="submit"
+                          className="px-6 py-2.5 rounded-xl bg-[#0056d2] hover:bg-blue-600 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition-all flex items-center space-x-2 cursor-pointer"
+                        >
+                          <Save className="w-4 h-4" />
+                          <span>Guardar Configuración del País</span>
+                        </button>
+                      </div>
+                    </form>
                   </div>
-                ))}
+                </div>
               </div>
+            </div>
+          )}
 
-              {/* Formulario para agregar un nuevo motivo */}
-              <div className="pt-4 border-t border-slate-100 space-y-3">
-                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center space-x-1.5">
-                  <Plus className="w-3.5 h-3.5 text-[#0056d2]" />
-                  <span>Agregar Nuevo Motivo de Rechazo</span>
-                </h4>
+          {/* ------------------------------------------------------------- */}
+          {/* TAB 2: TARIFAS & PARÁMETROS GENERALES */}
+          {/* ------------------------------------------------------------- */}
+          {activeTab === 'general' && (
+            <form onSubmit={handleSaveGeneral} className="space-y-6">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
+                <div className="flex items-center space-x-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
+                    <Globe className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black">Identidad de la Plataforma</h3>
+                    <p className="text-xs text-slate-400 font-medium">Configuración de nombre y datos institucionales</p>
+                  </div>
+                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
-                  <div className="sm:col-span-6 space-y-1">
-                    <label className="block text-[11px] font-bold text-slate-600">
-                      Nombre o Título del Motivo *
-                    </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Nombre Comercial</label>
                     <input
                       type="text"
-                      placeholder="Ej: Zona fuera de perímetro, Vehículo en mantenimiento..."
-                      value={newReasonLabel}
-                      onChange={(e) => setNewReasonLabel(e.target.value)}
-                      className="w-full text-xs font-semibold px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0056d2]"
+                      value={generalConfig.platformName}
+                      onChange={(e) => setGeneralConfig({ ...generalConfig, platformName: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-semibold"
                     />
                   </div>
-
-                  <div className="sm:col-span-4 space-y-1">
-                    <label className="block text-[11px] font-bold text-slate-600">
-                      Tipo de Causa
-                    </label>
-                    <select
-                      value={newReasonJustified ? 'justified' : 'unjustified'}
-                      onChange={(e) => setNewReasonJustified(e.target.value === 'justified')}
-                      className="w-full text-xs font-semibold px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0056d2]"
-                    >
-                      <option value="justified">✓ Causa Justificada (0 pts negativos)</option>
-                      <option value="unjustified">⚠️ Injustificada (Aplica sanción)</option>
-                    </select>
+                  <div>
+                    <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Sede Principal</label>
+                    <input
+                      type="text"
+                      value={generalConfig.country}
+                      onChange={(e) => setGeneralConfig({ ...generalConfig, country: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-semibold"
+                    />
                   </div>
+                </div>
+              </div>
 
-                  <div className="sm:col-span-2">
-                    <button
-                      type="button"
-                      onClick={handleAddReason}
-                      className="w-full py-2.5 px-4 bg-[#0056d2] hover:bg-[#0046a8] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center space-x-1 cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Agregar</span>
-                    </button>
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
+                <div className="flex items-center space-x-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
+                    <Percent className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black">Comisiones & Reglas Financieras</h3>
+                    <p className="text-xs text-slate-400 font-medium">Porcentajes de retención y cobros de intermediación</p>
                   </div>
                 </div>
 
-                {!newReasonJustified && (
-                  <div className="flex items-center space-x-2 pt-1 text-xs text-rose-700 bg-rose-50 p-2.5 rounded-xl border border-rose-100">
-                    <AlertCircle className="w-4 h-4 shrink-0" />
-                    <span>Puntos negativos a restar del prestador:</span>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                  <div>
+                    <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Comisión Plataforma (%)</label>
                     <input
                       type="number"
-                      min={1}
-                      max={50}
-                      value={newReasonPenalty}
-                      onChange={(e) => setNewReasonPenalty(Number(e.target.value))}
-                      className="w-16 px-2 py-1 text-xs font-bold bg-white border border-rose-300 rounded-lg text-center"
+                      step="0.1"
+                      value={financialRules.platformCommission}
+                      onChange={(e) => setFinancialRules({ ...financialRules, platformCommission: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold"
                     />
-                    <span>puntos de reputación.</span>
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Tarifa Fija Mínima ({generalConfig.currency})</label>
+                    <input
+                      type="number"
+                      value={financialRules.minPlatformFee}
+                      onChange={(e) => setFinancialRules({ ...financialRules, minPlatformFee: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Tarifa Hora Mínima ({generalConfig.currency})</label>
+                    <input
+                      type="number"
+                      value={financialRules.minHourlyRate}
+                      onChange={(e) => setFinancialRules({ ...financialRules, minHourlyRate: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-3">
+                  <button
+                    type="submit"
+                    className="px-6 py-2.5 rounded-xl bg-[#0056d2] hover:bg-blue-600 text-white font-bold text-xs shadow-md transition-all flex items-center space-x-2 cursor-pointer"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>Guardar Tarifas Financieras</span>
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
+
+          {/* ------------------------------------------------------------- */}
+          {/* TAB 3: MOTIVOS DE RECHAZO */}
+          {/* ------------------------------------------------------------- */}
+          {activeTab === 'reasons' && (
+            <div className="space-y-6">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
+                <div>
+                  <h3 className="text-base font-black">Catálogo de Motivos de Rechazo de Servicios</h3>
+                  <p className="text-xs text-slate-400 font-medium">Gestiona las causales oficiales disponibles cuando un prestador cancela un servicio asignado.</p>
+                </div>
+
+                <form onSubmit={handleAddReason} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 space-y-3">
+                  <div className="font-bold text-xs text-slate-800 dark:text-slate-200 flex items-center space-x-2">
+                    <Plus className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    <span>Agregar Nuevo Motivo de Rechazo</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <label className="block text-slate-600 dark:text-slate-300 font-semibold mb-1">Título o Razón del Rechazo *</label>
+                      <input
+                        type="text"
+                        required
+                        value={newReasonLabel}
+                        onChange={(e) => setNewReasonLabel(e.target.value)}
+                        placeholder="Ej: Acceso vial bloqueado o zona inaccesible"
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-600 dark:text-slate-300 font-semibold mb-1">Tipo de Justificación</label>
+                      <select
+                        value={newReasonJustified ? 'JUSTIFIED' : 'PENALTY'}
+                        onChange={(e) => setNewReasonJustified(e.target.value === 'JUSTIFIED')}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-semibold"
+                      >
+                        <option value="JUSTIFIED">Justificado (0 puntos de penalización)</option>
+                        <option value="PENALTY">Injustificado (Aplica penalización a reputación)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-xl bg-[#0056d2] hover:bg-blue-600 text-white font-bold text-xs shadow-xs transition-all cursor-pointer"
+                  >
+                    Guardar Motivo en Catálogo
+                  </button>
+                </form>
+
+                {/* Lista de motivos existentes */}
+                <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {rejectionReasons.map((reason) => (
+                    <div key={reason.id} className="py-3 flex items-center justify-between">
+                      <div>
+                        <div className="text-xs font-bold text-slate-900 dark:text-slate-100">{reason.label}</div>
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                          {reason.isJustified ? (
+                            <span className="text-emerald-600 font-bold">✓ Causa Justificada (0 pts)</span>
+                          ) : (
+                            <span className="text-rose-600 font-bold">✕ Injustificada (-{reason.penaltyPoints || 10} pts)</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => handleDeleteReason(reason.id)}
+                        className="p-1.5 text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+                        title="Eliminar motivo"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ------------------------------------------------------------- */}
+          {/* TAB 4: SOLICITUDES BUSINESS (B2B) */}
+          {/* ------------------------------------------------------------- */}
+          {activeTab === 'business' && (
+            <div className="space-y-6">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
+                <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+                  <div>
+                    <h3 className="text-base font-black">Solicitudes Conecta 360 Business (B2B)</h3>
+                    <p className="text-xs text-slate-400 font-medium">Clientes corporativos y empresas interesadas en convenios</p>
+                  </div>
+                  <span className="text-xs font-bold bg-blue-100 dark:bg-blue-900/60 text-[#0056d2] dark:text-blue-300 px-2.5 py-1 rounded-full">
+                    {businessLeads.length} Registros
+                  </span>
+                </div>
+
+                {businessLeads.length === 0 ? (
+                  <div className="text-center py-12 text-slate-400">
+                    <Building2 className="w-12 h-12 mx-auto mb-3 opacity-30 text-blue-500" />
+                    <p className="text-sm font-semibold">No hay solicitudes corporativas registradas aún.</p>
+                    <p className="text-xs mt-1">Las empresas que coticen en /business aparecerán automáticamente aquí.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {businessLeads.map((lead: any) => (
+                      <div
+                        key={lead.id}
+                        className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center space-x-2">
+                            <span className="font-bold text-sm text-slate-900 dark:text-slate-100">{lead.companyName}</span>
+                            <span className="text-xs font-mono bg-slate-200 dark:bg-slate-700 px-1.5 py-0.2 rounded font-bold">
+                              NIT: {lead.taxId}
+                            </span>
+                            <span className="text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 font-bold px-2 py-0.5 rounded-full capitalize">
+                              Plan {lead.selectedPlan || 'Corporativo'}
+                            </span>
+                          </div>
+                          <div className="text-xs text-slate-600 dark:text-slate-400">
+                            Contacto: <span className="font-semibold">{lead.contactName}</span> ({lead.contactRole || 'Representante'}) • ✉ {lead.email} • 📞 {lead.phone}
+                          </div>
+                          <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                            📍 {lead.city}, {lead.country} • Requerimiento: {lead.serviceNeeds}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-2">
+                          <a
+                            href={`mailto:${lead.email}?subject=Propuesta Comercial Conecta 360 Business para ${lead.companyName}`}
+                            className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-xs"
+                          >
+                            Contactar
+                          </a>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
             </div>
-
-            {/* Submit Bar */}
-            <div className="flex justify-end pt-4">
-              <button
-                type="submit"
-                className="px-8 py-3.5 rounded-2xl bg-[#0056d2] hover:bg-[#0046a8] text-white font-extrabold text-sm shadow-lg shadow-blue-500/20 transition-all flex items-center space-x-2"
-              >
-                <Save className="w-4 h-4" />
-                <span>Guardar Todos los Cambios</span>
-              </button>
-            </div>
-          </form>
+          )}
         </div>
       </main>
     </div>

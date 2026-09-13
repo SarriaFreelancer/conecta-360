@@ -16,10 +16,13 @@ import {
   ChevronRight,
   User,
   Home,
-  LogOut
+  LogOut,
+  Building2,
+  Globe
 } from 'lucide-react';
 import { destroySession } from '@/lib/auth';
 import { showConfirm } from '@/lib/alerts';
+import ThemeToggle from '@/components/ThemeToggle';
 
 interface AdminSidebarProps {
   currentPath?: string;
@@ -33,7 +36,8 @@ export const ADMIN_MENU_ITEMS = [
   { name: 'Roles', href: '/admin/roles', icon: ShieldAlert },
   { name: 'Verificaciones', href: '/admin/verifications', icon: Award },
   { name: 'Suscripciones', href: '/admin/subscriptions', icon: CreditCard },
-  { name: 'Configuración', href: '/admin/settings', icon: Settings },
+  { name: 'Configuración & Países', href: '/admin/settings', icon: Settings },
+  { name: 'Conecta Business B2B', href: '/business', icon: Building2, externalBadge: 'B2B' },
 ];
 
 export default function AdminSidebar({ currentPath }: AdminSidebarProps) {
@@ -146,7 +150,16 @@ export default function AdminSidebar({ currentPath }: AdminSidebarProps) {
               }`}
             >
               <Icon className={`w-5 h-5 shrink-0 ${active ? 'text-white' : 'text-slate-400 group-hover:text-white'}`} />
-              {!isCollapsed && <span className="truncate text-xs">{item.name}</span>}
+              {!isCollapsed && (
+                <div className="flex items-center justify-between flex-1 min-w-0">
+                  <span className="truncate text-xs">{item.name}</span>
+                  {item.externalBadge && (
+                    <span className="text-[9px] bg-amber-500 text-white font-black px-1.5 py-0.2 rounded-full uppercase">
+                      {item.externalBadge}
+                    </span>
+                  )}
+                </div>
+              )}
 
               {/* Tooltip flotante al estar colapsado */}
               {isCollapsed && (
@@ -160,7 +173,13 @@ export default function AdminSidebar({ currentPath }: AdminSidebarProps) {
       </nav>
 
       {/* Bottom Actions */}
-      <div className="p-3 border-t border-slate-800 space-y-1.5">
+      <div className="p-3 border-t border-slate-800 space-y-2">
+        {/* Conmutador de tema */}
+        <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between px-2'} py-1 bg-slate-800/50 rounded-xl`}>
+          {!isCollapsed && <span className="text-xs text-slate-400 font-semibold">Tema</span>}
+          <ThemeToggle />
+        </div>
+
         <Link
           href="/dashboard"
           title="Ir a Portal Usuario"

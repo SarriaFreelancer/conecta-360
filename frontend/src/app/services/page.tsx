@@ -29,10 +29,11 @@ import {
   Users
 } from 'lucide-react';
 import { getCurrentUser, UserSession } from '@/lib/auth';
-import { ALL_COLOMBIAN_CITIES, DEFAULT_CITY } from '@/lib/colombia-data';
+import { DEFAULT_CITY } from '@/lib/colombia-data';
 import { getAdminCategories, API_BASE_URL } from '@/lib/admin-data';
 import MainNavbar from '@/components/MainNavbar';
 import MainFooter from '@/components/MainFooter';
+import { useCountry } from '@/context/CountryContext';
 
 interface Requirement {
   id: number;
@@ -370,15 +371,22 @@ const fallbackProviders: ProviderData[] = [
 ];
 
 function ServicesDirectoryContent() {
+  const { currentCountry, currentCities, formatCurrency } = useCountry();
   const [user, setUser] = useState<UserSession | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [providers, setProviders] = useState<ProviderData[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCity, setSelectedCity] = useState(DEFAULT_CITY);
+  const [selectedCity, setSelectedCity] = useState(currentCountry.defaultCity || DEFAULT_CITY);
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [verificationFilter, setVerificationFilter] = useState<'ALL' | 'VERIFIED' | 'UNVERIFIED'>('ALL');
   const [sortBy, setSortBy] = useState<'rating' | 'price_asc' | 'price_desc'>('rating');
   const [selectedPricingModel, setSelectedPricingModel] = useState<string>('TODOS');
+
+  useEffect(() => {
+    if (currentCities.length > 0) {
+      setSelectedCity(currentCountry.defaultCity || currentCities[0].name);
+    }
+  }, [currentCountry.id]);
 
   useEffect(() => {
     setUser(getCurrentUser());
@@ -594,7 +602,7 @@ function ServicesDirectoryContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
+    <div className="min-h-screen bg-[#f8fafc] dark:bg-[#090d16] text-slate-800 dark:text-slate-100 flex flex-col font-sans transition-colors">
       {/* Header */}
       <MainNavbar />
 
@@ -609,30 +617,30 @@ function ServicesDirectoryContent() {
             <span>Volver a la página principal</span>
           </Link>
           <div className="inline-block bg-[#ef4444] text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-            Directorio Oficial Colombia
+            Directorio Oficial {currentCountry.name} ({currentCountry.currency})
           </div>
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight">
             Catálogo Completo de Servicios y Profesionales
           </h1>
           <p className="text-sm sm:text-base text-slate-200 max-w-2xl font-normal">
-            Encuentra especialistas verificados para tu hogar o empresa en Cali y las principales ciudades de Colombia. Cotiza, revisa calificaciones y contrata con total seguridad.
+            Encuentra especialistas verificados para tu hogar o empresa en {currentCountry.name}. Cotiza, revisa calificaciones y contrata con total seguridad.
           </p>
         </div>
       </div>
 
       {/* Barra de Filtros Avanzada */}
       <div className="max-w-[1620px] w-full mx-auto px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20 -mt-6">
-        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-4 sm:p-5 space-y-4">
+        <div className="bg-white dark:bg-[#0f172a] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {/* Buscador */}
-            <div className="flex items-center px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+            <div className="flex items-center px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl">
               <Search className="w-4 h-4 text-slate-400 mr-2 shrink-0" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Buscar servicio o nombre..."
-                className="w-full bg-transparent outline-none text-xs font-semibold text-slate-800 placeholder-slate-400"
+                className="w-full bg-transparent outline-none text-xs font-semibold text-slate-800 dark:text-slate-100 placeholder-slate-400"
               />
               {searchQuery && (
                 <button onClick={() => setSearchQuery('')} className="text-slate-400 hover:text-slate-600">
@@ -646,7 +654,7 @@ function ServicesDirectoryContent() {
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 outline-none focus:border-[#0056d2]"
+                className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none focus:border-[#0056d2]"
               >
                 <option value="ALL">Todas las Categorías</option>
                 <option value="Cerrajería">Cerrajería</option>
@@ -665,21 +673,19 @@ function ServicesDirectoryContent() {
               </select>
             </div>
 
-            {/* Ciudad */}
+            {/* Ciudad Dinámica */}
             <div>
               <select
                 value={selectedCity}
                 onChange={(e) => setSelectedCity(e.target.value)}
-                className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 outline-none focus:border-[#0056d2]"
+                className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none focus:border-[#0056d2]"
               >
-                <option value="Cali">Cali (Valle del Cauca)</option>
-                <option value="Palmira">Palmira (Valle)</option>
-                <option value="Jamundí">Jamundí (Valle)</option>
-                <option value="Yumbo">Yumbo (Valle)</option>
-                <option value="Bogotá D.C.">Bogotá D.C.</option>
-                <option value="Medellín">Medellín (Antioquia)</option>
-                <option value="Barranquilla">Barranquilla (Atlántico)</option>
-                <option value="Todas">Toda Colombia</option>
+                {currentCities.map((city) => (
+                  <option key={city.name} value={city.name}>
+                    {city.name} ({city.province})
+                  </option>
+                ))}
+                <option value="Todas">Todo {currentCountry.name}</option>
               </select>
             </div>
 
@@ -688,7 +694,7 @@ function ServicesDirectoryContent() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 outline-none focus:border-[#0056d2]"
+                className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none focus:border-[#0056d2]"
               >
                 <option value="rating">Mejor Calificados (5★)</option>
                 <option value="price_asc">Menor Tarifa por Hora</option>

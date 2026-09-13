@@ -43,6 +43,7 @@ import { getAdminCategories, API_BASE_URL } from '@/lib/admin-data';
 import MainNavbar from '@/components/MainNavbar';
 import MainFooter from '@/components/MainFooter';
 import { showSuccess, showError, showWarning, showConfirm } from '@/lib/alerts';
+import { useCountry } from '@/context/CountryContext';
 
 interface Requirement {
   id: number;
@@ -104,16 +105,22 @@ interface ProviderData {
 }
 
 export default function Home() {
+  const { currentCountry, currentCities, formatCurrency } = useCountry();
   const [user, setUser] = useState<UserSession | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [providers, setProviders] = useState<ProviderData[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  // Inicialmente va a funcionar en Cali
-  const [selectedCity, setSelectedCity] = useState(DEFAULT_CITY);
+  const [selectedCity, setSelectedCity] = useState(currentCountry.defaultCity || DEFAULT_CITY);
   const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
   const [citySearchTerm, setCitySearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedPricingModel, setSelectedPricingModel] = useState<string>('TODOS');
+
+  useEffect(() => {
+    if (currentCities.length > 0) {
+      setSelectedCity(currentCountry.defaultCity || currentCities[0].name);
+    }
+  }, [currentCountry.id]);
 
   // Modal para Solicitar Equipo de Trabajo / Cuadrilla Multi-Profesional
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
@@ -925,15 +932,21 @@ export default function Home() {
     );
   };
 
-  // Filtrado para la lista de ciudades del modal/dropdown
-  const filteredCityList = ALL_COLOMBIAN_CITIES.filter(
+  // Filtrado para la lista de ciudades del país activo para el modal/dropdown
+  const countryCitiesMapped = currentCities.map((c) => ({
+    city: c.name,
+    department: c.province,
+  }));
+  const baseCityList = countryCitiesMapped.length > 0 ? countryCitiesMapped : ALL_COLOMBIAN_CITIES;
+
+  const filteredCityList = baseCityList.filter(
     (c) =>
       c.city.toLowerCase().includes(citySearchTerm.toLowerCase()) ||
       c.department.toLowerCase().includes(citySearchTerm.toLowerCase())
   );
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans selection:bg-blue-100 selection:text-blue-900">
+    <div className="min-h-screen bg-[#f8fafc] dark:bg-[#090d16] text-slate-800 dark:text-slate-100 flex flex-col font-sans transition-colors selection:bg-blue-100 selection:text-blue-900">
       {/* 1. TOP NAVBAR */}
       <MainNavbar />
 
