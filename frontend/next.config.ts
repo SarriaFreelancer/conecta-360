@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+const apiPort = process.env.NEXT_PUBLIC_API_PORT || "3003";
+
 const nextConfig: NextConfig = {
   // Permitir túneles de desarrollo (ngrok, cloudflare, ip local) para WebSockets HMR y Fast Refresh
   allowedDevOrigins: [
@@ -12,6 +14,14 @@ const nextConfig: NextConfig = {
     "localhost:3010",
     "127.0.0.1:3010",
   ],
+  async rewrites() {
+    return [
+      {
+        source: "/api/backend/:path*",
+        destination: `http://localhost:${apiPort}/:path*`,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

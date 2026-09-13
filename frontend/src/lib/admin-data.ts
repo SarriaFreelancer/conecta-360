@@ -2,7 +2,15 @@
 // Connects to backend on port 3003 with offline-first resilient fallback
 
 const apiPort = process.env.NEXT_PUBLIC_API_PORT || '3003';
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || `http://localhost:${apiPort}`;
+
+// En el navegador, si se accede por túnel (ngrok, móvil o IP externa), usamos el proxy interno /api/backend
+// para que no intente conectarse al localhost del propio teléfono móvil.
+const isClient = typeof window !== 'undefined';
+const isRemoteHost = isClient && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+
+export const API_BASE_URL = isRemoteHost
+  ? '/api/backend'
+  : (process.env.NEXT_PUBLIC_API_URL || `http://localhost:${apiPort}`);
 
 export interface AdminCategory {
   id: number;
