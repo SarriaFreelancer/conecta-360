@@ -212,7 +212,7 @@ export default function AdminDashboard() {
   const handleLogout = () => {
     if (typeof window !== 'undefined' && window.confirm('¿Deseas cerrar la sesión y salir del Panel Administrativo?')) {
       destroySession();
-      window.location.href = '/login';
+      window.location.href = '/';
     }
   };
 

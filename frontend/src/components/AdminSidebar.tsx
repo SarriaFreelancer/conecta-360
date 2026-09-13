@@ -69,7 +69,7 @@ export default function AdminSidebar({ currentPath }: AdminSidebarProps) {
   const handleLogout = () => {
     if (typeof window !== 'undefined' && window.confirm('¿Estás seguro de que deseas cerrar la sesión de administración?')) {
       destroySession();
-      window.location.href = '/login';
+      window.location.href = '/';
     }
   };
 
