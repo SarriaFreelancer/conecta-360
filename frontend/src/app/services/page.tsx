@@ -611,11 +611,8 @@ function ServicesDirectoryContent() {
             <Link href="/services" className="text-[#0056d2] font-bold border-b-2 border-[#0056d2] pb-1">
               Servicios
             </Link>
-            <Link href="/cuadrillas" className="hover:text-[#0056d2] transition-colors flex items-center space-x-1.5">
-              <span>Cuadrillas</span>
-              <span className="px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black uppercase">
-                Nuevo
-              </span>
+            <Link href="/cuadrillas" className="hover:text-[#0056d2] transition-colors">
+              Cuadrillas
             </Link>
             <Link href="/#categorias" className="hover:text-[#0056d2] transition-colors">
               Categorías
@@ -628,23 +625,44 @@ function ServicesDirectoryContent() {
             </Link>
           </nav>
 
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2 sm:space-x-3">
             {user ? (
-              <Link
-                href="/dashboard"
-                className="px-3.5 py-2 rounded-full bg-blue-50 hover:bg-blue-100 text-[#0056d2] text-xs sm:text-sm font-bold flex items-center space-x-2 border border-blue-200 transition-all shadow-xs"
-              >
-                <span className={`w-2 h-2 rounded-full ${user.isVerified ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                <span>{user.firstName}</span>
-              </Link>
+              <div className="flex items-center space-x-2">
+                <Link
+                  href="/dashboard"
+                  className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-full bg-blue-50 hover:bg-blue-100 text-[#0056d2] text-xs sm:text-sm font-bold flex items-center space-x-1.5 sm:space-x-2 border border-blue-200 transition-all shadow-xs"
+                >
+                  <span className={`w-2 h-2 rounded-full ${user.isVerified ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                  <span className="max-w-[100px] sm:max-w-none truncate">{user.firstName}</span>
+                </Link>
+
+                <Link
+                  href="/dashboard?action=new-service"
+                  className="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-[#0056d2] hover:bg-[#0046a8] text-white text-xs sm:text-sm font-bold flex items-center space-x-1.5 shadow-sm transition-all"
+                >
+                  <Wrench className="w-3.5 h-3.5" />
+                  <span className="hidden xs:inline sm:inline">Ofrecer Servicios</span>
+                  <span className="xs:hidden sm:hidden">Ofrecer</span>
+                </Link>
+              </div>
             ) : (
-              <Link
-                href="/login?redirect=/services"
-                className="px-4 py-2 rounded-full bg-[#0056d2] hover:bg-[#0046a8] text-white text-xs sm:text-sm font-bold flex items-center space-x-1.5 shadow-sm transition-all"
-              >
-                <User className="w-3.5 h-3.5" />
-                <span>Ingresar</span>
-              </Link>
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <Link
+                  href="/login?redirect=/dashboard?action=new-service&action_type=offer"
+                  className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-[#0056d2] text-[#0056d2] hover:bg-blue-50 text-xs sm:text-sm font-bold flex items-center space-x-1.5 transition-all"
+                >
+                  <Wrench className="w-3.5 h-3.5" />
+                  <span>Quiero ofrecer</span>
+                </Link>
+
+                <Link
+                  href="/login?redirect=/services"
+                  className="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-[#0056d2] hover:bg-[#0046a8] text-white text-xs sm:text-sm font-bold flex items-center space-x-1.5 shadow-sm transition-all"
+                >
+                  <User className="w-3.5 h-3.5" />
+                  <span>Ingresar</span>
+                </Link>
+              </div>
             )}
           </div>
         </div>

@@ -952,11 +952,8 @@ export default function Home() {
             <Link href="/services" className="hover:text-[#0056d2] transition-colors">
               Servicios
             </Link>
-            <Link href="/cuadrillas" className="hover:text-[#0056d2] transition-colors flex items-center space-x-1.5">
-              <span>Cuadrillas</span>
-              <span className="px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black uppercase">
-                Nuevo
-              </span>
+            <Link href="/cuadrillas" className="hover:text-[#0056d2] transition-colors">
+              Cuadrillas
             </Link>
             <Link href="#categorias" className="hover:text-[#0056d2] transition-colors">
               Categorías
@@ -1059,12 +1056,9 @@ export default function Home() {
               <Link
                 href="/cuadrillas"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="py-2 px-3 rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-between"
+                className="py-2 px-3 rounded-lg hover:bg-slate-50 transition-colors"
               >
-                <span>Cuadrillas & Equipos</span>
-                <span className="px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black uppercase">
-                  Nuevo
-                </span>
+                Cuadrillas & Equipos
               </Link>
               <Link
                 href="#categorias"
@@ -1489,7 +1483,7 @@ export default function Home() {
           <div className="space-y-1.5 z-10 max-w-2xl">
             <div className="flex items-center space-x-2">
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-400 text-slate-950">
-                Nuevo &bull; Equipos y Cuadrillas
+                Equipos y Cuadrillas Especializadas
               </span>
               <span className="text-xs font-semibold text-blue-200">
                 Contrata múltiples profesionales a la vez en Cali

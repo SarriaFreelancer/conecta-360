@@ -611,9 +611,6 @@ function UserDashboardContent() {
               className="text-xs sm:text-sm font-semibold text-slate-600 hover:text-[#0056d2] px-2 py-1 hidden sm:flex items-center space-x-1"
             >
               <span>Cuadrillas</span>
-              <span className="px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-950 text-[9px] font-black uppercase">
-                Nuevo
-              </span>
             </Link>
 
             {/* Acceso directo al Panel de Administración (Categorías, Servicios, Usuarios) */}
