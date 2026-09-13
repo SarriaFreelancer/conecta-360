@@ -187,7 +187,7 @@ export default function Home() {
     setUser(getCurrentUser());
 
     // 2. Cargar categorías de MySQL
-    fetch('http://localhost:3001/categories')
+    fetch('http://localhost:3003/categories')
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) setCategories(data);
@@ -208,7 +208,7 @@ export default function Home() {
       params.append('search', searchQuery.trim());
     }
 
-    const url = `http://localhost:3001/providers${params.toString() ? `?${params.toString()}` : ''}`;
+    const url = `http://localhost:3003/providers${params.toString() ? `?${params.toString()}` : ''}`;
     fetch(url)
       .then((res) => res.json())
       .then((data) => {

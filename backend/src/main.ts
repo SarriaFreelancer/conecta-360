@@ -23,7 +23,7 @@ async function bootstrap() {
     }),
   );
 
-  const port = process.env.PORT || 3001;
+  const port = process.env.PORT || 3003;
   await app.listen(port);
   console.log(`🚀 Servidor backend CONECTA 360 corriendo en http://localhost:${port}`);
 }

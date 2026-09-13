@@ -381,7 +381,7 @@ function ServicesDirectoryContent() {
     setUser(getCurrentUser());
 
     // Cargar categorías del backend
-    fetch('http://localhost:3001/categories')
+    fetch('http://localhost:3003/categories')
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) setCategories(data);
@@ -389,7 +389,7 @@ function ServicesDirectoryContent() {
       .catch((err) => console.error(err));
 
     // Cargar proveedores del backend
-    fetch('http://localhost:3001/users?role=PROVIDER')
+    fetch('http://localhost:3003/users?role=PROVIDER')
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
