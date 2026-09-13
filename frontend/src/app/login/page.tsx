@@ -22,8 +22,11 @@ import {
   getInitialAdminSession,
   getInitialProviderSession,
   getInitialClientSession,
+  setAuthToken,
+  mapBackendUserToSession,
   UserSession
 } from '@/lib/auth';
+import { loginBackend } from '@/lib/admin-data';
 
 function LoginContent() {
   const router = useRouter();
@@ -53,73 +56,86 @@ function LoginContent() {
     }
   }, [router, redirectUrl]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    const em = email.trim().toLowerCase();
+    const pw = password.trim();
+
+    if (!em || !pw) {
+      setError('Por favor ingresa tu correo y contraseña.');
+      return;
+    }
+
     setLoading(true);
 
-    setTimeout(() => {
-      const em = email.trim().toLowerCase();
-      // Credenciales de prueba integradas
-      if (em === 'superadmin@conecta360.com') {
-        const session = getInitialSuperAdminSession();
+    // 1. Intentar iniciar sesión real en backend MySQL + JWT
+    try {
+      const authRes = await loginBackend(em, pw);
+      if (authRes && authRes.token) {
+        setAuthToken(authRes.token);
+        const session = mapBackendUserToSession(authRes.user);
         setCurrentUser(session);
-        router.push(redirectUrl && redirectUrl !== '/' ? redirectUrl : '/admin');
-        return;
-      }
-
-      if (em === 'admin@conecta360.com') {
-        const session = getInitialAdminSession();
-        setCurrentUser(session);
-        router.push(redirectUrl && redirectUrl !== '/' ? redirectUrl : '/admin');
-        return;
-      }
-
-      if (em === 'carlos.rodriguez@conecta360.co' || em.includes('electricista') || em.includes('proveedor')) {
-        const session = getInitialProviderSession();
-        setCurrentUser(session);
-        router.push(redirectUrl && redirectUrl !== '/' ? redirectUrl : '/dashboard');
-        return;
-      }
-
-      if (em === 'laura.gomez@gmail.com' || em.includes('cliente')) {
-        const session = getInitialClientSession();
-        setCurrentUser(session);
-        router.push(redirectUrl && redirectUrl !== '/' ? redirectUrl : '/');
-        return;
-      }
-
-      // Si ingresa con cualquier otro correo válido
-      if (email.trim() && password.trim()) {
-        const session: UserSession = {
-          id: Date.now(),
-          email: email.trim(),
-          firstName: email.split('@')[0].replace('.', ' ').toUpperCase(),
-          lastName: 'Usuario',
-          phone: '+57 312 345 6789',
-          role: email.toLowerCase().includes('proveedor') ? 'PROVIDER' : 'USER',
-          status: 'PENDING',
-          isVerified: false,
-          plan: 'FREE',
-          createdAt: new Date().toISOString(),
-          profile: {
-            city: 'Cali',
-            department: 'Valle del Cauca',
-            country: 'Colombia',
-            profession: 'Técnico de Servicios',
-          },
-          services: [],
-          history: [],
-          platformDebt: 0,
-        };
-        setCurrentUser(session);
-        const destination = redirectUrl && redirectUrl !== '/' ? redirectUrl : (session.role === 'PROVIDER' ? '/dashboard' : '/');
+        const destination =
+          redirectUrl && redirectUrl !== '/'
+            ? redirectUrl
+            : session.role === 'SUPERADMIN' || session.role === 'ADMIN'
+            ? '/admin'
+            : session.role === 'PROVIDER'
+            ? '/dashboard'
+            : '/';
         router.push(destination);
-      } else {
-        setError('Por favor ingresa tu correo y contraseña.');
-        setLoading(false);
+        return;
       }
-    }, 400);
+    } catch (backendErr: any) {
+      console.warn('[Login] Backend auth notice:', backendErr.message);
+      // Si fue error de credenciales explícito y no es cuenta demo rápida, mostrar el error
+      const isDemoAccount =
+        em === 'superadmin@conecta360.com' ||
+        em === 'admin@conecta360.com' ||
+        em === 'carlos.rodriguez@conecta360.co' ||
+        em === 'laura.gomez@gmail.com' ||
+        em.includes('proveedor') ||
+        em.includes('electricista') ||
+        em.includes('cliente');
+
+      if (!isDemoAccount) {
+        setError(backendErr.message || 'Credenciales inválidas');
+        setLoading(false);
+        return;
+      }
+    }
+
+    // 2. Fallback de soporte y compatibilidad para cuentas demo precargadas
+    if (em === 'superadmin@conecta360.com') {
+      const session = getInitialSuperAdminSession();
+      setCurrentUser(session);
+      router.push(redirectUrl && redirectUrl !== '/' ? redirectUrl : '/admin');
+      return;
+    }
+
+    if (em === 'admin@conecta360.com') {
+      const session = getInitialAdminSession();
+      setCurrentUser(session);
+      router.push(redirectUrl && redirectUrl !== '/' ? redirectUrl : '/admin');
+      return;
+    }
+
+    if (em === 'carlos.rodriguez@conecta360.co' || em.includes('electricista') || em.includes('proveedor')) {
+      const session = getInitialProviderSession();
+      setCurrentUser(session);
+      router.push(redirectUrl && redirectUrl !== '/' ? redirectUrl : '/dashboard');
+      return;
+    }
+
+    if (em === 'laura.gomez@gmail.com' || em.includes('cliente')) {
+      const session = getInitialClientSession();
+      setCurrentUser(session);
+      router.push(redirectUrl && redirectUrl !== '/' ? redirectUrl : '/');
+      return;
+    }
+
+    setLoading(false);
   };
 
   // Cuentas rápidas de demostración

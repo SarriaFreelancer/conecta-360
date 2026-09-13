@@ -105,9 +105,71 @@ export interface ProviderServiceItem {
 }
 
 const AUTH_STORAGE_KEY = 'conecta360_user_session';
+export const AUTH_TOKEN_KEY = 'conecta360_auth_token';
 const ALL_USERS_STORAGE_KEY = 'conecta360_registered_users';
 const NOTIFICATIONS_STORAGE_KEY = 'conecta360_notifications';
 const ALL_BOOKINGS_STORAGE_KEY = 'conecta360_all_bookings';
+
+export function getAuthToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return localStorage.getItem(AUTH_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setAuthToken(token: string | null): void {
+  if (typeof window === 'undefined') return;
+  try {
+    if (token) {
+      localStorage.setItem(AUTH_TOKEN_KEY, token);
+    } else {
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+    }
+  } catch (err) {
+    console.error('Error saving auth token:', err);
+  }
+}
+
+export function mapBackendUserToSession(backendUser: any): UserSession {
+  const roleName = backendUser.role?.name || backendUser.role || 'USER';
+  let mappedRole: 'USER' | 'PROVIDER' | 'ADMIN' | 'SUPERADMIN' = 'USER';
+  if (roleName === 'SUPERADMIN') mappedRole = 'SUPERADMIN';
+  else if (roleName === 'ADMIN') mappedRole = 'ADMIN';
+  else if (roleName === 'PROVIDER') mappedRole = 'PROVIDER';
+  else mappedRole = 'USER';
+
+  return {
+    id: backendUser.id,
+    email: backendUser.email,
+    firstName: backendUser.firstName,
+    lastName: backendUser.lastName,
+    phone: backendUser.phone || '',
+    role: mappedRole,
+    status: backendUser.status === 'ACTIVE' ? 'APPROVED' : (backendUser.status || 'PENDING'),
+    isVerified: Boolean(backendUser.providerProfile?.isVerified),
+    plan: 'FREE',
+    createdAt: backendUser.createdAt ? new Date(backendUser.createdAt).toISOString() : new Date().toISOString(),
+    reputationPoints: backendUser.profile?.reputationPoints ?? 100,
+    negativePoints: backendUser.profile?.negativePoints ?? 0,
+    rejectedServicesCount: 0,
+    acceptedServicesCount: 0,
+    profile: {
+      city: backendUser.profile?.city || 'Cali',
+      department: backendUser.profile?.department || 'Valle del Cauca',
+      country: backendUser.profile?.country || 'Colombia',
+      profession: backendUser.providerProfile?.title || (mappedRole === 'PROVIDER' ? 'Profesional de Servicios' : undefined),
+      bio: backendUser.profile?.bio || undefined,
+      profilePhoto: backendUser.profile?.profilePhoto || undefined,
+      address: backendUser.profile?.address || undefined,
+      showWhatsApp: backendUser.profile?.showWhatsApp !== false,
+      whatsappNumber: backendUser.profile?.whatsappNumber || backendUser.phone || undefined,
+    },
+    services: [],
+    history: [],
+  };
+}
 
 export function getInitialProviderSession(): UserSession {
   const global = getGlobalSettings();
@@ -412,6 +474,7 @@ export function setCurrentUser(user: UserSession | null): void {
       saveToAllUsers(user);
     } else {
       localStorage.removeItem(AUTH_STORAGE_KEY);
+      localStorage.removeItem(AUTH_TOKEN_KEY);
     }
   } catch (err) {
     console.error('Error storing current user:', err);

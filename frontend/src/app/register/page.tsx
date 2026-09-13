@@ -17,7 +17,8 @@ import {
   Lock,
   Sparkles
 } from 'lucide-react';
-import { registerUser, getCurrentUser } from '@/lib/auth';
+import { registerUser, getCurrentUser, setCurrentUser, setAuthToken, mapBackendUserToSession } from '@/lib/auth';
+import { registerBackend } from '@/lib/admin-data';
 import { COLOMBIA_DEPARTMENTS, getCitiesForDepartment, DEFAULT_CITY, DEFAULT_DEPARTMENT } from '@/lib/colombia-data';
 
 function RegisterContent() {
@@ -60,12 +61,17 @@ function RegisterContent() {
     }
   }, [router]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     if (!firstName.trim() || !lastName.trim() || !email.trim() || !phone.trim() || !password.trim()) {
       setError('Por favor completa todos los campos requeridos.');
+      return;
+    }
+
+    if (password.trim().length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres.');
       return;
     }
 
@@ -76,31 +82,65 @@ function RegisterContent() {
 
     setLoading(true);
 
-    setTimeout(() => {
-      try {
-        const newUser = registerUser({
-          firstName: firstName.trim(),
-          lastName: lastName.trim(),
-          email: email.trim(),
-          phone: phone.trim(),
-          password: password.trim(),
-          role,
-          city,
-          department,
-          profession: role === 'PROVIDER' ? profession.trim() : undefined,
-        });
+    try {
+      // 1. Registrar usuario real en backend MySQL + JWT
+      const regRes = await registerBackend({
+        email: email.trim().toLowerCase(),
+        password: password.trim(),
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        phone: phone.trim(),
+        role,
+        city,
+        department,
+        profession: role === 'PROVIDER' ? profession.trim() : undefined,
+      });
 
-        // Redirigir según el rol
-        if (newUser.role === 'PROVIDER') {
+      if (regRes && regRes.token) {
+        setAuthToken(regRes.token);
+        const session = mapBackendUserToSession(regRes.user);
+        setCurrentUser(session);
+
+        if (session.role === 'PROVIDER') {
           router.push('/dashboard?welcome=true');
         } else {
           router.push('/?registered=true');
         }
-      } catch (err: any) {
-        setError(err.message || 'Error al registrar el usuario');
-        setLoading(false);
+        return;
       }
-    }, 600);
+    } catch (backendErr: any) {
+      console.warn('[Register] Backend registration notice:', backendErr.message);
+      // Si el error es duplicidad explícita, alertar al usuario sin proceder con fallback ciego
+      if (backendErr.message && (backendErr.message.includes('registrado') || backendErr.message.includes('existe') || backendErr.message.includes('correo'))) {
+        setError(backendErr.message);
+        setLoading(false);
+        return;
+      }
+    }
+
+    // Fallback local en caso de desconexión momentánea de backend
+    try {
+      const newUser = registerUser({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        password: password.trim(),
+        role,
+        city,
+        department,
+        profession: role === 'PROVIDER' ? profession.trim() : undefined,
+      });
+
+      if (newUser.role === 'PROVIDER') {
+        router.push('/dashboard?welcome=true');
+      } else {
+        router.push('/?registered=true');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Error al registrar el usuario');
+      setLoading(false);
+    }
   };
 
   return (

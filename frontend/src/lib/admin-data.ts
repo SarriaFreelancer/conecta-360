@@ -699,3 +699,54 @@ export async function markNotificationAsReadBackend(notifId: number) {
   return null;
 }
 
+// ==========================================
+// 8. AUTENTICACIÓN CENTRALIZADA (Auth) API
+// ==========================================
+export async function loginBackend(email: string, password: string): Promise<{ user: any; token: string }> {
+  const res = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || 'Error al iniciar sesión');
+  }
+  return res.json();
+}
+
+export async function registerBackend(payload: {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  role?: string;
+  city?: string;
+  department?: string;
+  profession?: string;
+}): Promise<{ user: any; token: string }> {
+  const res = await fetch(`${API_BASE_URL}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || 'Error al registrarse en el sistema');
+  }
+  return res.json();
+}
+
+export async function getMeBackend(token: string): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/auth/me`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!res.ok) {
+    throw new Error('Sesión no válida o expirada');
+  }
+  return res.json();
+}
+

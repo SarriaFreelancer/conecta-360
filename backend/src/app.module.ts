@@ -10,10 +10,12 @@ import { CuadrillasModule } from './cuadrillas/cuadrillas.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
     PrismaModule,
+    AuthModule,
     UsersModule,
     ProfilesModule,
     RolesModule,
