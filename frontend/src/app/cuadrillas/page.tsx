@@ -139,18 +139,24 @@ export default function CuadrillasPage() {
   };
 
   const loadBackendData = () => {
-    fetch('http://localhost:3003/cuadrillas')
-      .then((res) => res.json())
+    fetch('http://localhost:3003/cuadrillas', { signal: AbortSignal.timeout(2000) })
+      .then((res) => {
+        if (res.ok) return res.json();
+        return null;
+      })
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
           const mapped = data.map(mapBackendCuadrilla);
           setCuadrillas(mapped);
         }
       })
-      .catch((err) => console.log('Usando almacenamiento local de cuadrillas:', err));
+      .catch(() => {});
 
-    fetch('http://localhost:3003/cuadrillas/proposals/all')
-      .then((res) => res.json())
+    fetch('http://localhost:3003/cuadrillas/proposals/all', { signal: AbortSignal.timeout(2000) })
+      .then((res) => {
+        if (res.ok) return res.json();
+        return null;
+      })
       .then((data) => {
         if (Array.isArray(data)) {
           const mapped = data.map(mapBackendProposal);
@@ -159,7 +165,7 @@ export default function CuadrillasPage() {
           }
         }
       })
-      .catch((err) => console.log('Usando propuestas locales:', err));
+      .catch(() => {});
   };
 
   useEffect(() => {

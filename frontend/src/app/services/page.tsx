@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { getCurrentUser, UserSession } from '@/lib/auth';
 import { ALL_COLOMBIAN_CITIES, DEFAULT_CITY } from '@/lib/colombia-data';
+import { getAdminCategories, API_BASE_URL } from '@/lib/admin-data';
 
 interface Requirement {
   id: number;
@@ -380,17 +381,25 @@ function ServicesDirectoryContent() {
   useEffect(() => {
     setUser(getCurrentUser());
 
-    // Cargar categorías del backend
-    fetch('http://localhost:3003/categories')
-      .then((res) => res.json())
+    // Cargar categorías del backend con fallback seguro
+    getAdminCategories()
       .then((data) => {
-        if (Array.isArray(data)) setCategories(data);
+        if (Array.isArray(data) && data.length > 0) {
+          setCategories(data as any);
+        }
       })
-      .catch((err) => console.error(err));
+      .catch(() => {});
 
-    // Cargar proveedores del backend
-    fetch('http://localhost:3003/users?role=PROVIDER')
-      .then((res) => res.json())
+    // Cargar proveedores del backend de forma segura
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+
+    fetch(`${API_BASE_URL}/users?role=PROVIDER`, { signal: controller.signal })
+      .then((res) => {
+        clearTimeout(timeoutId);
+        if (res.ok) return res.json();
+        return null;
+      })
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
           const mapped: ProviderData[] = data.map((u: any) => ({
@@ -414,7 +423,11 @@ function ServicesDirectoryContent() {
           setProviders(mapped);
         }
       })
-      .catch((err) => console.error(err));
+      .catch(() => {
+        // Modo offline / backend apagado: mantiene fallbackProviders sin error modal
+      });
+
+    return () => clearTimeout(timeoutId);
   }, []);
 
   // Combinar proveedores

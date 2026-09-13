@@ -39,6 +39,7 @@ import {
 } from 'lucide-react';
 import { getCurrentUser, setCurrentUser, createTeamBooking, UserSession } from '@/lib/auth';
 import { COLOMBIA_DEPARTMENTS, ALL_COLOMBIAN_CITIES, DEFAULT_CITY } from '@/lib/colombia-data';
+import { getAdminCategories, API_BASE_URL } from '@/lib/admin-data';
 
 interface Requirement {
   id: number;
@@ -186,16 +187,17 @@ export default function Home() {
     // 1. Obtener usuario de la sesión actual
     setUser(getCurrentUser());
 
-    // 2. Cargar categorías de MySQL
-    fetch('http://localhost:3003/categories')
-      .then((res) => res.json())
+    // 2. Cargar categorías de forma segura con fallback resiliente
+    getAdminCategories()
       .then((data) => {
-        if (Array.isArray(data)) setCategories(data);
+        if (Array.isArray(data) && data.length > 0) {
+          setCategories(data as any);
+        }
       })
-      .catch((err) => console.error('Error fetching categories from backend:', err));
+      .catch(() => {});
   }, []);
 
-  // 3. Cargar proveedores filtrados desde el backend MySQL
+  // 3. Cargar proveedores filtrados desde el backend MySQL con fallback silencioso
   useEffect(() => {
     const params = new URLSearchParams();
     if (selectedCity && selectedCity !== 'Todas' && selectedCity !== 'Tu ciudad') {
@@ -208,15 +210,26 @@ export default function Home() {
       params.append('search', searchQuery.trim());
     }
 
-    const url = `http://localhost:3003/providers${params.toString() ? `?${params.toString()}` : ''}`;
-    fetch(url)
-      .then((res) => res.json())
+    const url = `${API_BASE_URL}/providers${params.toString() ? `?${params.toString()}` : ''}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+
+    fetch(url, { signal: controller.signal })
+      .then((res) => {
+        clearTimeout(timeoutId);
+        if (res.ok) return res.json();
+        return null;
+      })
       .then((data) => {
-        if (Array.isArray(data)) {
+        if (Array.isArray(data) && data.length > 0) {
           setProviders(data);
         }
       })
-      .catch((err) => console.error('Error fetching filtered providers from backend:', err));
+      .catch(() => {
+        // En modo offline o servidor apagado mantiene los fallbackProviders sin disparar error modal
+      });
+
+    return () => clearTimeout(timeoutId);
   }, [selectedCity, selectedCategory, searchQuery]);
 
   const handleLogout = () => {
