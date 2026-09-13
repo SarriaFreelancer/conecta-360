@@ -47,8 +47,8 @@ export default function BusinessPortalPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const calculateMonthlyEstimate = () => {
-    const base = selectedPlan === 'pyme' ? 350000 : selectedPlan === 'corporativo' ? 1200000 : 2800000;
-    const branchMultiplier = Math.max(1, numBranches * 0.85);
+    const base = selectedPlan === 'pyme' ? 89000 : selectedPlan === 'corporativo' ? 249000 : 490000;
+    const branchMultiplier = Math.max(1, 1 + (numBranches - 1) * 0.12);
     return Math.round(base * branchMultiplier);
   };
 
@@ -360,21 +360,25 @@ export default function BusinessPortalPage() {
                 </p>
 
                 <div className="text-3xl font-black text-slate-900 dark:text-slate-100 mb-6">
-                  {formatCurrency(350000)} <span className="text-xs font-normal text-slate-500">/ mes</span>
+                  {formatCurrency(89000)} <span className="text-xs font-normal text-slate-500">/ mes</span>
                 </div>
 
                 <ul className="space-y-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300 mb-8">
                   <li className="flex items-center space-x-2.5">
                     <CheckCircle2 className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
-                    <span>Hasta 3 sedes o sucursales</span>
+                    <span>Hasta 3 sedes o sucursales activas</span>
                   </li>
                   <li className="flex items-center space-x-2.5">
                     <CheckCircle2 className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
-                    <span>4 intervenciones técnicas mensuales</span>
+                    <span>Tarifas preferenciales con 15% de ahorro</span>
                   </li>
                   <li className="flex items-center space-x-2.5">
                     <CheckCircle2 className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
-                    <span>Factura electrónica unificada</span>
+                    <span>Factura electrónica unificada con NIT/RUT</span>
+                  </li>
+                  <li className="flex items-center space-x-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                    <span>Técnicos verificados con ARL al día</span>
                   </li>
                   <li className="flex items-center space-x-2.5">
                     <CheckCircle2 className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
@@ -402,17 +406,17 @@ export default function BusinessPortalPage() {
                 <div className="text-xs font-bold text-blue-300 uppercase tracking-wider mb-2">Para Medianas y Grandes</div>
                 <h3 className="text-2xl font-black mb-2">Plan Corporativo</h3>
                 <p className="text-xs text-blue-100/80 mb-6">
-                  Para inmobiliarias, constructoras, centros educativos, clínicas y empresas multi-sucursal.
+                  Para inmobiliarias, constructoras, centros educativos, clínicas y cadenas con múltiples sucursales.
                 </p>
 
                 <div className="text-3xl font-black text-white mb-6">
-                  {formatCurrency(1200000)} <span className="text-xs font-normal text-blue-200">/ mes</span>
+                  {formatCurrency(249000)} <span className="text-xs font-normal text-blue-200">/ mes</span>
                 </div>
 
                 <ul className="space-y-3 text-xs sm:text-sm text-blue-100 mb-8">
                   <li className="flex items-center space-x-2.5">
                     <CheckCircle2 className="w-4 h-4 text-sky-400 shrink-0" />
-                    <span>Sedes ilimitadas en el país</span>
+                    <span>Hasta 10 sedes o sucursales a nivel nacional</span>
                   </li>
                   <li className="flex items-center space-x-2.5">
                     <CheckCircle2 className="w-4 h-4 text-sky-400 shrink-0" />
@@ -424,11 +428,11 @@ export default function BusinessPortalPage() {
                   </li>
                   <li className="flex items-center space-x-2.5">
                     <CheckCircle2 className="w-4 h-4 text-sky-400 shrink-0" />
-                    <span>Gestor de cuenta B2B dedicado</span>
+                    <span>Gestor de cuenta B2B dedicado (WhatsApp/Llamadas)</span>
                   </li>
                   <li className="flex items-center space-x-2.5">
                     <CheckCircle2 className="w-4 h-4 text-sky-400 shrink-0" />
-                    <span>Póliza de responsabilidad civil incluida</span>
+                    <span>Póliza de responsabilidad civil y cumplimiento</span>
                   </li>
                 </ul>
               </div>
@@ -448,25 +452,29 @@ export default function BusinessPortalPage() {
                 <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Multinacional & Gran Industria</div>
                 <h3 className="text-2xl font-black mb-2">Plan Enterprise</h3>
                 <p className="text-xs text-slate-600 dark:text-slate-400 mb-6">
-                  Operaciones a nivel nacional e internacional con integración ERP y cuadrillas de guardia 24/7.
+                  Operaciones masivas multi-ciudad con integración ERP y cuadrillas de guardia permanente.
                 </p>
 
                 <div className="text-3xl font-black text-slate-900 dark:text-slate-100 mb-6">
-                  A la Medida <span className="text-xs font-normal text-slate-500">/ contrato marco</span>
+                  {formatCurrency(490000)} <span className="text-xs font-normal text-slate-500">/ mes</span>
                 </div>
 
                 <ul className="space-y-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300 mb-8">
                   <li className="flex items-center space-x-2.5">
                     <CheckCircle2 className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
-                    <span>Cobertura multi-país (Iberoamérica)</span>
+                    <span>Sedes ilimitadas y cobertura multi-país</span>
                   </li>
                   <li className="flex items-center space-x-2.5">
                     <CheckCircle2 className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
-                    <span>Integración API directa con ERP (SAP, Oracle)</span>
+                    <span>Integración API directa con ERP (SAP, Oracle, Siigo)</span>
                   </li>
                   <li className="flex items-center space-x-2.5">
                     <CheckCircle2 className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
-                    <span>Cuadrillas técnicas en planta permanente</span>
+                    <span>Cuadrillas de guardia 24/7/365</span>
+                  </li>
+                  <li className="flex items-center space-x-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                    <span>Auditorías técnicas y preventivas programadas</span>
                   </li>
                   <li className="flex items-center space-x-2.5">
                     <CheckCircle2 className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />

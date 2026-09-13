@@ -61,25 +61,13 @@ export default function MainNavbar() {
     <header className="bg-white dark:bg-[#0f172a] border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50 h-16 sm:h-20 flex items-center shadow-xs transition-colors">
       <div className="max-w-[1620px] w-full mx-auto px-4 sm:px-8 md:px-10 lg:px-12 xl:px-16 flex items-center justify-between">
         {/* Logo Oficial CONECTA 360 */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center">
           <Link href="/" className="flex items-center">
             <img
               src="/images/logo-conecta-nav.png"
               alt="CONECTA 360"
               className="h-8 sm:h-9 w-auto object-contain dark:brightness-110"
             />
-          </Link>
-
-          {/* Acceso Directo Conecta 360 Business Desktop */}
-          <Link
-            href="/business"
-            className="hidden xl:inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-[#0056d2] dark:text-blue-300 text-xs font-bold border border-blue-200 dark:border-blue-800/80 transition-all shadow-xs"
-          >
-            <Building2 className="w-3.5 h-3.5" />
-            <span>Conecta 360 Business</span>
-            <span className="bg-[#0056d2] text-white text-[9px] font-black px-1.5 py-0.2 rounded-full uppercase">
-              B2B
-            </span>
           </Link>
         </div>
 
