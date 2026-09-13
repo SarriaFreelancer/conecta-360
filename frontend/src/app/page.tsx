@@ -28,9 +28,16 @@ import {
   LogOut,
   X,
   Menu,
-  Filter
+  Filter,
+  Tag,
+  Users,
+  Briefcase,
+  MessageSquare,
+  Send,
+  CheckSquare,
+  Square
 } from 'lucide-react';
-import { getCurrentUser, setCurrentUser, UserSession } from '@/lib/auth';
+import { getCurrentUser, setCurrentUser, createTeamBooking, UserSession } from '@/lib/auth';
 import { COLOMBIA_DEPARTMENTS, ALL_COLOMBIAN_CITIES, DEFAULT_CITY } from '@/lib/colombia-data';
 
 interface Requirement {
@@ -58,12 +65,13 @@ interface Category {
 
 interface ProviderData {
   id: number | string;
-  userId: number;
+  userId: number | string;
   title: string | null;
   hourlyRate: string | number | null;
   isVerified: boolean;
   rating: number;
   totalReviews: number;
+  featuredActivities?: string[];
   user: {
     id: number;
     firstName: string;
@@ -99,6 +107,76 @@ export default function Home() {
   const [citySearchTerm, setCitySearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Modal para Solicitar Equipo de Trabajo / Cuadrilla Multi-Profesional
+  const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
+  const [teamProjectName, setTeamProjectName] = useState('');
+  const [teamEstimatedTime, setTeamEstimatedTime] = useState('4 a 8 horas (1 día completo)');
+  const [teamMessage, setTeamMessage] = useState('');
+  const [selectedTeamProviderIds, setSelectedTeamProviderIds] = useState<(number | string)[]>([]);
+  const [teamBookingSuccess, setTeamBookingSuccess] = useState<string | null>(null);
+
+  const handleToggleTeamProvider = (provId: number | string) => {
+    if (selectedTeamProviderIds.includes(provId)) {
+      setSelectedTeamProviderIds(selectedTeamProviderIds.filter((id) => id !== provId));
+    } else {
+      setSelectedTeamProviderIds([...selectedTeamProviderIds, provId]);
+    }
+  };
+
+  const handleOpenTeamModal = () => {
+    if (!user) {
+      alert('Debes iniciar sesión para solicitar un equipo de trabajo.');
+      window.location.href = '/login?redirect=/?action=team';
+      return;
+    }
+    if (selectedTeamProviderIds.length === 0 && providers.length > 0) {
+      setSelectedTeamProviderIds(providers.slice(0, 2).map((p) => p.userId || p.id));
+    }
+    setTeamProjectName('Proyecto Cuadrilla Especializada Cali');
+    setTeamMessage('Requerimos cuadrilla para trabajo coordinado en Cali. Por favor confirmar disponibilidad en el rango estimado.');
+    setIsTeamModalOpen(true);
+  };
+
+  const handleSubmitTeamBooking = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    if (selectedTeamProviderIds.length === 0) {
+      alert('Por favor selecciona al menos 1 o más profesionales para el equipo de trabajo.');
+      return;
+    }
+    if (!teamProjectName.trim()) {
+      alert('Por favor ingresa el nombre o propósito de la cuadrilla.');
+      return;
+    }
+
+    const chosenProviders = (providers.length > 0 ? providers : fallbackProviders)
+      .filter((p) => selectedTeamProviderIds.includes(p.userId) || selectedTeamProviderIds.includes(p.id))
+      .map((p) => ({
+        id: p.userId || p.id,
+        name: `${p.user.firstName} ${p.user.lastName}`,
+        title: p.title || 'Especialista',
+        categoryName: p.providerServices?.[0]?.service?.category?.name || 'Servicios Profesionales',
+        hourlyRate: Number(p.hourlyRate) || 45000,
+      }));
+
+    const result = createTeamBooking({
+      projectName: teamProjectName.trim(),
+      clientName: `${user.firstName} ${user.lastName}`,
+      clientPhone: user.phone,
+      estimatedTimeRange: teamEstimatedTime,
+      message: teamMessage.trim(),
+      providers: chosenProviders,
+    });
+
+    if (result.success) {
+      setTeamBookingSuccess(`¡Equipo de ${chosenProviders.length} profesionales solicitado con éxito! Cada especialista ha recibido la notificación en su portal para confirmar.`);
+      setTimeout(() => {
+        setTeamBookingSuccess(null);
+        setIsTeamModalOpen(false);
+      }, 3500);
+    }
+  };
 
   useEffect(() => {
     // 1. Obtener usuario de la sesión actual
@@ -449,6 +527,7 @@ export default function Home() {
           isVerified: user.isVerified, // Tarjeta muestra si está verificado o aún no
           rating: 5.0,
           totalReviews: 0,
+          featuredActivities: srv.featuredActivities || srv.activities.slice(0, 5),
           user: {
             id: user.id,
             firstName: user.firstName,
@@ -603,6 +682,51 @@ export default function Home() {
     return `$${num.toLocaleString('es-CO')} COP`;
   };
 
+  // Obtener las actividades principales (hasta 5) de la persona para mostrar en la tarjeta exterior
+  const getProviderFeaturedActivities = (prov: ProviderData): string[] => {
+    if (prov.featuredActivities && prov.featuredActivities.length > 0) {
+      return prov.featuredActivities.slice(0, 5);
+    }
+
+    if (user && user.role === 'PROVIDER' && String(prov.userId) === String(user.id)) {
+      const s = user.services.find((srv) => srv.id === prov.id) || user.services[0];
+      if (s) {
+        return (s.featuredActivities && s.featuredActivities.length > 0)
+          ? s.featuredActivities.slice(0, 5)
+          : s.activities.slice(0, 5);
+      }
+    }
+
+    const titleLower = (prov.title || '').toLowerCase();
+    const nameLower = `${prov.user?.firstName || ''} ${prov.user?.lastName || ''}`.toLowerCase();
+
+    if (titleLower.includes('cerraj') || nameLower.includes('juan')) {
+      return ['Apertura de cerraduras', 'Duplicado de llaves chip', 'Cerraduras digitales', 'Apertura de autos', 'Cilindros de seguridad'];
+    }
+    if (titleLower.includes('electr') || nameLower.includes('carlos')) {
+      return ['Cableado estructurado', 'Paneles solares', 'Reparación cortocircuitos', 'Certificación RETIE', 'Tableros eléctricos'];
+    }
+    if (titleLower.includes('tecno') || titleLower.includes('web') || nameLower.includes('ana')) {
+      return ['Mantenimiento PC', 'Desarrollo web y apps', 'Redes WiFi', 'Seguridad informática', 'Soporte remoto'];
+    }
+    if (titleLower.includes('plom') || nameLower.includes('luis')) {
+      return ['Reparación de fugas', 'Destape de cañerías', 'Instalación de grifería', 'Motobombas', 'Calentadores de agua'];
+    }
+    if (titleLower.includes('repar') || nameLower.includes('roberto')) {
+      return ['Reparación electrodomésticos', 'Drywall y techos', 'Pintura residencial', 'Enchapes y pisos', 'Soldadura'];
+    }
+    if (titleLower.includes('diseñ') || nameLower.includes('diana')) {
+      return ['Diseño de logos', 'Diseño UI/UX móvil', 'Branding corporativo', 'Publicidad digital', 'Edición de video'];
+    }
+    if (titleLower.includes('educ') || nameLower.includes('sofia')) {
+      return ['Matemáticas y física', 'Inglés interactivo', 'Pruebas Saber 11', 'Refuerzo escolar', 'Clases online'];
+    }
+    if (titleLower.includes('salud') || nameLower.includes('valeria')) {
+      return ['Fisioterapia a domicilio', 'Rehabilitación física', 'Masaje terapéutico', 'Ergonomía postural', 'Acondicionamiento'];
+    }
+    return ['Diagnóstico técnico', 'Servicio a domicilio en Cali', 'Mantenimiento preventivo', 'Garantía de servicio', 'Atención inmediata'];
+  };
+
   // Renderizar tarjeta de servicio
   const renderProviderCard = (prov: ProviderData, idx: number) => {
     const fullName = `${prov.user.firstName} ${prov.user.lastName}`;
@@ -612,6 +736,7 @@ export default function Home() {
       : 'Cali, Valle del Cauca';
     const photoUrl = getDefaultPhoto(prov, idx);
     const CatIcon = getCategoryIcon(categoryTitle);
+    const activitiesToShow = getProviderFeaturedActivities(prov);
 
     return (
       <div
@@ -682,6 +807,24 @@ export default function Home() {
             <div className="flex items-center text-slate-500 text-[11px] font-medium pt-0.5">
               <MapPin className="w-3 h-3 text-slate-400 mr-1 shrink-0" />
               <span className="truncate">{locationStr}</span>
+            </div>
+
+            {/* 5 Actividades Principales de la Persona en la Tarjeta Exterior */}
+            <div className="pt-2 border-t border-slate-100 space-y-1">
+              <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">
+                Actividades Principales ({activitiesToShow.length}):
+              </span>
+              <div className="flex flex-wrap gap-1">
+                {activitiesToShow.map((act, i) => (
+                  <span
+                    key={i}
+                    className="px-2 py-0.5 rounded-md bg-slate-50 text-slate-700 text-[10px] font-semibold border border-slate-200/70 flex items-center space-x-1"
+                  >
+                    <Tag className="w-2.5 h-2.5 text-[#0056d2] shrink-0" />
+                    <span className="truncate max-w-[130px]">{act}</span>
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -1224,6 +1367,38 @@ export default function Home() {
               Toda Colombia
             </button>
           </div>
+        </div>
+
+        {/* Banner Especial: Solicitar Equipo de Trabajo / Cuadrilla Multi-Profesional */}
+        <div className="mb-8 p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-blue-950 via-[#0056d2] to-indigo-900 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-5 relative overflow-hidden">
+          <div className="space-y-1.5 z-10 max-w-2xl">
+            <div className="flex items-center space-x-2">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-400 text-slate-950">
+                Nuevo &bull; Equipos y Cuadrillas
+              </span>
+              <span className="text-xs font-semibold text-blue-200">
+                Contrata múltiples profesionales a la vez en Cali
+              </span>
+            </div>
+            <h3 className="text-lg sm:text-xl font-black tracking-tight text-white">
+              ¿Necesitas un Equipo de Trabajo (Cuadrilla)?
+            </h3>
+            <p className="text-xs sm:text-sm text-blue-100 leading-relaxed">
+              Solicita varias personas de la misma categoría o combina diferentes especialidades (ej: electricista + cerrajero + técnico TI), acuerda un rango de tiempo estimado conjunto y envíales instrucciones en un solo clic.
+            </p>
+          </div>
+
+          <div className="shrink-0 z-10">
+            <button
+              onClick={handleOpenTeamModal}
+              className="w-full md:w-auto px-6 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs sm:text-sm shadow-lg hover:scale-[1.02] active:scale-[0.99] transition-all flex items-center justify-center space-x-2"
+            >
+              <Users className="w-4 h-4" />
+              <span>Solicitar Equipo de Trabajo</span>
+            </button>
+          </div>
+
+          <div className="absolute right-0 top-0 bottom-0 w-80 bg-white/5 skew-x-12 pointer-events-none" />
         </div>
 
         {/* Grid de Tarjetas de Servicios */}
@@ -1782,6 +1957,175 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* MODAL: Solicitar Equipo de Trabajo / Cuadrilla Multi-Profesional */}
+      {isTeamModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto space-y-6 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#0056d2] flex items-center justify-center font-black">
+                  <Users className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+                    Solicitar Equipo de Trabajo / Cuadrilla
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Contrata y coordina a varios profesionales de una o varias categorías en Cali
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsTeamModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {teamBookingSuccess ? (
+              <div className="p-6 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-center space-y-3">
+                <CheckCircle2 className="w-12 h-12 text-emerald-600 mx-auto" />
+                <h4 className="text-base font-black">¡Solicitud de Equipo Enviada!</h4>
+                <p className="text-xs text-emerald-800 leading-relaxed">{teamBookingSuccess}</p>
+                <p className="text-[11px] text-emerald-600 font-semibold">
+                  * Cada especialista recibirá la notificación en su portal para confirmar en el rango de tiempo solicitado.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmitTeamBooking} className="space-y-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
+                      Nombre o Motivo del Proyecto *
+                    </label>
+                    <input
+                      type="text"
+                      value={teamProjectName}
+                      onChange={(e) => setTeamProjectName(e.target.value)}
+                      placeholder="Ej: Remodelación Integral Oficina Norte Cali"
+                      required
+                      className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#0056d2] outline-none font-medium text-slate-800"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
+                      Rango de Tiempo Estimado *
+                    </label>
+                    <select
+                      value={teamEstimatedTime}
+                      onChange={(e) => setTeamEstimatedTime(e.target.value)}
+                      className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#0056d2] outline-none font-semibold text-slate-800"
+                    >
+                      <option value="2 a 4 horas (Media jornada)">2 a 4 horas (Media jornada)</option>
+                      <option value="4 a 8 horas (1 día completo)">4 a 8 horas (1 día completo)</option>
+                      <option value="2 a 3 días hábiles">2 a 3 días hábiles</option>
+                      <option value="1 semana (Proyecto mediano)">1 semana (Proyecto mediano)</option>
+                      <option value="Más de 1 semana (Obra / Remodelación)">Más de 1 semana (Obra / Remodelación)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
+                    Mensaje e Instrucciones para el Equipo *
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={teamMessage}
+                    onChange={(e) => setTeamMessage(e.target.value)}
+                    placeholder="Describe las tareas específicas, dirección exacta en Cali, herramientas necesarias y requerimientos para el equipo..."
+                    required
+                    className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#0056d2] outline-none resize-none font-medium text-slate-800"
+                  />
+                </div>
+
+                {/* Selección de Profesionales para la cuadrilla */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
+                      Selecciona a los Integrantes del Equipo ({selectedTeamProviderIds.length} seleccionados):
+                    </label>
+                    <span className="text-[11px] text-[#0056d2] font-bold">
+                      Puedes seleccionar de varias categorías
+                    </span>
+                  </div>
+
+                  <div className="max-h-60 overflow-y-auto space-y-2 border border-slate-200 rounded-2xl p-3 bg-slate-50/50">
+                    {(providers.length > 0 ? providers : fallbackProviders).map((p, idx) => {
+                      const pId = p.userId || p.id;
+                      const isSelected = selectedTeamProviderIds.includes(pId);
+                      return (
+                        <div
+                          key={`${pId}-${idx}`}
+                          onClick={() => handleToggleTeamProvider(pId)}
+                          className={`p-3 rounded-xl border flex items-center justify-between gap-3 cursor-pointer transition-all ${
+                            isSelected
+                              ? 'bg-blue-50 border-[#0056d2] shadow-xs'
+                              : 'bg-white border-slate-200 hover:border-slate-300'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-3 min-w-0">
+                            <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 ${isSelected ? 'text-[#0056d2]' : 'text-slate-300'}`}>
+                              {isSelected ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5" />}
+                            </div>
+                            <img
+                              src={getDefaultPhoto(p, idx)}
+                              alt={p.user.firstName}
+                              className="w-10 h-10 rounded-xl object-cover shrink-0"
+                            />
+                            <div className="min-w-0">
+                              <h5 className="text-xs font-black text-slate-900 truncate">
+                                {p.user.firstName} {p.user.lastName}
+                              </h5>
+                              <p className="text-[11px] text-slate-500 truncate">
+                                {p.title || 'Especialista'} &bull; <span className="font-semibold text-[#0056d2]">{p.user.profile?.city || 'Cali'}</span>
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="text-right shrink-0">
+                            <span className="text-xs font-black text-slate-900 block">
+                              {formatRate(p.hourlyRate)}
+                            </span>
+                            <span className="text-[10px] text-slate-400">Tarifa hora</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div className="text-xs text-slate-600">
+                    Total integrantes: <strong className="text-slate-900">{selectedTeamProviderIds.length}</strong> &bull; Rango: <strong className="text-[#0056d2]">{teamEstimatedTime}</strong>
+                  </div>
+
+                  <div className="flex items-center space-x-2 w-full sm:w-auto">
+                    <button
+                      type="button"
+                      onClick={() => setIsTeamModalOpen(false)}
+                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold transition-all"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={selectedTeamProviderIds.length === 0}
+                      className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#0056d2] hover:bg-[#0046a8] disabled:bg-slate-300 text-white text-xs font-black shadow-md shadow-blue-600/20 transition-all flex items-center justify-center space-x-1.5"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      <span>Solicitar Equipo ({selectedTeamProviderIds.length})</span>
+                    </button>
+                  </div>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

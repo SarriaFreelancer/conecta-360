@@ -10,7 +10,7 @@ export interface ServiceHistoryItem {
   providerName: string;
   providerPhone?: string;
   date: string;
-  status: 'PENDIENTE' | 'EN_PROGRESO' | 'COMPLETADO' | 'CANCELADO';
+  status: 'SOLICITADO' | 'CONFIRMADO' | 'EN_PROGRESO' | 'COMPLETADO' | 'CANCELADO' | 'PENDIENTE';
   amount: number; // Monto en COP
   paymentStatus: 'PAGADO' | 'PENDIENTE';
   paymentMethod: 'Transferencia Bancaria' | 'Efectivo' | 'Tarjeta de Crédito / Débito';
@@ -18,6 +18,27 @@ export interface ServiceHistoryItem {
   platformDebtStatus?: 'EN_DEUDA' | 'AL_DIA' | 'NO_APLICA'; // En deuda cuando es Efectivo o Transferencia
   rating?: number; // 1 a 5 estrellas
   reviewComment?: string;
+  estimatedTimeRange?: string; // Rango de tiempo estimado (ej. "2 a 4 horas", "1 día hábil", etc.)
+  teamBookingId?: string; // ID si pertenece a una solicitud de equipo de trabajo
+  teamProjectName?: string;
+  teamMembersCount?: number;
+  messageNotes?: string;
+}
+
+export interface AppNotification {
+  id: string;
+  userId: number | string;
+  title: string;
+  message: string;
+  type: 'SERVICE_REQUEST' | 'SERVICE_CONFIRMED' | 'TEAM_REQUEST' | 'MESSAGE' | 'SYSTEM';
+  date: string;
+  createdAt?: string;
+  read: boolean;
+  link?: string;
+  actionRequired?: boolean;
+  serviceId?: string;
+  timeRange?: string;
+  estimatedTimeRange?: string;
 }
 
 export interface UserSession {
@@ -40,6 +61,8 @@ export interface UserSession {
     bio?: string;
     profilePhoto?: string;
     address?: string;
+    showWhatsApp?: boolean; // Interruptor ON / OFF para mostrar WhatsApp en perfil
+    whatsappNumber?: string; // Número de WhatsApp oficial
   };
   services: ProviderServiceItem[];
   history: ServiceHistoryItem[];
@@ -53,6 +76,7 @@ export interface ProviderServiceItem {
   categoryName: string;
   hourlyRate: number;
   activities: string[]; // Límite máximo de 10 actividades
+  featuredActivities?: string[]; // Hasta 5 actividades elegidas para exhibir en la tarjeta pública
   city: string;
   department: string;
   coverageZones?: string;
@@ -64,6 +88,7 @@ export interface ProviderServiceItem {
 
 const AUTH_STORAGE_KEY = 'conecta360_user_session';
 const ALL_USERS_STORAGE_KEY = 'conecta360_registered_users';
+const NOTIFICATIONS_STORAGE_KEY = 'conecta360_notifications';
 
 export function getInitialProviderSession(): UserSession {
   const global = getGlobalSettings();
@@ -86,6 +111,8 @@ export function getInitialProviderSession(): UserSession {
       bio: 'Especialista en instalaciones eléctricas residenciales, cuadros de mando y mantenimiento 24/7 en Cali y área metropolitana.',
       profilePhoto: '/images/service-electricista.jpg',
       address: 'Calle 5 # 38-20, San Fernando, Cali',
+      showWhatsApp: true,
+      whatsappNumber: '+57 315 789 4521',
     },
     services: [
       {
@@ -101,6 +128,13 @@ export function getInitialProviderSession(): UserSession {
           'Iluminación LED y tomas',
           'Mantenimiento preventivo',
         ], // 5/10 actividades
+        featuredActivities: [
+          'Instalación de acometidas',
+          'Reparación de cortocircuitos',
+          'Tableros de breakers',
+          'Iluminación LED y tomas',
+          'Mantenimiento preventivo',
+        ], // 5 elegidas para la tarjeta pública
         city: 'Cali',
         department: 'Valle del Cauca',
         coverageZones: 'Cali (Norte, Sur, Oeste), Jamundí, Yumbo',
@@ -112,6 +146,24 @@ export function getInitialProviderSession(): UserSession {
     ],
     platformDebt: 11750, // Deuda de $11.750 COP por comisiones de cobros directos en Efectivo/Transferencia
     history: [
+      {
+        id: 'hist-req-new',
+        serviceTitle: 'Adecuación de Iluminación y Tomas en Apartamento',
+        categoryName: 'Electricidad',
+        clientName: 'Laura Gómez',
+        clientPhone: '+57 312 456 7890',
+        providerName: 'Carlos Andrés Rodríguez',
+        providerPhone: '+57 315 789 4521',
+        date: 'Hoy, 08:30 AM',
+        status: 'SOLICITADO',
+        amount: 110000,
+        paymentStatus: 'PENDIENTE',
+        paymentMethod: 'Transferencia Bancaria',
+        platformFee: 5500,
+        platformDebtStatus: 'EN_DEUDA',
+        estimatedTimeRange: '2 a 3 horas (Tarde 2:00 PM - 5:00 PM)',
+        messageNotes: 'Hola Carlos, necesitamos revisar las tomas de corriente y puntos LED en la sala.',
+      },
       {
         id: 'hist-1',
         serviceTitle: 'Instalación de Cuadro Eléctrico Principal y Breakers',
@@ -479,32 +531,220 @@ export function createServiceBooking(booking: {
   amount: number;
   date?: string;
   notes?: string;
+  estimatedTimeRange?: string;
+  teamBookingId?: string;
+  teamProjectName?: string;
+  teamMembersCount?: number;
 }): boolean {
   const current = getCurrentUser();
   if (!current) return false;
 
   const newHistoryItem: ServiceHistoryItem = {
-    id: `req-${Date.now()}`,
+    id: `req-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
     serviceTitle: booking.serviceTitle,
     categoryName: booking.categoryName,
     clientName: `${current.firstName} ${current.lastName}`,
     clientPhone: current.phone,
     providerName: booking.providerName,
-    date: booking.date || new Date().toISOString().split('T')[0],
-    status: 'EN_PROGRESO',
+    date: booking.date || new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }),
+    status: 'SOLICITADO',
     amount: booking.amount,
     paymentStatus: 'PENDIENTE',
     paymentMethod: 'Transferencia Bancaria',
     platformFee: calculatePlatformFee(booking.amount),
     platformDebtStatus: 'EN_DEUDA', // Cliente paga directo por transferencia -> prestador queda en deuda
     reviewComment: booking.notes,
+    estimatedTimeRange: booking.estimatedTimeRange || '2 a 4 horas estimadas',
+    teamBookingId: booking.teamBookingId,
+    teamProjectName: booking.teamProjectName,
+    teamMembersCount: booking.teamMembersCount,
+    messageNotes: booking.notes,
   };
 
   if (!current.history) current.history = [];
   current.history.unshift(newHistoryItem);
-  current.platformDebt = calculateUserPlatformDebt(current);
+  setCurrentUser(current);
+
+  // Generar notificación para el prestador
+  addNotification({
+    userId: booking.providerId,
+    title: 'Nueva Solicitud de Servicio Recibida',
+    message: `${current.firstName} ${current.lastName} ha solicitado tu servicio "${booking.serviceTitle}". Rango estimado: ${booking.estimatedTimeRange || '2 a 4 horas'}. Ingresa para confirmar.`,
+    type: booking.teamBookingId ? 'TEAM_REQUEST' : 'SERVICE_REQUEST',
+    actionRequired: true,
+    serviceId: newHistoryItem.id,
+    timeRange: booking.estimatedTimeRange || '2 a 4 horas',
+  });
+
+  return true;
+}
+
+// Confirmar solicitud de servicio por parte del prestador
+export function confirmServiceBooking(bookingId: string, confirmedTimeRange?: string): boolean {
+  const current = getCurrentUser();
+  if (!current || !current.history) return false;
+
+  const item = current.history.find((h) => h.id === bookingId);
+  if (!item) return false;
+
+  item.status = 'CONFIRMADO';
+  if (confirmedTimeRange) {
+    item.estimatedTimeRange = confirmedTimeRange;
+  }
+  setCurrentUser(current);
+
+  // Despachar notificación de vuelta al cliente
+  addNotification({
+    userId: item.clientName,
+    title: '¡Servicio Confirmado por el Profesional!',
+    message: `${item.providerName} ha confirmado la solicitud para "${item.serviceTitle}". Rango de tiempo estimado acordado: ${confirmedTimeRange || item.estimatedTimeRange || 'Confirmado'}.`,
+    type: 'SERVICE_CONFIRMED',
+    actionRequired: false,
+    serviceId: item.id,
+    timeRange: confirmedTimeRange || item.estimatedTimeRange,
+  });
+
+  return true;
+}
+
+// Contratación y solicitud de Equipos de Trabajo (Multi-Profesionales de la misma o varias categorías)
+export function createTeamBooking(teamData: {
+  projectName: string;
+  clientName: string;
+  clientPhone: string;
+  estimatedTimeRange: string;
+  message: string;
+  providers: Array<{
+    id: number | string;
+    name: string;
+    title: string;
+    categoryName?: string;
+    hourlyRate: number;
+  }>;
+}): { success: boolean; teamBookingId: string } {
+  const current = getCurrentUser();
+  if (!current) return { success: false, teamBookingId: '' };
+
+  const teamId = `team-${Date.now()}`;
+
+  teamData.providers.forEach((prov) => {
+    createServiceBooking({
+      providerId: prov.id,
+      providerName: prov.name,
+      serviceTitle: `${prov.title} (Equipo: ${teamData.projectName})`,
+      categoryName: prov.categoryName || 'Cuadrilla de Trabajo',
+      amount: Number(prov.hourlyRate) || 45000,
+      notes: teamData.message,
+      estimatedTimeRange: teamData.estimatedTimeRange,
+      teamBookingId: teamId,
+      teamProjectName: teamData.projectName,
+      teamMembersCount: teamData.providers.length,
+    });
+  });
+
+  return { success: true, teamBookingId: teamId };
+}
+
+// Configurar hasta 5 actividades principales destacadas para la tarjeta pública
+export function setFeaturedActivitiesForService(serviceId: string, activities: string[]): boolean {
+  const current = getCurrentUser();
+  if (!current || !current.services) return false;
+
+  const srv = current.services.find((s) => s.id === serviceId);
+  if (!srv) return false;
+
+  // Límite de hasta 5 actividades elegidas
+  srv.featuredActivities = activities.slice(0, 5);
   setCurrentUser(current);
   return true;
+}
+
+// Activar/desactivar WhatsApp en el perfil público
+export function updateWhatsAppSettings(showWhatsApp: boolean, whatsappNumber?: string): boolean {
+  const current = getCurrentUser();
+  if (!current) return false;
+
+  current.profile.showWhatsApp = showWhatsApp;
+  if (whatsappNumber !== undefined) {
+    current.profile.whatsappNumber = whatsappNumber;
+  }
+  setCurrentUser(current);
+  return true;
+}
+
+// Notificaciones
+export function getUserNotifications(userId?: number | string): AppNotification[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
+    let list: AppNotification[] = raw ? JSON.parse(raw) : [];
+    const current = getCurrentUser();
+
+    // Inicializar notificación de bienvenida / solicitud si está vacía
+    if (list.length === 0) {
+      list = [
+        {
+          id: 'notif-initial-1',
+          userId: 999, // Carlos Rodríguez
+          title: 'Nueva Solicitud: Adecuación de Iluminación y Tomas',
+          message: 'Laura Gómez te ha enviado una solicitud de servicio en Cali. Rango estimado: 2 a 3 horas. Ingresa para confirmar.',
+          type: 'SERVICE_REQUEST',
+          date: 'Hoy, 08:30 AM',
+          read: false,
+          actionRequired: true,
+          serviceId: 'hist-req-new',
+          timeRange: '2 a 3 horas (Tarde 2:00 PM - 5:00 PM)',
+        },
+      ];
+      localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(list));
+    }
+
+    const targetId = userId || (current ? current.id : null);
+    if (!targetId && !current) return list;
+
+    return list.filter(
+      (n) =>
+        String(n.userId).toLowerCase() === String(targetId).toLowerCase() ||
+        (current && String(n.userId).toLowerCase() === `${current.firstName} ${current.lastName}`.toLowerCase()) ||
+        String(n.userId) === 'all'
+    );
+  } catch (e) {
+    console.error('Error reading notifications:', e);
+    return [];
+  }
+}
+
+export function addNotification(notificationData: Omit<AppNotification, 'id' | 'date' | 'read'>): AppNotification {
+  const newNotif: AppNotification = {
+    ...notificationData,
+    id: `notif-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+    date: 'Ahora mismo',
+    read: false,
+  };
+
+  if (typeof window === 'undefined') return newNotif;
+  try {
+    const raw = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
+    const list: AppNotification[] = raw ? JSON.parse(raw) : [];
+    list.unshift(newNotif);
+    localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(list));
+  } catch (e) {
+    console.error('Error saving notification:', e);
+  }
+  return newNotif;
+}
+
+export function markNotificationAsRead(notificationId: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const raw = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
+    if (!raw) return;
+    const list: AppNotification[] = JSON.parse(raw);
+    const updated = list.map((n) => (n.id === notificationId ? { ...n, read: true } : n));
+    localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(updated));
+  } catch (e) {
+    console.error('Error marking notification as read:', e);
+  }
 }
 
 export function calculateUserPlatformDebt(userOrId?: number | string | UserSession | null | any): number {

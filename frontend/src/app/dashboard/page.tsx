@@ -33,7 +33,11 @@ import {
   ThumbsUp,
   MessageSquare,
   Briefcase,
-  Users
+  Users,
+  Bell,
+  MessageCircle,
+  CheckSquare,
+  Square
 } from 'lucide-react';
 import {
   getCurrentUser,
@@ -47,6 +51,12 @@ import {
   toggleUserRole,
   payUserPlatformDebt,
   calculateUserPlatformDebt,
+  confirmServiceBooking,
+  setFeaturedActivitiesForService,
+  updateWhatsAppSettings,
+  getUserNotifications,
+  markNotificationAsRead,
+  AppNotification,
   UserSession,
   ProviderServiceItem,
   ServiceHistoryItem
@@ -75,6 +85,14 @@ function UserDashboardContent() {
   const [ratingModalItem, setRatingModalItem] = useState<ServiceHistoryItem | null>(null);
   const [selectedRating, setSelectedRating] = useState<number>(5);
   const [reviewComment, setReviewComment] = useState<string>('');
+
+  // Sistema de Notificaciones
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+
+  // Switch de WhatsApp en el Perfil Público (ON / OFF)
+  const [whatsAppToggle, setWhatsAppToggle] = useState(true);
+  const [whatsAppInput, setWhatsAppInput] = useState('');
 
   // Categorías disponibles con requerimiento de título
   const categoriesList = [
@@ -136,6 +154,9 @@ function UserDashboardContent() {
       setEditCity(session.profile.city || DEFAULT_CITY);
       setEditDepartment(session.profile.department || DEFAULT_DEPARTMENT);
       setEditAddress(session.profile.address || '');
+      setWhatsAppToggle(session.profile.showWhatsApp ?? true);
+      setWhatsAppInput(session.profile.whatsappNumber || session.phone);
+      setNotifications(getUserNotifications(session.id));
     }
 
     if (openNewServiceParam) {
@@ -296,10 +317,56 @@ function UserDashboardContent() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  // Guardar perfil de usuario
+  // Confirmar solicitud de servicio en rango estimado (Modo Prestador)
+  const handleConfirmService = (serviceId: string, estimatedTimeRange?: string) => {
+    const success = confirmServiceBooking(serviceId, estimatedTimeRange);
+    if (success) {
+      const refreshed = getCurrentUser();
+      setUser(refreshed);
+      if (refreshed) setNotifications(getUserNotifications(refreshed.id));
+      setToastMessage('✓ ¡Solicitud de servicio confirmada con éxito! El cliente ha recibido la notificación en el sistema.');
+      setTimeout(() => setToastMessage(null), 4500);
+    }
+  };
+
+  // Escoger cuáles de las actividades mostrar afuera en la tarjeta pública (máx 5)
+  const handleToggleFeaturedActivity = (serviceId: string, activityName: string) => {
+    if (!user) return;
+    const service = user.services.find((s) => s.id === serviceId);
+    if (!service) return;
+
+    const currentFeatured = service.featuredActivities && service.featuredActivities.length > 0
+      ? service.featuredActivities
+      : service.activities.slice(0, 5);
+
+    let nextFeatured: string[];
+    if (currentFeatured.includes(activityName)) {
+      if (currentFeatured.length <= 1) {
+        alert('Debes mantener al menos 1 actividad seleccionada para tu tarjeta pública exterior.');
+        return;
+      }
+      nextFeatured = currentFeatured.filter((a) => a !== activityName);
+    } else {
+      if (currentFeatured.length >= 5) {
+        alert('Puedes seleccionar un máximo de 5 actividades principales para tu tarjeta exterior.');
+        return;
+      }
+      nextFeatured = [...currentFeatured, activityName];
+    }
+
+    const success = setFeaturedActivitiesForService(serviceId, nextFeatured);
+    if (success) {
+      const refreshed = getCurrentUser();
+      setUser(refreshed);
+      setToastMessage('✓ Actividades principales de la tarjeta pública actualizadas.');
+      setTimeout(() => setToastMessage(null), 3000);
+    }
+  };
+
+  // Guardar perfil de usuario con configuración de WhatsApp
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
-    const updated = updateUserProfile({
+    updateUserProfile({
       firstName: editFirstName,
       lastName: editLastName,
       phone: editPhone,
@@ -309,11 +376,11 @@ function UserDashboardContent() {
       bio: editBio,
       address: editAddress,
     });
-    if (updated) {
-      setUser(updated);
-      setToastMessage('✓ Perfil actualizado exitosamente.');
-      setTimeout(() => setToastMessage(null), 3000);
-    }
+    updateWhatsAppSettings(whatsAppToggle, whatsAppInput);
+    const refreshed = getCurrentUser();
+    setUser(refreshed);
+    setToastMessage('✓ Perfil y configuración de WhatsApp actualizados exitosamente.');
+    setTimeout(() => setToastMessage(null), 3500);
   };
 
   // Pagar deuda con la plataforma
@@ -394,6 +461,73 @@ function UserDashboardContent() {
               Ver Portal Público
             </Link>
 
+            {/* Campana de Notificaciones del Sistema */}
+            <div className="relative">
+              <button
+                onClick={() => setIsNotifOpen(!isNotifOpen)}
+                className="p-2 relative rounded-xl text-slate-500 hover:text-[#0056d2] hover:bg-slate-100 transition-colors"
+                title="Notificaciones de servicios"
+              >
+                <Bell className="w-5 h-5" />
+                {notifications.filter((n) => !n.read).length > 0 && (
+                  <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center animate-pulse">
+                    {notifications.filter((n) => !n.read).length}
+                  </span>
+                )}
+              </button>
+
+              {isNotifOpen && (
+                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 p-4 space-y-3 animate-in fade-in zoom-in-95">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <div className="flex items-center space-x-1.5">
+                      <Bell className="w-4 h-4 text-[#0056d2]" />
+                      <h4 className="text-xs font-black text-slate-800 uppercase tracking-wide">Notificaciones en el Sistema</h4>
+                    </div>
+                    <span className="text-[11px] font-bold text-slate-400">
+                      {notifications.filter((n) => !n.read).length} sin leer
+                    </span>
+                  </div>
+
+                  <div className="max-h-72 overflow-y-auto space-y-2">
+                    {notifications.length === 0 ? (
+                      <p className="text-xs text-slate-400 text-center py-4">No tienes notificaciones por el momento</p>
+                    ) : (
+                      notifications.map((n) => (
+                        <div
+                          key={n.id}
+                          onClick={() => {
+                            markNotificationAsRead(n.id);
+                            if (user) setNotifications(getUserNotifications(user.id));
+                          }}
+                          className={`p-3 rounded-xl text-xs transition-colors cursor-pointer border ${
+                            n.read ? 'bg-slate-50 border-slate-100 text-slate-600' : 'bg-blue-50/70 border-blue-200 text-slate-900 font-semibold'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="font-bold text-xs">{n.title}</span>
+                            <span className="text-[10px] text-slate-400 shrink-0">{n.date || n.createdAt}</span>
+                          </div>
+                          <p className="text-xs text-slate-600 mt-1 font-normal leading-relaxed">{n.message}</p>
+                          {(n.timeRange || n.estimatedTimeRange) && (
+                            <div className="mt-1.5 inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-white border border-blue-200 text-[10px] font-bold text-[#0056d2]">
+                              <Clock className="w-3 h-3" />
+                              <span>Rango: {n.timeRange || n.estimatedTimeRange}</span>
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-100 text-center">
+                    <span className="text-[10px] text-slate-400">
+                      * Próximamente integración directa por WhatsApp y Correo Electrónico
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="h-4 w-px bg-slate-200" />
 
             <div className="flex items-center space-x-2">
@@ -427,6 +561,77 @@ function UserDashboardContent() {
 
       {/* Main Content Area */}
       <main className="max-w-[1240px] w-full mx-auto px-4 sm:px-6 py-8 space-y-8">
+        {/* Banner de Solicitudes Entrantes para Confirmar (Prestador) */}
+        {user.role === 'PROVIDER' && historyItems.filter((h) => h.status === 'SOLICITADO').length > 0 && (
+          <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-[#0056d2] text-white rounded-3xl p-6 sm:p-7 shadow-lg shadow-blue-500/20 space-y-4 animate-in fade-in">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center font-bold text-white shrink-0">
+                  <Bell className="w-6 h-6 animate-bounce" />
+                </div>
+                <div>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-white/20 text-white">
+                    {historyItems.filter((h) => h.status === 'SOLICITADO').length} Solicitud(es) de Servicio Recibida(s)
+                  </span>
+                  <h3 className="text-lg sm:text-xl font-black tracking-tight text-white mt-0.5">
+                    Tienes solicitudes de clientes en Cali esperando tu confirmación
+                  </h3>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+              {historyItems.filter((h) => h.status === 'SOLICITADO').map((req) => (
+                <div key={req.id} className="bg-white text-slate-800 rounded-2xl p-5 shadow-sm space-y-3 border border-white/20">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <span className="text-[10px] font-black text-[#0056d2] uppercase">{req.categoryName}</span>
+                      <h4 className="text-sm sm:text-base font-black text-slate-900">{req.serviceTitle}</h4>
+                      <p className="text-xs text-slate-600">
+                        Cliente: <strong className="text-slate-800">{req.clientName}</strong> {req.clientPhone ? `(${req.clientPhone})` : ''}
+                      </p>
+                    </div>
+                    <span className="text-base font-black text-[#0056d2] shrink-0">
+                      ${req.amount.toLocaleString('es-CO')} COP
+                    </span>
+                  </div>
+
+                  {req.estimatedTimeRange && (
+                    <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-900 flex items-start space-x-2">
+                      <Clock className="w-4 h-4 text-[#0056d2] shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-bold block text-[#0056d2]">Rango de tiempo estimado solicitado:</span>
+                        <span className="font-semibold text-slate-800">{req.estimatedTimeRange}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {req.messageNotes && (
+                    <p className="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100 italic">
+                      "{req.messageNotes}"
+                    </p>
+                  )}
+
+                  <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100">
+                    <span className="text-[11px] text-amber-600 font-bold flex items-center space-x-1">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>Esperando tu confirmación</span>
+                    </span>
+
+                    <button
+                      onClick={() => handleConfirmService(req.id, req.estimatedTimeRange)}
+                      className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center space-x-1.5"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Confirmar Solicitud</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* 1. Header Profile Banner & Verification Badge */}
         <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xs relative overflow-hidden">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
@@ -870,23 +1075,51 @@ function UserDashboardContent() {
                         </div>
                       </div>
 
-                      {/* Actividades relacionadas (Límite de 10) */}
-                      <div className="space-y-1.5 pt-2 border-t border-slate-100">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold text-slate-700">
+                      {/* Actividades relacionadas & Selección para Tarjeta Pública Exterior (Hasta 5) */}
+                      <div className="space-y-2 pt-2 border-t border-slate-100">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs">
+                          <span className="font-bold text-slate-800">
                             Actividades y Especialidades ({service.activities.length}/10):
                           </span>
+                          <span className="text-[11px] font-bold text-[#0056d2] bg-blue-50 px-2.5 py-0.5 rounded-full inline-flex items-center space-x-1">
+                            <span>{(service.featuredActivities || service.activities.slice(0, 5)).length}/5 visibles en tarjeta pública</span>
+                          </span>
                         </div>
+                        <p className="text-[11px] text-slate-500">
+                          Selecciona hasta 5 actividades principales para que se muestren afuera en tu tarjeta pública:
+                        </p>
                         <div className="flex flex-wrap gap-1.5">
-                          {service.activities.map((act, i) => (
-                            <span
-                              key={i}
-                              className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-[11px] font-semibold flex items-center space-x-1"
-                            >
-                              <Tag className="w-2.5 h-2.5 text-[#0056d2]" />
-                              <span>{act}</span>
-                            </span>
-                          ))}
+                          {service.activities.map((act, i) => {
+                            const currentFeatured = service.featuredActivities && service.featuredActivities.length > 0
+                              ? service.featuredActivities
+                              : service.activities.slice(0, 5);
+                            const isFeatured = currentFeatured.includes(act);
+                            return (
+                              <button
+                                key={i}
+                                type="button"
+                                onClick={() => handleToggleFeaturedActivity(service.id, act)}
+                                className={`px-2.5 py-1 rounded-xl text-[11px] font-semibold flex items-center space-x-1.5 transition-all border ${
+                                  isFeatured
+                                    ? 'bg-[#0056d2] text-white border-[#0046a8] shadow-xs'
+                                    : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
+                                }`}
+                                title={isFeatured ? 'Visible afuera en tarjeta pública (Clic para quitar)' : 'Clic para mostrar en tarjeta pública'}
+                              >
+                                {isFeatured ? (
+                                  <CheckSquare className="w-3.5 h-3.5 text-white" />
+                                ) : (
+                                  <Square className="w-3.5 h-3.5 text-slate-400" />
+                                )}
+                                <span>{act}</span>
+                                {isFeatured && (
+                                  <span className="text-[9px] bg-blue-800 text-white font-bold px-1 rounded">
+                                    Pública
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
 
@@ -1000,6 +1233,27 @@ function UserDashboardContent() {
                       </span>
                     </p>
 
+                    {/* Actividades principales mostradas afuera en la tarjeta pública (máx 5) */}
+                    <div className="pt-1.5 space-y-1">
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">
+                        Actividades Principales ({((user.services[0].featuredActivities && user.services[0].featuredActivities.length > 0) ? user.services[0].featuredActivities : user.services[0].activities.slice(0, 5)).length}):
+                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        {((user.services[0].featuredActivities && user.services[0].featuredActivities.length > 0)
+                          ? user.services[0].featuredActivities
+                          : user.services[0].activities.slice(0, 5)
+                        ).map((act, idx) => (
+                          <span
+                            key={idx}
+                            className="px-2 py-0.5 rounded-md bg-blue-50 text-[#0056d2] text-[10px] font-bold border border-blue-100 flex items-center space-x-1"
+                          >
+                            <Tag className="w-2.5 h-2.5 shrink-0" />
+                            <span>{act}</span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
                     <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
                       <span className="text-xs font-black text-[#0056d2]">
                         Desde ${Number(user.services[0].hourlyRate).toLocaleString('es-CO')}/h
@@ -1084,6 +1338,18 @@ function UserDashboardContent() {
                       <div className="flex flex-row md:flex-col items-start md:items-end justify-between gap-2 shrink-0 border-t md:border-t-0 pt-3 md:pt-0 border-slate-100">
                         {/* Badge de Estado del Servicio */}
                         <div>
+                          {item.status === 'SOLICITADO' && (
+                            <span className="px-3 py-1 rounded-full text-xs font-black bg-amber-50 text-amber-800 border border-amber-300 flex items-center space-x-1 animate-pulse">
+                              <Clock className="w-3.5 h-3.5" />
+                              <span>Solicitado (Esperando Confirmación)</span>
+                            </span>
+                          )}
+                          {item.status === 'CONFIRMADO' && (
+                            <span className="px-3 py-1 rounded-full text-xs font-black bg-indigo-50 text-indigo-700 border border-indigo-200 flex items-center space-x-1">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Confirmado</span>
+                            </span>
+                          )}
                           {item.status === 'COMPLETADO' && (
                             <span className="px-3 py-1 rounded-full text-xs font-black bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center space-x-1">
                               <CheckCircle2 className="w-3.5 h-3.5" />
@@ -1097,7 +1363,7 @@ function UserDashboardContent() {
                             </span>
                           )}
                           {item.status === 'PENDIENTE' && (
-                            <span className="px-3 py-1 rounded-full text-xs font-black bg-amber-50 text-amber-800 border border-amber-200 flex items-center space-x-1">
+                            <span className="px-3 py-1 rounded-full text-xs font-black bg-slate-100 text-slate-700 border border-slate-300 flex items-center space-x-1">
                               <Clock className="w-3.5 h-3.5" />
                               <span>Pendiente</span>
                             </span>
@@ -1175,7 +1441,25 @@ function UserDashboardContent() {
 
                     {/* Botones de acción rápida para cambiar estado */}
                     {user.role === 'PROVIDER' && item.status !== 'COMPLETADO' && (
-                      <div className="pt-2 border-t border-slate-100 flex items-center justify-end space-x-2">
+                      <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-end gap-2">
+                        {item.status === 'SOLICITADO' && (
+                          <button
+                            onClick={() => handleConfirmService(item.id, item.estimatedTimeRange)}
+                            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-colors flex items-center space-x-1.5"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Confirmar Solicitud con Rango Estimado</span>
+                          </button>
+                        )}
+                        {item.status === 'CONFIRMADO' && (
+                          <button
+                            onClick={() => handleUpdateJobStatus(item.id, 'EN_PROGRESO')}
+                            className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition-colors flex items-center space-x-1"
+                          >
+                            <Clock className="w-3.5 h-3.5" />
+                            <span>Iniciar Servicio (En Progreso)</span>
+                          </button>
+                        )}
                         {item.status === 'PENDIENTE' && (
                           <button
                             onClick={() => handleUpdateJobStatus(item.id, 'EN_PROGRESO')}
@@ -1184,13 +1468,15 @@ function UserDashboardContent() {
                             Iniciar Servicio
                           </button>
                         )}
-                        <button
-                          onClick={() => handleUpdateJobStatus(item.id, 'COMPLETADO')}
-                          className="px-4 py-1.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 font-bold text-xs shadow-sm transition-colors flex items-center space-x-1"
-                        >
-                          <Check className="w-3 h-3" />
-                          <span>Marcar como Completado</span>
-                        </button>
+                        {item.status === 'EN_PROGRESO' && (
+                          <button
+                            onClick={() => handleUpdateJobStatus(item.id, 'COMPLETADO')}
+                            className="px-4 py-1.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 font-bold text-xs shadow-sm transition-colors flex items-center space-x-1"
+                          >
+                            <Check className="w-3 h-3" />
+                            <span>Marcar como Completado</span>
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1451,6 +1737,64 @@ function UserDashboardContent() {
                   placeholder="Describe tu experiencia, certificaciones y compromiso de atención en Cali..."
                   className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#0056d2] outline-none resize-none"
                 />
+              </div>
+
+              {/* Configuración de WhatsApp en el Perfil Público (Interruptor ON / OFF) */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center space-x-2">
+                      <MessageCircle className="w-5 h-5 text-emerald-600" />
+                      <h4 className="text-xs font-black uppercase tracking-wider text-emerald-950">
+                        Botón de Contacto por WhatsApp
+                      </h4>
+                    </div>
+                    <p className="text-xs text-emerald-800">
+                      Permite a los clientes contactarte directamente por WhatsApp desde tu perfil público
+                    </p>
+                  </div>
+
+                  {/* Interruptor ON / OFF */}
+                  <div className="flex items-center space-x-2.5 shrink-0">
+                    <span className={`text-xs font-bold ${whatsAppToggle ? 'text-emerald-700' : 'text-slate-400'}`}>
+                      {whatsAppToggle ? 'HABILITADO (ON)' : 'DESHABILITADO (OFF)'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setWhatsAppToggle(!whatsAppToggle)}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        whatsAppToggle ? 'bg-emerald-600' : 'bg-slate-300'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                          whatsAppToggle ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                {whatsAppToggle && (
+                  <div className="pt-2 border-t border-emerald-200/60 space-y-1.5">
+                    <label className="block text-xs font-bold text-emerald-900 uppercase tracking-wide">
+                      Número de WhatsApp de Contacto *
+                    </label>
+                    <div className="relative">
+                      <Phone className="w-4 h-4 text-emerald-600 absolute left-3.5 top-3" />
+                      <input
+                        type="text"
+                        value={whatsAppInput}
+                        onChange={(e) => setWhatsAppInput(e.target.value)}
+                        placeholder="Ej: +57 315 123 4567"
+                        className="w-full pl-10 pr-4 py-2 text-sm bg-white border border-emerald-300 rounded-xl focus:border-emerald-600 outline-none text-slate-800 font-medium"
+                      />
+                    </div>
+                    <span className="text-[11px] text-emerald-700 block">
+                      ✓ El botón de WhatsApp solo se mostrará en tu perfil público si este interruptor está en ON.
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="pt-3 border-t border-slate-100 flex justify-end">

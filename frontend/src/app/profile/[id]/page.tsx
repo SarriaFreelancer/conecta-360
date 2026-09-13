@@ -24,7 +24,8 @@ import {
   FileText,
   ThumbsUp,
   MessageSquare,
-  Sparkles
+  Sparkles,
+  MessageCircle
 } from 'lucide-react';
 import { getCurrentUser, createServiceBooking, UserSession } from '@/lib/auth';
 
@@ -61,6 +62,8 @@ interface UserData {
     profilePhoto: string | null;
     profession?: string | null;
     address?: string | null;
+    showWhatsApp?: boolean;
+    whatsappNumber?: string;
   };
   providerProfile?: {
     id: number;
@@ -93,6 +96,7 @@ function ProfileContent() {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [selectedService, setSelectedService] = useState('');
   const [bookingDate, setBookingDate] = useState('');
+  const [estimatedTimeRange, setEstimatedTimeRange] = useState('2 a 4 horas (Media jornada)');
   const [bookingNotes, setBookingNotes] = useState('');
   const [bookingSuccess, setBookingSuccess] = useState(false);
 
@@ -154,6 +158,7 @@ function ProfileContent() {
       amount: rateNum,
       date: bookingDate || new Date().toISOString().split('T')[0],
       notes: bookingNotes,
+      estimatedTimeRange: estimatedTimeRange,
     });
 
     setBookingSuccess(true);
@@ -282,6 +287,18 @@ function ProfileContent() {
                   </div>
                 )}
 
+                {user.profile?.showWhatsApp && (
+                  <a
+                    href={`https://wa.me/${(user.profile?.whatsappNumber || user.phone || '573151234567').replace(/[^0-9]/g, '')}?text=Hola%20${encodeURIComponent(user.firstName)},%20te%20contacto%20desde%20Conecta%20360%20para%20solicitar%20tus%20servicios%20en%20Cali.`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-black text-sm shadow-md hover:shadow-lg transition-all flex items-center space-x-2 cursor-pointer"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    <span>WhatsApp</span>
+                  </a>
+                )}
+
                 <button
                   onClick={handleOpenBooking}
                   className="px-6 py-3 rounded-2xl bg-gradient-to-r from-[#0056d2] to-blue-600 hover:from-[#0046a8] hover:to-blue-700 text-white font-black text-sm shadow-md hover:shadow-lg transition-all flex items-center space-x-2 cursor-pointer group"
@@ -354,12 +371,33 @@ function ProfileContent() {
                       </div>
                     </div>
 
-                    <div className="flex items-start space-x-3">
-                      <MapPin className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-                      <div>
-                        <span className="text-[10px] text-slate-400 block font-semibold">Ubicación y Sede</span>
-                        <span className="font-bold">{locationCity}, {locationDept} (Colombia)</span>
+                    <div className="flex flex-col space-y-3">
+                      <div className="flex items-start space-x-3">
+                        <MapPin className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                        <div>
+                          <span className="text-[10px] text-slate-400 block font-semibold">Ubicación y Sede</span>
+                          <span className="font-bold">{locationCity}, {locationDept} (Colombia)</span>
+                        </div>
                       </div>
+
+                      {/* Botón directo de WhatsApp según configuración del profesional (Interruptor ON/OFF) */}
+                      {user.profile?.showWhatsApp ? (
+                        <div className="pt-2">
+                          <a
+                            href={`https://wa.me/${(user.profile?.whatsappNumber || user.phone || '573151234567').replace(/[^0-9]/g, '')}?text=Hola%20${encodeURIComponent(user.firstName)},%20te%20contacto%20desde%20Conecta%20360%20para%20solicitar%20tus%20servicios%20en%20Cali.`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold text-xs flex items-center justify-center space-x-2 shadow-sm transition-all"
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                            <span>Contactar por WhatsApp</span>
+                          </a>
+                        </div>
+                      ) : (
+                        <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-500 italic text-center">
+                          El profesional tiene desactivado el contacto directo por WhatsApp. Utiliza el botón oficial "Solicitar Servicio".
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -657,6 +695,23 @@ function ProfileContent() {
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                    Rango de tiempo estimado para la atención *
+                  </label>
+                  <select
+                    value={estimatedTimeRange}
+                    onChange={(e) => setEstimatedTimeRange(e.target.value)}
+                    className="w-full text-xs font-medium bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#0056d2] font-semibold text-slate-800"
+                  >
+                    <option value="1 a 2 horas (Atención puntual)">1 a 2 horas (Atención puntual)</option>
+                    <option value="2 a 4 horas (Media jornada)">2 a 4 horas (Media jornada)</option>
+                    <option value="4 a 8 horas (1 día completo)">4 a 8 horas (1 día completo)</option>
+                    <option value="2 a 3 días hábiles">2 a 3 días hábiles</option>
+                    <option value="A convenir según diagnóstico">A convenir según diagnóstico</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
                     Detalles o requerimientos de la labor
                   </label>
                   <textarea
@@ -941,6 +996,16 @@ function getDetailedProviderData(id: number): UserData {
     },
   };
 
+  let showWhatsApp = true;
+  let whatsappNumber = current.phone || '+57 315 123 4567';
+  try {
+    const session = getCurrentUser();
+    if (session && String(session.id) === String(id)) {
+      showWhatsApp = session.profile.showWhatsApp ?? true;
+      whatsappNumber = session.profile.whatsappNumber || session.phone;
+    }
+  } catch (e) {}
+
   return {
     id: id || 1,
     uuid: `usr-prov-${id}`,
@@ -950,7 +1015,11 @@ function getDetailedProviderData(id: number): UserData {
     phone: current.phone || '+57 315 123 4567',
     status: 'ACTIVE',
     role: { name: 'PROVIDER', description: 'Proveedor' },
-    profile: current.profile as any,
+    profile: {
+      ...current.profile,
+      showWhatsApp,
+      whatsappNumber,
+    } as any,
     providerProfile: current.providerProfile as any,
   };
 }

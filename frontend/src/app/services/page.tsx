@@ -24,7 +24,9 @@ import {
   Filter,
   X,
   SlidersHorizontal,
-  ArrowLeft
+  ArrowLeft,
+  Tag,
+  Users
 } from 'lucide-react';
 import { getCurrentUser, UserSession } from '@/lib/auth';
 import { ALL_COLOMBIAN_CITIES, DEFAULT_CITY } from '@/lib/colombia-data';
@@ -60,6 +62,7 @@ interface ProviderData {
   isVerified: boolean;
   rating: number;
   totalReviews: number;
+  featuredActivities?: string[];
   user: {
     id: number;
     firstName: string;
@@ -486,6 +489,50 @@ function ServicesDirectoryContent() {
     return fallbackPhotos[index % fallbackPhotos.length];
   };
 
+  const getProviderFeaturedActivities = (prov: ProviderData): string[] => {
+    if (prov.featuredActivities && prov.featuredActivities.length > 0) {
+      return prov.featuredActivities.slice(0, 5);
+    }
+
+    if (user && user.role === 'PROVIDER' && String(prov.userId) === String(user.id)) {
+      const s = user.services.find((srv) => srv.id === prov.id) || user.services[0];
+      if (s) {
+        return (s.featuredActivities && s.featuredActivities.length > 0)
+          ? s.featuredActivities.slice(0, 5)
+          : s.activities.slice(0, 5);
+      }
+    }
+
+    const titleLower = (prov.title || '').toLowerCase();
+    const nameLower = `${prov.user?.firstName || ''} ${prov.user?.lastName || ''}`.toLowerCase();
+
+    if (titleLower.includes('cerraj') || nameLower.includes('juan')) {
+      return ['Apertura de cerraduras', 'Duplicado de llaves chip', 'Cerraduras digitales', 'Apertura de autos', 'Cilindros de seguridad'];
+    }
+    if (titleLower.includes('electr') || nameLower.includes('carlos')) {
+      return ['Cableado estructurado', 'Paneles solares', 'Reparación cortocircuitos', 'Certificación RETIE', 'Tableros eléctricos'];
+    }
+    if (titleLower.includes('tecno') || titleLower.includes('redes') || nameLower.includes('ana')) {
+      return ['Mantenimiento PC', 'Desarrollo web y apps', 'Redes WiFi', 'Seguridad informática', 'Soporte remoto'];
+    }
+    if (titleLower.includes('plom') || nameLower.includes('luis')) {
+      return ['Reparación de fugas', 'Destape de cañerías', 'Instalación de grifería', 'Motobombas', 'Calentadores de agua'];
+    }
+    if (titleLower.includes('repar') || nameLower.includes('roberto')) {
+      return ['Reparación electrodomésticos', 'Drywall y techos', 'Pintura residencial', 'Enchapes y pisos', 'Soldadura'];
+    }
+    if (titleLower.includes('diseñ') || nameLower.includes('diana')) {
+      return ['Diseño de logos', 'Diseño UI/UX móvil', 'Branding corporativo', 'Publicidad digital', 'Edición de video'];
+    }
+    if (titleLower.includes('educ') || nameLower.includes('sofia')) {
+      return ['Matemáticas y física', 'Inglés interactivo', 'Pruebas Saber 11', 'Refuerzo escolar', 'Clases online'];
+    }
+    if (titleLower.includes('salud') || nameLower.includes('valeria')) {
+      return ['Fisioterapia a domicilio', 'Rehabilitación física', 'Masaje terapéutico', 'Ergonomía postural', 'Acondicionamiento'];
+    }
+    return ['Diagnóstico técnico', 'Servicio a domicilio en Cali', 'Mantenimiento preventivo', 'Garantía de servicio', 'Atención inmediata'];
+  };
+
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
       {/* Header */}
@@ -763,6 +810,24 @@ function ServicesDirectoryContent() {
                       <div className="flex items-center text-slate-500 text-[11px] font-medium pt-0.5">
                         <MapPin className="w-3 h-3 text-slate-400 mr-1 shrink-0" />
                         <span className="truncate">{locationStr}</span>
+                      </div>
+
+                      {/* 5 Actividades Principales de la Persona */}
+                      <div className="pt-2 border-t border-slate-100 space-y-1">
+                        <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">
+                          Actividades Principales ({getProviderFeaturedActivities(prov).length}):
+                        </span>
+                        <div className="flex flex-wrap gap-1">
+                          {getProviderFeaturedActivities(prov).map((act, i) => (
+                            <span
+                              key={i}
+                              className="px-2 py-0.5 rounded-md bg-slate-50 text-slate-700 text-[10px] font-semibold border border-slate-200/70 flex items-center space-x-1"
+                            >
+                              <Tag className="w-2.5 h-2.5 text-[#0056d2] shrink-0" />
+                              <span className="truncate max-w-[130px]">{act}</span>
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
