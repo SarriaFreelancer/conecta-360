@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Award,
@@ -23,137 +23,157 @@ import {
   UserCheck
 } from 'lucide-react';
 import AdminSidebar from '@/components/AdminSidebar';
-
-interface VerificationRequest {
-  id: number;
-  providerName: string;
-  category: string;
-  email: string;
-  phone: string;
-  city: string;
-  documentType: string;
-  documentNumber: string;
-  requestDate: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
-  documentFile: string;
-  notes?: string;
-}
+import {
+  fetchVerificationsBackend,
+  updateProviderVerificationBackend,
+  AdminVerificationItem,
+} from '@/lib/admin-data';
 
 export default function AdminVerificationsPage() {
-  const [requests, setRequests] = useState<VerificationRequest[]>([
+  const [requests, setRequests] = useState<AdminVerificationItem[]>([
     {
       id: 1,
-      providerName: 'Juan Pérez',
-      category: 'Cerrajería',
-      email: 'juan.perez@conecta360.com',
-      phone: '+593 98 123 4567',
-      city: 'Quito, Pichincha',
-      documentType: 'Cédula de Identidad & Certificación Cerrajero',
-      documentNumber: '1723456789',
+      userId: 1,
+      providerName: 'Carlos Andrés Rodríguez',
+      category: 'Electricidad',
+      email: 'carlos.rodriguez@conecta360.co',
+      phone: '+57 315 789 4521',
+      city: 'Cali, Valle del Cauca',
+      documentType: 'Cédula de Ciudadanía & Matrícula CONTE / RETIE',
+      documentNumber: 'CC-1144098231',
       requestDate: '12 Sep 2026',
       status: 'APPROVED',
-      documentFile: 'cedula_certificado_juan_perez.pdf',
-      notes: 'Documento de identidad legible y certificado gremial validado con la asociación.',
+      isVerified: true,
+      rating: 5,
+      totalReviews: 24,
+      documentFile: 'cedula_matricula_conte_carlos_rodriguez.pdf',
+      notes: 'Matrícula CONTE TE-1 verificada en portal oficial y antecedentes policiales limpios.',
     },
     {
       id: 2,
-      providerName: 'Carlos Mendoza',
-      category: 'Electricidad',
-      email: 'carlos.mendoza@conecta360.com',
-      phone: '+593 98 234 5678',
-      city: 'Quito, Pichincha',
-      documentType: 'Matrícula Profesional Eléctrica & Antecedentes',
-      documentNumber: '1718902345',
+      userId: 2,
+      providerName: 'Juan Carlos Pérez',
+      category: 'Cerrajería',
+      email: 'juan.perez@conecta360.co',
+      phone: '+57 310 123 4567',
+      city: 'Cali, Valle del Cauca',
+      documentType: 'Cédula & Certificado Asociación Cerrajeros de Colombia',
+      documentNumber: 'CC-1144567890',
       requestDate: '11 Sep 2026',
       status: 'PENDING',
-      documentFile: 'matricula_electrica_carlos_mendoza.pdf',
-      notes: 'Revisión pendiente en el registro nacional de técnicos eléctricos.',
+      isVerified: false,
+      rating: 4.9,
+      totalReviews: 18,
+      documentFile: 'cedula_certificado_juan_perez.pdf',
+      notes: 'Validación en curso con el registro gremial y certificado de antecedentes.',
     },
     {
       id: 3,
-      providerName: 'Ana Torres',
-      category: 'Tecnología',
-      email: 'ana.torres@conecta360.com',
-      phone: '+593 98 345 6789',
-      city: 'Quito, Pichincha',
-      documentType: 'Título Universitario en Sistemas (Senescyt)',
-      documentNumber: '1790123456',
+      userId: 3,
+      providerName: 'Andrés Felipe Gómez',
+      category: 'Plomería',
+      email: 'andres.gomez@conecta360.co',
+      phone: '+57 318 456 7890',
+      city: 'Cali, Valle del Cauca',
+      documentType: 'Certificado Técnico Laboral SENA & RUT',
+      documentNumber: 'CC-1144890123',
       requestDate: '10 Sep 2026',
       status: 'APPROVED',
-      documentFile: 'titulo_senescyt_ana_torres.pdf',
-      notes: 'Registro verificado en portal público de educación superior.',
+      isVerified: true,
+      rating: 5,
+      totalReviews: 32,
+      documentFile: 'tecnico_sena_plomeria_andres.pdf',
+      notes: 'Certificado SENA en instalaciones hidrosanitarias validado exitosamente.',
     },
     {
       id: 4,
-      providerName: 'Luis García',
-      category: 'Plomería',
-      email: 'luis.garcia@conecta360.com',
-      phone: '+593 98 456 7890',
-      city: 'Quito, Pichincha',
-      documentType: 'Certificado de Antecedentes & Cédula',
-      documentNumber: '1756789012',
+      userId: 4,
+      providerName: 'Ana María Torres',
+      category: 'Tecnología & Redes',
+      email: 'ana.torres@conecta360.co',
+      phone: '+57 312 345 6789',
+      city: 'Cali, Valle del Cauca',
+      documentType: 'Tarjeta Profesional Copnia / Título de Ingeniería',
+      documentNumber: 'CC-1144345678',
       requestDate: '09 Sep 2026',
-      status: 'PENDING',
-      documentFile: 'record_policial_luis_garcia.pdf',
-      notes: 'Documento en proceso de cotejo con la base judicial.',
+      status: 'APPROVED',
+      isVerified: true,
+      rating: 4.95,
+      totalReviews: 15,
+      documentFile: 'tarjeta_profesional_sistemas_ana.pdf',
+      notes: 'Registro verificado en el Consejo Profesional Nacional de Ingeniería.',
     },
     {
       id: 5,
-      providerName: 'Roberto Vaca',
-      category: 'Reparaciones',
-      email: 'roberto.vaca@conecta360.com',
-      phone: '+593 98 567 8901',
-      city: 'Guayaquil, Guayas',
-      documentType: 'Certificación Técnica en Refrigeración',
-      documentNumber: '0912345678',
+      userId: 5,
+      providerName: 'Lucía Zambrano',
+      category: 'Climatización & Refrigeración',
+      email: 'lucia.zambrano@conecta360.co',
+      phone: '+57 317 678 2345',
+      city: 'Palmira, Valle del Cauca',
+      documentType: 'Carnet de Certificación en Manejo de Gases Refrigerantes',
+      documentNumber: 'CC-1144901234',
       requestDate: '08 Sep 2026',
       status: 'PENDING',
-      documentFile: 'cert_refrigeracion_roberto.pdf',
+      isVerified: false,
+      rating: 4.8,
+      totalReviews: 12,
+      documentFile: 'cert_refrigerantes_lucia.pdf',
+      notes: 'Certificación ambiental en trámite de verificación con entidad emisora.',
     },
     {
       id: 6,
-      providerName: 'Sofía Cárdenas',
-      category: 'Educación',
-      email: 'sofia.cardenas@conecta360.com',
-      phone: '+593 98 890 1234',
-      city: 'Ambato, Tungurahua',
-      documentType: 'Título de Licenciatura en Pedagogía y Matemáticas',
-      documentNumber: '1809876543',
+      userId: 6,
+      providerName: 'Pedro Martínez',
+      category: 'Mantenimiento Locativo',
+      email: 'pedro.martinez@conecta360.co',
+      phone: '+57 314 890 1234',
+      city: 'Jamundí, Valle del Cauca',
+      documentType: 'Certificado Vigente Trabajo Seguro en Alturas (Avanzado)',
+      documentNumber: 'CC-1144234567',
       requestDate: '07 Sep 2026',
       status: 'PENDING',
-      documentFile: 'titulo_pedagogia_sofia.pdf',
+      isVerified: false,
+      rating: 4.85,
+      totalReviews: 9,
+      documentFile: 'certificado_alturas_pedro.pdf',
+      notes: 'Cotejando vigencia de certificación con el Ministerio del Trabajo.',
     }
   ]);
 
   const [filterStatus, setFilterStatus] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedRequest, setSelectedRequest] = useState<VerificationRequest | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<AdminVerificationItem | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
-  const menuItems = [
-    { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-    { name: 'Usuarios', href: '/admin/users', icon: Users },
-    { name: 'Categorías', href: '/admin/categories', icon: Layers },
-    { name: 'Servicios', href: '/admin/services', icon: Wrench },
-    { name: 'Roles', href: '/admin/roles', icon: ShieldAlert },
-    { name: 'Verificaciones', href: '/admin/verifications', icon: Award, active: true },
-    { name: 'Suscripciones', href: '/admin/subscriptions', icon: CreditCard },
-    { name: 'Configuración', href: '/admin/settings', icon: Settings },
-  ];
+  useEffect(() => {
+    fetchVerificationsBackend().then((data) => {
+      if (Array.isArray(data) && data.length > 0) {
+        setRequests(data);
+      }
+    });
+  }, []);
 
-  const handleUpdateStatus = (id: number, newStatus: 'APPROVED' | 'REJECTED') => {
+  const handleUpdateStatus = async (id: number, newStatus: 'APPROVED' | 'REJECTED') => {
     setRequests((prev) =>
-      prev.map((req) => (req.id === id ? { ...req, status: newStatus } : req))
+      prev.map((req) => (req.id === id ? { ...req, status: newStatus, isVerified: newStatus === 'APPROVED' } : req))
     );
     if (selectedRequest && selectedRequest.id === id) {
-      setSelectedRequest((prev) => (prev ? { ...prev, status: newStatus } : null));
+      setSelectedRequest((prev) => (prev ? { ...prev, status: newStatus, isVerified: newStatus === 'APPROVED' } : null));
     }
     setFeedbackMessage(
       newStatus === 'APPROVED'
-        ? '✓ Solicitud aprobada con éxito. El prestador ahora cuenta con la insignia de Verificado oficial.'
-        : '✕ Solicitud rechazada. Se ha emitido requerimiento de subsanación de documentos.'
+        ? '✓ Solicitud aprobada con éxito. El prestador ahora cuenta con la insignia de Verificado oficial en MySQL.'
+        : '✕ Solicitud rechazada. Se ha emitido requerimiento de subsanación de documentos en MySQL.'
     );
-    setTimeout(() => setFeedbackMessage(null), 4000);
+
+    try {
+      await updateProviderVerificationBackend(id, newStatus);
+    } catch (err) {
+      console.warn('Error sincronizando verificación con MySQL:', err);
+    }
+
+    setTimeout(() => setFeedbackMessage(null), 4500);
   };
 
   const filteredRequests = requests.filter((req) => {

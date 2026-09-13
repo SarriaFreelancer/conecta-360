@@ -750,3 +750,90 @@ export async function getMeBackend(token: string): Promise<any> {
   return res.json();
 }
 
+// ==========================================
+// 9. VERIFICACIONES DE PRESTADORES Y DOCUMENTOS
+// ==========================================
+export interface AdminVerificationItem {
+  id: number;
+  userId: number;
+  providerName: string;
+  category: string;
+  email: string;
+  phone: string;
+  city: string;
+  isVerified: boolean;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  rating: number;
+  totalReviews: number;
+  experienceYears?: number;
+  coverageZones?: string;
+  documentType: string;
+  documentNumber: string;
+  documentFile: string;
+  notes?: string;
+  documents?: {
+    id: number;
+    providerProfileId: number;
+    documentType: string;
+    documentNumber?: string;
+    fileUrl: string;
+    status: 'PENDIENTE' | 'APROBADO' | 'RECHAZADO';
+    reviewNotes?: string;
+    createdAt?: string;
+  }[];
+  requestDate: string;
+}
+
+export async function fetchVerificationsBackend(): Promise<AdminVerificationItem[]> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/providers/verifications`, {
+      signal: AbortSignal.timeout(4000),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) return data;
+    }
+  } catch (err) {
+    console.warn('[Conecta360 API] Error consultando verificaciones en backend:', err);
+  }
+  return [];
+}
+
+export async function updateProviderVerificationBackend(
+  id: number,
+  status: 'APPROVED' | 'REJECTED' | 'PENDING',
+  notes?: string,
+) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/providers/${id}/verify`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, notes }),
+      signal: AbortSignal.timeout(4000),
+    });
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('[Conecta360 API] Error actualizando verificación en backend:', err);
+  }
+  return null;
+}
+
+export async function updateDocumentStatusBackend(
+  docId: number,
+  status: 'APROBADO' | 'RECHAZADO' | 'PENDIENTE',
+  reviewNotes?: string,
+) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/providers/documents/${docId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, reviewNotes }),
+      signal: AbortSignal.timeout(4000),
+    });
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('[Conecta360 API] Error actualizando estado de documento:', err);
+  }
+  return null;
+}
+

@@ -1,10 +1,29 @@
-import { Controller, Get, Post, Param, Body, Query, ParseIntPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Param,
+  Body,
+  Query,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { ProvidersService } from './providers.service';
-import { ActivateProviderDto } from './dto/provider.dto';
+import {
+  ActivateProviderDto,
+  VerifyProviderDto,
+  CreateVerificationDocumentDto,
+  UpdateDocumentStatusDto,
+} from './dto/provider.dto';
 
 @Controller('providers')
 export class ProvidersController {
   constructor(private readonly providersService: ProvidersService) {}
+
+  @Get('verifications')
+  getVerifications() {
+    return this.providersService.getVerifications();
+  }
 
   @Get()
   findAll(
@@ -23,5 +42,29 @@ export class ProvidersController {
   @Post('activate/:userId')
   activate(@Param('userId', ParseIntPipe) userId: number, @Body() dto: ActivateProviderDto) {
     return this.providersService.activate(userId, dto);
+  }
+
+  @Patch(':id/verify')
+  verifyProvider(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: VerifyProviderDto,
+  ) {
+    return this.providersService.verifyProvider(id, dto);
+  }
+
+  @Patch('documents/:docId/status')
+  updateDocumentStatus(
+    @Param('docId', ParseIntPipe) docId: number,
+    @Body() dto: UpdateDocumentStatusDto,
+  ) {
+    return this.providersService.updateDocumentStatus(docId, dto);
+  }
+
+  @Post(':id/documents')
+  addDocument(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CreateVerificationDocumentDto,
+  ) {
+    return this.providersService.addDocument(id, dto);
   }
 }
