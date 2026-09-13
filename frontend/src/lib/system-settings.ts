@@ -16,6 +16,8 @@ export interface GlobalPlatformSettings {
   cashTransferDebtEnabled: boolean; // Cobros en efectivo/transferencia generan deuda con la plataforma
 }
 
+export type GlobalSettings = GlobalPlatformSettings;
+
 export const DEFAULT_GLOBAL_SETTINGS: GlobalPlatformSettings = {
   platformName: 'CONECTA 360',
   country: 'Colombia',

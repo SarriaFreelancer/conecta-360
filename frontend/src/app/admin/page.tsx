@@ -46,6 +46,7 @@ import {
 } from 'lucide-react';
 import AdminSidebar from '@/components/AdminSidebar';
 import { getAllBookings, reassignBookingByAdmin, ServiceHistoryItem, destroySession, getCurrentUser, UserSession } from '@/lib/auth';
+import { showConfirm, showSuccess, showError } from '@/lib/alerts';
 import {
   getAdminCategories,
   getAdminServices,
@@ -211,8 +212,15 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleLogout = () => {
-    if (typeof window !== 'undefined' && window.confirm('¿Deseas cerrar la sesión y salir del Panel Administrativo?')) {
+  const handleLogout = async () => {
+    const confirmed = await showConfirm({
+      title: '¿Cerrar Sesión?',
+      text: '¿Deseas salir del Panel Administrativo de Conecta 360?',
+      confirmText: 'Sí, Salir',
+      cancelText: 'Cancelar',
+      icon: 'question',
+    });
+    if (confirmed) {
       destroySession();
       window.location.href = '/';
     }

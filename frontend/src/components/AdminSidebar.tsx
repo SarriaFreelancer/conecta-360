@@ -19,6 +19,7 @@ import {
   LogOut
 } from 'lucide-react';
 import { destroySession } from '@/lib/auth';
+import { showConfirm } from '@/lib/alerts';
 
 interface AdminSidebarProps {
   currentPath?: string;
@@ -43,10 +44,10 @@ export default function AdminSidebar({ currentPath }: AdminSidebarProps) {
   useEffect(() => {
     try {
       const saved = localStorage.getItem('conecta360_admin_sidebar_collapsed');
-      if (saved === 'true') setIsCollapsed(true);
-    } catch (e) {
-      // Ignorar errores de storage
-    }
+      if (saved !== null) {
+        setIsCollapsed(saved === 'true');
+      }
+    } catch (e) {}
   }, []);
 
   const toggleCollapse = () => {
@@ -66,8 +67,15 @@ export default function AdminSidebar({ currentPath }: AdminSidebarProps) {
     return activeRoute.startsWith(href);
   };
 
-  const handleLogout = () => {
-    if (typeof window !== 'undefined' && window.confirm('¿Estás seguro de que deseas cerrar la sesión de administración?')) {
+  const handleLogout = async () => {
+    const confirmed = await showConfirm({
+      title: '¿Cerrar Sesión?',
+      text: '¿Estás seguro de que deseas salir del panel de administración?',
+      confirmText: 'Sí, Salir',
+      cancelText: 'Cancelar',
+      icon: 'question',
+    });
+    if (confirmed) {
       destroySession();
       window.location.href = '/';
     }

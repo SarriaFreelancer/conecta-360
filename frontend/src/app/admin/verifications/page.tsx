@@ -28,6 +28,7 @@ import {
   updateProviderVerificationBackend,
   AdminVerificationItem,
 } from '@/lib/admin-data';
+import { showSuccess, showWarning, showConfirm } from '@/lib/alerts';
 
 export default function AdminVerificationsPage() {
   const [requests, setRequests] = useState<AdminVerificationItem[]>([
@@ -155,25 +156,35 @@ export default function AdminVerificationsPage() {
   }, []);
 
   const handleUpdateStatus = async (id: number, newStatus: 'APPROVED' | 'REJECTED') => {
+    const isApprove = newStatus === 'APPROVED';
+    const confirmed = await showConfirm(
+      isApprove ? '¿Aprobar verificación?' : '¿Rechazar solicitud?',
+      isApprove
+        ? 'El prestador recibirá la insignia oficial de Profesional Verificado en su perfil y servicios.'
+        : 'Se notificará al prestador que debe subsanar o reenviar los documentos solicitados.',
+      isApprove ? 'Sí, aprobar' : 'Sí, rechazar',
+      isApprove ? '#0056d2' : '#ef4444'
+    );
+    if (!confirmed) return;
+
     setRequests((prev) =>
-      prev.map((req) => (req.id === id ? { ...req, status: newStatus, isVerified: newStatus === 'APPROVED' } : req))
+      prev.map((req) => (req.id === id ? { ...req, status: newStatus, isVerified: isApprove } : req))
     );
     if (selectedRequest && selectedRequest.id === id) {
-      setSelectedRequest((prev) => (prev ? { ...prev, status: newStatus, isVerified: newStatus === 'APPROVED' } : null));
+      setSelectedRequest((prev) => (prev ? { ...prev, status: newStatus, isVerified: isApprove } : null));
     }
-    setFeedbackMessage(
-      newStatus === 'APPROVED'
-        ? '✓ Solicitud aprobada con éxito. El prestador ahora cuenta con la insignia de Verificado oficial en MySQL.'
-        : '✕ Solicitud rechazada. Se ha emitido requerimiento de subsanación de documentos en MySQL.'
-    );
+
+    if (isApprove) {
+      showSuccess('Prestador Verificado', 'Solicitud aprobada con éxito. El prestador ahora cuenta con la insignia de Verificado oficial.');
+    } else {
+      showWarning('Solicitud Rechazada', 'Se ha emitido el requerimiento de subsanación de documentos al prestador.');
+    }
 
     try {
       await updateProviderVerificationBackend(id, newStatus);
     } catch (err) {
       console.warn('Error sincronizando verificación con MySQL:', err);
     }
-
-    setTimeout(() => setFeedbackMessage(null), 4500);
   };
 
   const filteredRequests = requests.filter((req) => {

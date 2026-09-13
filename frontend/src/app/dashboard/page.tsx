@@ -68,6 +68,7 @@ import {
 import { getGlobalSettings, getRejectionReasons, RejectionReasonItem } from '@/lib/system-settings';
 import { COLOMBIA_DEPARTMENTS, getCitiesForDepartment, DEFAULT_CITY, DEFAULT_DEPARTMENT } from '@/lib/colombia-data';
 import { fetchBookingsByClient, fetchBookingsByProvider, fetchNotificationsByUser } from '@/lib/admin-data';
+import { showSuccess, showError, showWarning, showConfirm } from '@/lib/alerts';
 
 function UserDashboardContent() {
   const router = useRouter();
@@ -280,7 +281,7 @@ function UserDashboardContent() {
   const handleAddActivity = () => {
     if (!activityInput.trim()) return;
     if (activities.length >= globalSettings.maxActivitiesPerService) {
-      alert(`El límite máximo es de ${globalSettings.maxActivitiesPerService} actividades.`);
+      showWarning('Límite de Actividades', `El límite máximo es de ${globalSettings.maxActivitiesPerService} actividades por servicio.`);
       return;
     }
     if (activities.includes(activityInput.trim())) return;
@@ -316,12 +317,12 @@ function UserDashboardContent() {
   const handleSaveService = (e: React.FormEvent) => {
     e.preventDefault();
     if (!serviceTitle.trim()) {
-      alert('Por favor ingresa el nombre de tu servicio.');
+      showWarning('Nombre Requerido', 'Por favor ingresa el nombre de tu servicio profesional.');
       return;
     }
 
     if (activeCategory.requiresTitle && !titleCertification.trim() && !certificateFileName.trim()) {
-      alert(`La categoría ${activeCategory.name} requiere ingresar tu título o matrícula profesional.`);
+      showWarning('Título Requerido', `La categoría ${activeCategory.name} requiere ingresar tu título o matrícula profesional.`);
       return;
     }
 
@@ -345,19 +346,24 @@ function UserDashboardContent() {
     if (result.success) {
       setUser(getCurrentUser());
       setIsModalOpen(false);
-      setToastMessage('¡Servicio agregado exitosamente!');
-      setTimeout(() => setToastMessage(null), 4000);
+      showSuccess('¡Servicio Publicado!', 'Tu nuevo servicio ha sido agregado exitosamente a tu catálogo.');
     } else {
-      alert(result.message);
+      showError('No se pudo agregar', result.message || 'Verifica los datos ingresados.');
     }
   };
 
-  const handleDeleteService = (id: string) => {
-    if (confirm('¿Estás seguro de eliminar este servicio?')) {
+  const handleDeleteService = async (id: string) => {
+    const confirmed = await showConfirm({
+      title: '¿Eliminar Servicio?',
+      text: '¿Estás seguro de que deseas eliminar este servicio de tu catálogo?',
+      confirmText: 'Sí, Eliminar',
+      cancelText: 'Cancelar',
+      icon: 'warning',
+    });
+    if (confirmed) {
       removeServiceFromUser(id);
       setUser(getCurrentUser());
-      setToastMessage('Servicio eliminado.');
-      setTimeout(() => setToastMessage(null), 3000);
+      showSuccess('Servicio Eliminado', 'El servicio fue eliminado de tu perfil.');
     }
   };
 
@@ -452,7 +458,7 @@ function UserDashboardContent() {
     if (!rejectModalItem) return;
 
     if (!rejectExplanation.trim()) {
-      alert('Por favor explica detalladamente el por qué rechazas este servicio para que el cliente y el administrador lo revisen.');
+      showWarning('Explicación Requerida', 'Por favor explica detalladamente el por qué rechazas este servicio para que el cliente y el administrador lo revisen.');
       return;
     }
 
@@ -476,11 +482,10 @@ function UserDashboardContent() {
       setRejectModalItem(null);
       setRejectExplanation('');
       if (penaltyToApply > 0) {
-        setToastMessage(`⚠️ Solicitud rechazada. Incurriste en -${penaltyToApply} puntos negativos de reputación.`);
+        showWarning('Solicitud Rechazada', `Incurriste en -${penaltyToApply} puntos negativos de reputación debido a causa no justificada.`);
       } else {
-        setToastMessage('✓ Solicitud rechazada con causa justificada (0 puntos negativos). El cliente y el admin fueron notificados.');
+        showSuccess('Solicitud Rechazada', 'El servicio fue declinado con causa justificada (0 puntos negativos).');
       }
-      setTimeout(() => setToastMessage(null), 5000);
     }
   };
 
@@ -497,13 +502,13 @@ function UserDashboardContent() {
     let nextFeatured: string[];
     if (currentFeatured.includes(activityName)) {
       if (currentFeatured.length <= 1) {
-        alert('Debes mantener al menos 1 actividad seleccionada para tu tarjeta pública exterior.');
+        showWarning('Mínimo Requerido', 'Debes mantener al menos 1 actividad seleccionada para tu tarjeta pública exterior.');
         return;
       }
       nextFeatured = currentFeatured.filter((a) => a !== activityName);
     } else {
       if (currentFeatured.length >= 4) {
-        alert('Puedes seleccionar un máximo de 4 actividades principales para tu tarjeta exterior.');
+        showWarning('Límite de Exhibición', 'Puedes seleccionar un máximo de 4 actividades principales para exhibir en tu tarjeta exterior.');
         return;
       }
       nextFeatured = [...currentFeatured, activityName];
@@ -513,8 +518,7 @@ function UserDashboardContent() {
     if (success) {
       const refreshed = getCurrentUser();
       setUser(refreshed);
-      setToastMessage('✓ Actividades principales de la tarjeta pública actualizadas.');
-      setTimeout(() => setToastMessage(null), 3000);
+      showSuccess('Tarjeta Actualizada', 'Las actividades principales de la tarjeta pública fueron actualizadas.');
     }
   };
 
@@ -2680,8 +2684,8 @@ function UserDashboardContent() {
               <button
                 type="button"
                 onClick={() => {
-                  alert('¡Solicitud de Plan Pro recibida! Un asesor de Conecta 360 se contactará.');
                   setShowUpgradeModal(false);
+                  showSuccess('¡Solicitud Recibida!', 'Un asesor de Conecta 360 se comunicará contigo para activar las funciones de tu Plan Pro.');
                 }}
                 className="flex-1 py-2.5 bg-[#0056d2] hover:bg-[#0046a8] text-white font-bold text-xs rounded-xl shadow-md"
               >

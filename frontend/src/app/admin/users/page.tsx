@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import AdminSidebar from '@/components/AdminSidebar';
 import { getUserHistoryForAdmin, verifyUserByAdmin, calculateUserPlatformDebt, ServiceHistoryItem } from '@/lib/auth';
+import { showSuccess, showError, showWarning, showConfirm, showSwalToast } from '@/lib/alerts';
 import { getGlobalSettings } from '@/lib/system-settings';
 import {
   getAdminUsers,
@@ -253,6 +254,15 @@ export default function AdminUsersPage() {
 
   // Aprobar verificación con persistencia directa en MySQL
   const handleApproveVerification = async (u: UserItem) => {
+    const confirmed = await showConfirm({
+      title: '¿Aprobar Verificación Oficial?',
+      text: `¿Deseas otorgar la insignia de prestador verificado a ${u.firstName} ${u.lastName}?`,
+      confirmText: 'Sí, Aprobar',
+      cancelText: 'Cancelar',
+      icon: 'question',
+    });
+    if (!confirmed) return;
+
     // 1. Actualización optimista e inmediata en la interfaz y almacenamiento local
     verifyUserByAdmin(u.id);
     if (u.email) verifyUserByAdmin(u.email);
@@ -281,7 +291,7 @@ export default function AdminUsersPage() {
       });
     }
 
-    showToast(`✓ Verificación aprobada para ${u.firstName} ${u.lastName}`);
+    showSuccess('¡Verificación Aprobada!', `${u.firstName} ${u.lastName} ahora cuenta con la insignia de verificado oficial.`);
 
     // 2. Persistencia asíncrona segura en backend MySQL
     try {
@@ -302,7 +312,14 @@ export default function AdminUsersPage() {
     const newTargetStatus: 'ACTIVE' | 'BLOCKED' = u.status === 'BLOCKED' ? 'ACTIVE' : 'BLOCKED';
     const actionText = newTargetStatus === 'BLOCKED' ? 'bloquear' : 'desbloquear y activar';
 
-    if (!confirm(`¿Estás seguro de que deseas ${actionText} a ${u.firstName} ${u.lastName}?`)) return;
+    const confirmed = await showConfirm({
+      title: `¿${newTargetStatus === 'BLOCKED' ? 'Bloquear' : 'Activar'} Usuario?`,
+      text: `¿Estás seguro de que deseas ${actionText} a ${u.firstName} ${u.lastName}?`,
+      confirmText: newTargetStatus === 'BLOCKED' ? 'Sí, Bloquear' : 'Sí, Activar',
+      cancelText: 'Cancelar',
+      icon: newTargetStatus === 'BLOCKED' ? 'warning' : 'question',
+    });
+    if (!confirmed) return;
 
     // Actualización optimista
     setUsers((prev) =>
@@ -313,7 +330,10 @@ export default function AdminUsersPage() {
       ),
     );
 
-    showToast(`✓ Usuario ${u.firstName} ${u.lastName} ahora está ${newTargetStatus === 'BLOCKED' ? 'BLOQUEADO' : 'ACTIVO'}`);
+    showSuccess(
+      newTargetStatus === 'BLOCKED' ? 'Usuario Bloqueado' : 'Usuario Activado',
+      `El usuario ${u.firstName} ${u.lastName} ahora está ${newTargetStatus === 'BLOCKED' ? 'BLOQUEADO' : 'ACTIVO'}.`
+    );
 
     try {
       await updateAdminUserBackend(u.id, { status: newTargetStatus, email: u.email });
@@ -326,7 +346,7 @@ export default function AdminUsersPage() {
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newFirstName || !newLastName || !newEmail || !newPassword) {
-      alert('Por favor completa los campos obligatorios (Nombre, Apellido, Correo y Contraseña)');
+      showWarning('Campos Obligatorios', 'Por favor completa todos los campos requeridos (Nombre, Apellido, Correo y Contraseña).');
       return;
     }
 
@@ -349,9 +369,9 @@ export default function AdminUsersPage() {
       setNewPassword('');
       setNewPhone('');
       fetchUsers();
-      showToast('✓ Nuevo usuario registrado exitosamente en la base de datos MySQL');
+      showSuccess('Usuario Creado', `El usuario ${newFirstName} ${newLastName} ha sido registrado exitosamente.`);
     } catch (err: any) {
-      alert(err.message || 'Error al crear usuario en MySQL');
+      showError('Error al crear usuario', err?.message || 'No se pudo registrar el usuario en MySQL.');
     } finally {
       setIsCreating(false);
     }
@@ -388,9 +408,9 @@ export default function AdminUsersPage() {
       setIsEditModalOpen(false);
       setEditingUser(null);
       fetchUsers();
-      showToast('✓ Datos del usuario actualizados exitosamente en MySQL');
+      showSuccess('Usuario Actualizado', 'Los datos del usuario han sido actualizados exitosamente.');
     } catch (err: any) {
-      alert(err.message || 'Error al actualizar usuario en MySQL');
+      showError('Error al actualizar', err?.message || 'No fue posible guardar los cambios en MySQL.');
     } finally {
       setIsUpdating(false);
     }
@@ -398,14 +418,21 @@ export default function AdminUsersPage() {
 
   // Eliminar usuario de MySQL
   const handleDeleteUser = async (u: UserItem) => {
-    if (!confirm(`¿Eliminar permanentemente al usuario ${u.firstName} ${u.lastName} (${u.email}) de MySQL?`)) return;
+    const confirmed = await showConfirm({
+      title: '¿Eliminar Usuario?',
+      text: `¿Eliminar permanentemente a ${u.firstName} ${u.lastName} (${u.email})? Esta acción no se puede deshacer.`,
+      confirmText: 'Sí, Eliminar',
+      cancelText: 'Cancelar',
+      icon: 'warning',
+    });
+    if (!confirmed) return;
 
     try {
       await deleteAdminUserBackend(u.id);
       setUsers((prev) => prev.filter((item) => item.id !== u.id));
-      showToast(`✓ Usuario ${u.firstName} eliminado de la base de datos`);
+      showSuccess('Usuario Eliminado', `El usuario ${u.firstName} fue eliminado correctamente.`);
     } catch (err) {
-      showToast('Error al eliminar usuario');
+      showError('Error al eliminar', 'Ocurrió un inconveniente al intentar eliminar el usuario.');
     }
   };
 

@@ -23,6 +23,7 @@ import {
   deleteAdminServiceBackend,
   API_BASE_URL,
 } from '@/lib/admin-data';
+import { showConfirm, showSuccess, showError } from '@/lib/alerts';
 
 interface ServiceItem {
   id: number;
@@ -183,7 +184,15 @@ export default function AdminServicesPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('¿Estás seguro de eliminar este servicio?')) return;
+    const confirmed = await showConfirm({
+      title: '¿Eliminar Servicio?',
+      text: '¿Estás seguro de que deseas eliminar este servicio de la plataforma?',
+      confirmText: 'Sí, Eliminar',
+      cancelText: 'Cancelar',
+      icon: 'warning',
+    });
+    if (!confirmed) return;
+
     try {
       await deleteAdminServiceBackend(id);
     } catch (error) {
@@ -194,7 +203,7 @@ export default function AdminServicesPage() {
     if (typeof window !== 'undefined') {
       localStorage.setItem('conecta360_admin_services_v2', JSON.stringify(updated));
     }
-    showToast('Servicio eliminado de MySQL');
+    showSuccess('Servicio Eliminado', 'El servicio ha sido removido exitosamente.');
   };
 
   const showToast = (msg: string) => {

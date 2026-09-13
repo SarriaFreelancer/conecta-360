@@ -26,6 +26,7 @@ import {
   deleteAdminCategoryBackend,
   API_BASE_URL,
 } from '@/lib/admin-data';
+import { showConfirm, showSuccess, showError } from '@/lib/alerts';
 
 interface Requirement {
   id: number;
@@ -183,7 +184,15 @@ export default function AdminCategoriesPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('¿Estás seguro de eliminar esta categoría?')) return;
+    const confirmed = await showConfirm({
+      title: '¿Eliminar Categoría?',
+      text: '¿Estás seguro de que deseas eliminar esta categoría? Esta acción afectará los servicios asociados.',
+      confirmText: 'Sí, Eliminar',
+      cancelText: 'Cancelar',
+      icon: 'warning',
+    });
+    if (!confirmed) return;
+
     try {
       await deleteAdminCategoryBackend(id);
     } catch (error) {
@@ -194,7 +203,7 @@ export default function AdminCategoriesPage() {
     if (typeof window !== 'undefined') {
       localStorage.setItem('conecta360_admin_categories_v2', JSON.stringify(updated));
     }
-    showToast('Categoría eliminada de MySQL');
+    showSuccess('Categoría Eliminada', 'La categoría ha sido removida del catálogo.');
   };
 
   const showToast = (msg: string) => {

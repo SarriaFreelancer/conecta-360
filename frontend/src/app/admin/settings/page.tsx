@@ -34,21 +34,23 @@ import {
   getRejectionReasons,
   addRejectionReason,
   deleteRejectionReason,
-  RejectionReasonItem
+  RejectionReasonItem,
+  GlobalSettings
 } from '@/lib/system-settings';
 import { updatePlatformSettingsBackend } from '@/lib/admin-data';
+import { showSuccess, showConfirm } from '@/lib/alerts';
 
 export default function AdminSettingsPage() {
-  const [globalSettings, setGlobalSettings] = useState(getGlobalSettings());
+  const [globalSettings, setGlobalSettings] = useState<GlobalSettings>(getGlobalSettings());
 
   const [generalConfig, setGeneralConfig] = useState({
-    platformName: globalSettings.platformName || 'CONECTA 360',
-    primarySlogan: 'Conecta lo que necesitas con quien puede hacerlo.',
-    secondarySlogan: 'Necesitas. Encuentras. Contratas.',
-    supportEmail: 'contacto@conecta360.co',
-    supportPhone: '+57 315 789 4521',
-    currency: 'COP ($)',
-    country: 'Colombia'
+    platformName: globalSettings.platformName || 'Conecta 360',
+    primarySlogan: 'Plataforma Líder de Servicios Locales y Profesionales Verificados',
+    secondarySlogan: 'Conectando hogares y empresas con talento certificado en Colombia',
+    supportEmail: 'soporte@conecta360.com.co',
+    supportPhone: '+57 300 123 4567',
+    country: globalSettings.country || 'Colombia',
+    currency: globalSettings.currency || 'COP ($)'
   });
 
   const [securityRules, setSecurityRules] = useState({
@@ -106,15 +108,24 @@ export default function AdminSettingsPage() {
       newReasonDesc.trim()
     );
     setRejectionReasons(getRejectionReasons());
+    showSuccess('Motivo Agregado', `El motivo "${newReasonLabel.trim()}" fue agregado exitosamente al catálogo.`);
     setNewReasonLabel('');
     setNewReasonDesc('');
     setNewReasonJustified(true);
     setNewReasonPenalty(10);
   };
 
-  const handleDeleteReason = (id: string) => {
+  const handleDeleteReason = async (id: string) => {
+    const isConfirmed = await showConfirm(
+      '¿Eliminar motivo de rechazo?',
+      'Este motivo ya no estará disponible para selección en las cancelaciones de prestadores.',
+      'Sí, eliminar',
+      '#ef4444'
+    );
+    if (!isConfirmed) return;
     deleteRejectionReason(id);
     setRejectionReasons(getRejectionReasons());
+    showSuccess('Motivo Eliminado', 'El motivo de rechazo ha sido retirado del sistema.');
   };
 
   useEffect(() => {
@@ -171,6 +182,7 @@ export default function AdminSettingsPage() {
       console.warn('Error guardando en MySQL:', err);
     }
 
+    showSuccess('Parámetros Guardados', 'La configuración global de Conecta 360 se ha actualizado correctamente.');
     setTimeout(() => setSavedSuccess(false), 4000);
   };
 

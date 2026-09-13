@@ -42,6 +42,7 @@ import { COLOMBIA_DEPARTMENTS, ALL_COLOMBIAN_CITIES, DEFAULT_CITY } from '@/lib/
 import { getAdminCategories, API_BASE_URL } from '@/lib/admin-data';
 import MainNavbar from '@/components/MainNavbar';
 import MainFooter from '@/components/MainFooter';
+import { showSuccess, showError, showWarning, showConfirm } from '@/lib/alerts';
 
 interface Requirement {
   id: number;
@@ -130,9 +131,9 @@ export default function Home() {
     }
   };
 
-  const handleOpenTeamModal = () => {
+  const handleOpenTeamModal = async () => {
     if (!user) {
-      alert('Debes iniciar sesión para solicitar un equipo de trabajo o cuadrilla.');
+      await showWarning('Autenticación Requerida', 'Debes iniciar sesión para solicitar un equipo de trabajo o cuadrilla.');
       window.location.href = `/login?redirect=${encodeURIComponent('/?action=team')}&action_type=cuadrilla`;
       return;
     }
@@ -148,11 +149,11 @@ export default function Home() {
     e.preventDefault();
     if (!user) return;
     if (selectedTeamProviderIds.length === 0) {
-      alert('Por favor selecciona al menos 1 o más profesionales para el equipo de trabajo.');
+      showWarning('Selección Requerida', 'Por favor selecciona al menos 1 o más profesionales para el equipo de trabajo.');
       return;
     }
     if (!teamProjectName.trim()) {
-      alert('Por favor ingresa el nombre o propósito de la cuadrilla.');
+      showWarning('Nombre Requerido', 'Por favor ingresa el nombre o propósito de la cuadrilla.');
       return;
     }
 
@@ -176,11 +177,11 @@ export default function Home() {
     });
 
     if (result.success) {
-      setTeamBookingSuccess(`¡Equipo de ${chosenProviders.length} profesionales solicitado con éxito! Cada especialista ha recibido la notificación en su portal para confirmar.`);
-      setTimeout(() => {
-        setTeamBookingSuccess(null);
-        setIsTeamModalOpen(false);
-      }, 3500);
+      setIsTeamModalOpen(false);
+      showSuccess(
+        '¡Cuadrilla Solicitada!',
+        `Equipo de ${chosenProviders.length} profesionales solicitado con éxito. Cada especialista ha recibido la notificación para confirmar.`
+      );
     }
   };
 
