@@ -12,12 +12,14 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { AuthModule } from './auth/auth.module';
 import { SettingsModule } from './settings/settings.module';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
     PrismaModule,
     AuthModule,
     SettingsModule,
+    UploadModule,
     UsersModule,
     ProfilesModule,
     RolesModule,

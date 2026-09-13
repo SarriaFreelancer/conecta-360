@@ -19,7 +19,13 @@ import {
   Search
 } from 'lucide-react';
 import AdminSidebar from '@/components/AdminSidebar';
-import { getAdminCategories, API_BASE_URL } from '@/lib/admin-data';
+import {
+  getAdminCategories,
+  createAdminCategoryBackend,
+  updateAdminCategoryBackend,
+  deleteAdminCategoryBackend,
+  API_BASE_URL,
+} from '@/lib/admin-data';
 
 interface Requirement {
   id: number;
@@ -87,18 +93,20 @@ export default function AdminCategoriesPage() {
     e.preventDefault();
     if (!name || !slug) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/categories`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, slug, description, icon: 'grid', isActive: true }),
+      const created = await createAdminCategoryBackend({
+        name,
+        slug,
+        description,
+        icon: 'grid',
+        isActive: true,
       });
-      if (res.ok) {
+      if (created) {
         setIsModalOpen(false);
         setName('');
         setSlug('');
         setDescription('');
-        fetchCategories();
-        showToast('Categoría creada exitosamente');
+        await fetchCategories();
+        showToast('Categoría creada exitosamente en MySQL');
         return;
       }
     } catch (error) {
@@ -142,21 +150,17 @@ export default function AdminCategoriesPage() {
     e.preventDefault();
     if (!editingCategory || !editName || !editSlug) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/categories/${editingCategory.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: editName,
-          slug: editSlug,
-          description: editDescription,
-          isActive: editIsActive,
-        }),
+      const updatedBackend = await updateAdminCategoryBackend(editingCategory.id, {
+        name: editName,
+        slug: editSlug,
+        description: editDescription,
+        isActive: editIsActive,
       });
-      if (res.ok) {
+      if (updatedBackend) {
         setIsEditModalOpen(false);
         setEditingCategory(null);
-        fetchCategories();
-        showToast('Categoría actualizada exitosamente');
+        await fetchCategories();
+        showToast('Categoría actualizada exitosamente en MySQL');
         return;
       }
     } catch (error) {
@@ -181,9 +185,7 @@ export default function AdminCategoriesPage() {
   const handleDelete = async (id: number) => {
     if (!confirm('¿Estás seguro de eliminar esta categoría?')) return;
     try {
-      await fetch(`${API_BASE_URL}/categories/${id}`, {
-        method: 'DELETE',
-      });
+      await deleteAdminCategoryBackend(id);
     } catch (error) {
       console.warn('Servidor offline, eliminando localmente:', error);
     }
@@ -192,7 +194,7 @@ export default function AdminCategoriesPage() {
     if (typeof window !== 'undefined') {
       localStorage.setItem('conecta360_admin_categories_v2', JSON.stringify(updated));
     }
-    showToast('Categoría eliminada');
+    showToast('Categoría eliminada de MySQL');
   };
 
   const showToast = (msg: string) => {

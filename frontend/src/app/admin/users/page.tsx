@@ -23,12 +23,29 @@ import {
   Mail,
   MapPin,
   Tag,
-  Award
+  Award,
+  Plus,
+  Edit2,
+  Trash2,
+  Ban,
+  Check,
+  UserPlus,
 } from 'lucide-react';
 import AdminSidebar from '@/components/AdminSidebar';
 import { getUserHistoryForAdmin, verifyUserByAdmin, calculateUserPlatformDebt, ServiceHistoryItem } from '@/lib/auth';
 import { getGlobalSettings } from '@/lib/system-settings';
-import { getAdminUsers, getAdminCategories, API_BASE_URL } from '@/lib/admin-data';
+import {
+  getAdminUsers,
+  getAdminCategories,
+  getAdminRoles,
+  createAdminUserBackend,
+  updateAdminUserBackend,
+  deleteAdminUserBackend,
+  updateProviderVerificationBackend,
+  fetchAllBookingsBackend,
+  AdminRole,
+  API_BASE_URL,
+} from '@/lib/admin-data';
 
 interface UserItem {
   id: number;
@@ -37,9 +54,12 @@ interface UserItem {
   lastName: string;
   email: string;
   phone: string | null;
-  status: string;
+  status: 'ACTIVE' | 'INACTIVE' | 'BLOCKED' | 'PENDING' | string;
+  isActive?: boolean;
   createdAt: string;
+  roleId?: number;
   role?: {
+    id?: number;
     name: string;
   };
   profile?: {
@@ -71,6 +91,7 @@ interface UserItem {
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserItem[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
+  const [roles, setRoles] = useState<AdminRole[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<'ALL' | 'PROVIDER' | 'CLIENT'>('ALL');
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
@@ -80,7 +101,30 @@ export default function AdminUsersPage() {
   // Modal de Historial y Detalle del Usuario
   const [selectedUser, setSelectedUser] = useState<UserItem | null>(null);
   const [userHistory, setUserHistory] = useState<ServiceHistoryItem[]>([]);
+  const [isRealHistory, setIsRealHistory] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Modal Nuevo Usuario
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [newFirstName, setNewFirstName] = useState('');
+  const [newLastName, setNewLastName] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [newPhone, setNewPhone] = useState('');
+  const [newRoleId, setNewRoleId] = useState<number>(3); // Default 3: USER / CLIENT
+  const [newStatus, setNewStatus] = useState<'ACTIVE' | 'INACTIVE' | 'BLOCKED' | 'PENDING'>('ACTIVE');
+  const [isCreating, setIsCreating] = useState(false);
+
+  // Modal Editar Usuario
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserItem | null>(null);
+  const [editFirstName, setEditFirstName] = useState('');
+  const [editLastName, setEditLastName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editRoleId, setEditRoleId] = useState<number>(3);
+  const [editStatus, setEditStatus] = useState<'ACTIVE' | 'INACTIVE' | 'BLOCKED' | 'PENDING'>('ACTIVE');
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -105,6 +149,19 @@ export default function AdminUsersPage() {
         }
       })
       .catch((e) => console.error(e));
+
+    // Cargar roles desde la base de datos MySQL
+    getAdminRoles()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setRoles(data);
+          const defaultRole = data.find((r) => r.name === 'USER') || data[0];
+          if (defaultRole) {
+            setNewRoleId(defaultRole.id);
+          }
+        }
+      })
+      .catch((e) => console.error(e));
   }, []);
 
   useEffect(() => {
@@ -114,6 +171,11 @@ export default function AdminUsersPage() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     fetchUsers();
+  };
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
   };
 
   // Determinar la categoría principal de un usuario
@@ -127,10 +189,56 @@ export default function AdminUsersPage() {
     return 'Servicios Generales';
   };
 
-  // Abrir modal de historial personalizado
-  const handleOpenHistoryModal = (u: UserItem) => {
+  // Abrir modal de historial con datos reales de MySQL
+  const handleOpenHistoryModal = async (u: UserItem) => {
     setSelectedUser(u);
     const cat = getUserCategory(u);
+
+    try {
+      // Consultar reservas reales registradas en MySQL
+      const allBookings = await fetchAllBookingsBackend();
+      const userBookings = allBookings.filter(
+        (b) =>
+          b.clientId === u.id ||
+          (u.providerProfile && b.providerId === u.providerProfile.id) ||
+          b.providerId === u.id,
+      );
+
+      if (userBookings && userBookings.length > 0) {
+        const mappedHistory: ServiceHistoryItem[] = userBookings.map((b) => ({
+          id: b.id,
+          serviceTitle: b.serviceTitle || 'Servicio Profesional',
+          categoryName: b.categoryName || cat,
+          clientName: b.client ? `${b.client.firstName} ${b.client.lastName}` : 'Cliente Registrado',
+          clientPhone: b.client?.phone || '',
+          providerName: b.provider?.user
+            ? `${b.provider.user.firstName} ${b.provider.user.lastName}`
+            : 'Prestador Asignado',
+          providerPhone: b.provider?.user?.phone || '',
+          amount: Number(b.amount) || 0,
+          date: new Date(b.createdAt).toLocaleDateString('es-CO', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+          }),
+          status: b.status || 'COMPLETADO',
+          paymentMethod: b.paymentMethod || 'Efectivo',
+          paymentStatus: b.paymentStatus || 'PAGADO',
+          platformFee: Number(b.platformFee) || 0,
+          platformDebtStatus: b.platformDebtStatus || 'AL_DIA',
+          rating: b.review?.rating || 5,
+          reviewComment: b.review?.comment || '',
+        }));
+
+        setUserHistory(mappedHistory);
+        setIsRealHistory(true);
+        return;
+      }
+    } catch (error) {
+      console.warn('Error consultando historial real, usando fallback:', error);
+    }
+
+    // Fallback si aún no tiene reservas en MySQL
     const history = getUserHistoryForAdmin({
       id: u.id,
       email: u.email,
@@ -140,35 +248,150 @@ export default function AdminUsersPage() {
       categoryName: cat,
     });
     setUserHistory(history);
+    setIsRealHistory(false);
   };
 
-  // Aprobar verificación desde el panel de usuarios
-  const handleApproveVerification = (u: UserItem) => {
-    verifyUserByAdmin(u.id);
-    setUsers((prev) =>
-      prev.map((item) =>
-        item.id === u.id
-          ? {
-              ...item,
-              status: 'APPROVED',
-              providerProfile: item.providerProfile
-                ? { ...item.providerProfile, isVerified: true }
-                : item.providerProfile,
-            }
-          : item
-      )
-    );
-    if (selectedUser && selectedUser.id === u.id) {
-      setSelectedUser({
-        ...selectedUser,
-        status: 'APPROVED',
-        providerProfile: selectedUser.providerProfile
-          ? { ...selectedUser.providerProfile, isVerified: true }
-          : selectedUser.providerProfile,
-      });
+  // Aprobar verificación con persistencia directa en MySQL
+  const handleApproveVerification = async (u: UserItem) => {
+    try {
+      await updateProviderVerificationBackend(u.id, 'APPROVED');
+      await updateAdminUserBackend(u.id, { status: 'ACTIVE' });
+      verifyUserByAdmin(u.id);
+
+      setUsers((prev) =>
+        prev.map((item) =>
+          item.id === u.id
+            ? {
+                ...item,
+                status: 'ACTIVE',
+                providerProfile: item.providerProfile
+                  ? { ...item.providerProfile, isVerified: true }
+                  : item.providerProfile,
+              }
+            : item,
+        ),
+      );
+
+      if (selectedUser && selectedUser.id === u.id) {
+        setSelectedUser({
+          ...selectedUser,
+          status: 'ACTIVE',
+          providerProfile: selectedUser.providerProfile
+            ? { ...selectedUser.providerProfile, isVerified: true }
+            : selectedUser.providerProfile,
+        });
+      }
+
+      showToast(`✓ Verificación aprobada y registrada en MySQL para ${u.firstName} ${u.lastName}`);
+    } catch (err) {
+      console.error(err);
+      showToast('Error al actualizar verificación en el servidor');
     }
-    setToastMessage(`✓ Verificación aprobada para ${u.firstName} ${u.lastName}`);
-    setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  // Alternar bloqueo/desbloqueo de usuario en MySQL
+  const handleToggleBlockUser = async (u: UserItem) => {
+    const newTargetStatus: 'ACTIVE' | 'BLOCKED' = u.status === 'BLOCKED' ? 'ACTIVE' : 'BLOCKED';
+    const actionText = newTargetStatus === 'BLOCKED' ? 'bloquear' : 'desbloquear y activar';
+
+    if (!confirm(`¿Estás seguro de que deseas ${actionText} a ${u.firstName} ${u.lastName}?`)) return;
+
+    try {
+      await updateAdminUserBackend(u.id, { status: newTargetStatus });
+      setUsers((prev) =>
+        prev.map((item) => (item.id === u.id ? { ...item, status: newTargetStatus } : item)),
+      );
+      showToast(`✓ Usuario ${u.firstName} ${u.lastName} ahora está ${newTargetStatus === 'BLOCKED' ? 'BLOQUEADO' : 'ACTIVO'}`);
+    } catch (err: any) {
+      showToast(err.message || 'Error al cambiar estado del usuario');
+    }
+  };
+
+  // Crear nuevo usuario en MySQL
+  const handleCreateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newFirstName || !newLastName || !newEmail || !newPassword) {
+      alert('Por favor completa los campos obligatorios (Nombre, Apellido, Correo y Contraseña)');
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      await createAdminUserBackend({
+        firstName: newFirstName,
+        lastName: newLastName,
+        email: newEmail,
+        password: newPassword,
+        phone: newPhone || undefined,
+        roleId: Number(newRoleId),
+        status: newStatus,
+      });
+
+      setIsCreateModalOpen(false);
+      setNewFirstName('');
+      setNewLastName('');
+      setNewEmail('');
+      setNewPassword('');
+      setNewPhone('');
+      fetchUsers();
+      showToast('✓ Nuevo usuario registrado exitosamente en la base de datos MySQL');
+    } catch (err: any) {
+      alert(err.message || 'Error al crear usuario en MySQL');
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  // Abrir modal de edición
+  const handleOpenEdit = (u: UserItem) => {
+    setEditingUser(u);
+    setEditFirstName(u.firstName);
+    setEditLastName(u.lastName);
+    setEditEmail(u.email);
+    setEditPhone(u.phone || '');
+    setEditRoleId(u.roleId || (u.role && (u.role as any).id) || 3);
+    setEditStatus((u.status as any) || 'ACTIVE');
+    setIsEditModalOpen(true);
+  };
+
+  // Guardar edición en MySQL
+  const handleUpdateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+
+    setIsUpdating(true);
+    try {
+      await updateAdminUserBackend(editingUser.id, {
+        firstName: editFirstName,
+        lastName: editLastName,
+        email: editEmail,
+        phone: editPhone || undefined,
+        roleId: Number(editRoleId),
+        status: editStatus,
+      });
+
+      setIsEditModalOpen(false);
+      setEditingUser(null);
+      fetchUsers();
+      showToast('✓ Datos del usuario actualizados exitosamente en MySQL');
+    } catch (err: any) {
+      alert(err.message || 'Error al actualizar usuario en MySQL');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Eliminar usuario de MySQL
+  const handleDeleteUser = async (u: UserItem) => {
+    if (!confirm(`¿Eliminar permanentemente al usuario ${u.firstName} ${u.lastName} (${u.email}) de MySQL?`)) return;
+
+    try {
+      await deleteAdminUserBackend(u.id);
+      setUsers((prev) => prev.filter((item) => item.id !== u.id));
+      showToast(`✓ Usuario ${u.firstName} eliminado de la base de datos`);
+    } catch (err) {
+      showToast('Error al eliminar usuario');
+    }
   };
 
   // Filtro local adicional de búsqueda en cliente para respuesta instantánea
@@ -195,12 +418,22 @@ export default function AdminUsersPage() {
             <Link href="/admin" className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 md:hidden">
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <h2 className="text-xl font-bold text-slate-900">Gestión de Usuarios y Prestadores</h2>
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">Gestión de Usuarios y Prestadores</h2>
+              <p className="text-[11px] text-slate-500 hidden sm:block">Control integral de cuentas, estados, roles y auditoría MySQL</p>
+            </div>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md flex items-center space-x-1.5 transition-all"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Nuevo Usuario</span>
+            </button>
             <span className="text-xs font-bold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
-              {filteredUsers.length} Usuarios Registrados
+              {filteredUsers.length} Registrados
             </span>
           </div>
         </header>
@@ -300,6 +533,7 @@ export default function AdminUsersPage() {
                   <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                     <th className="py-4 px-6">Usuario & Ubicación</th>
                     <th className="py-4 px-6">Tipo / Rol</th>
+                    <th className="py-4 px-6">Estado Cuenta</th>
                     <th className="py-4 px-6">Categoría & Servicios</th>
                     <th className="py-4 px-6">Calificación / Estrellas</th>
                     <th className="py-4 px-6">Deuda Plataforma</th>
@@ -310,13 +544,13 @@ export default function AdminUsersPage() {
                 <tbody className="divide-y divide-slate-100 text-sm font-medium text-slate-700">
                   {loading ? (
                     <tr>
-                      <td colSpan={7} className="py-8 text-center text-slate-400 text-xs font-semibold">
-                        Cargando usuarios...
+                      <td colSpan={8} className="py-8 text-center text-slate-400 text-xs font-semibold">
+                        Cargando usuarios desde MySQL...
                       </td>
                     </tr>
                   ) : filteredUsers.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="py-8 text-center text-slate-400 text-xs font-semibold">
+                      <td colSpan={8} className="py-8 text-center text-slate-400 text-xs font-semibold">
                         No se encontraron usuarios con los filtros seleccionados.
                       </td>
                     </tr>
@@ -326,18 +560,22 @@ export default function AdminUsersPage() {
                       const userCategory = getUserCategory(u);
                       const isVerified = u.providerProfile?.isVerified || u.status === 'APPROVED';
                       const userDebt = isProvider ? calculateUserPlatformDebt(u.id) : 0;
+                      const isBlocked = u.status === 'BLOCKED' || u.isActive === false;
 
                       return (
-                        <tr key={u.id} className="hover:bg-slate-50/80 transition-colors">
+                        <tr key={u.id} className={`transition-colors ${isBlocked ? 'bg-rose-50/30' : 'hover:bg-slate-50/80'}`}>
                           <td className="py-4 px-6">
                             <div className="flex items-center space-x-3">
-                              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black flex items-center justify-center text-xs shadow-xs shrink-0">
-                                {u.firstName.substring(0, 1)}
-                                {u.lastName.substring(0, 1)}
+                              <div className={`w-10 h-10 rounded-2xl ${isBlocked ? 'bg-rose-600' : 'bg-gradient-to-tr from-blue-600 to-indigo-600'} text-white font-black flex items-center justify-center text-xs shadow-xs shrink-0`}>
+                                {u.firstName ? u.firstName.substring(0, 1) : 'U'}
+                                {u.lastName ? u.lastName.substring(0, 1) : ''}
                               </div>
                               <div>
-                                <p className="font-extrabold text-slate-900 leading-tight">
-                                  {u.firstName} {u.lastName}
+                                <p className="font-extrabold text-slate-900 leading-tight flex items-center space-x-1.5">
+                                  <span>{u.firstName} {u.lastName}</span>
+                                  {isBlocked && (
+                                    <span className="text-[10px] bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded font-bold">Bloqueado</span>
+                                  )}
                                 </p>
                                 <p className="text-xs text-slate-400 flex items-center space-x-1 mt-0.5">
                                   <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
@@ -360,7 +598,30 @@ export default function AdminUsersPage() {
                             ) : (
                               <span className="inline-flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                 <Users className="w-3 h-3" />
-                                <span>Cliente</span>
+                                <span>{u.role?.name || 'Cliente'}</span>
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Estado de Cuenta */}
+                          <td className="py-4 px-6">
+                            {u.status === 'BLOCKED' ? (
+                              <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[11px] font-black bg-rose-100 text-rose-800 border border-rose-300">
+                                <Ban className="w-3 h-3 text-rose-600" />
+                                <span>Bloqueado</span>
+                              </span>
+                            ) : u.status === 'INACTIVE' ? (
+                              <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                                <span>Inactivo</span>
+                              </span>
+                            ) : u.status === 'PENDING' ? (
+                              <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                                <span>Pendiente</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[11px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                <span>Activo</span>
                               </span>
                             )}
                           </td>
@@ -389,7 +650,7 @@ export default function AdminUsersPage() {
                               <div className="space-y-0.5">
                                 <div className="flex items-center space-x-1 text-amber-500 font-extrabold text-xs">
                                   <Star className="w-3.5 h-3.5 fill-amber-400" />
-                                  <span>{u.providerProfile?.rating ? u.providerProfile.rating.toFixed(1) : '5.0'}</span>
+                                  <span>{u.providerProfile?.rating ? Number(u.providerProfile.rating).toFixed(1) : '5.0'}</span>
                                   <span className="text-slate-400 font-normal">
                                     ({u.providerProfile?.totalReviews || 12} reseñas)
                                   </span>
@@ -442,26 +703,59 @@ export default function AdminUsersPage() {
                           </td>
 
                           {/* Acciones */}
-                          <td className="py-4 px-6 text-right space-x-2">
-                            <button
-                              onClick={() => handleOpenHistoryModal(u)}
-                              className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-[#0056d2] hover:text-white text-[#0056d2] font-bold text-xs transition-all inline-flex items-center space-x-1.5 shadow-2xs"
-                              title="Ver historial personalizado de servicios"
-                            >
-                              <Calendar className="w-3.5 h-3.5" />
-                              <span>Ver Historial</span>
-                            </button>
-
-                            {!isVerified && (
+                          <td className="py-4 px-6 text-right">
+                            <div className="flex items-center justify-end space-x-1.5">
+                              {/* Ver Historial */}
                               <button
-                                onClick={() => handleApproveVerification(u)}
-                                className="px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 font-bold text-xs transition-all inline-flex items-center space-x-1"
-                                title="Aprobar verificación del usuario"
+                                onClick={() => handleOpenHistoryModal(u)}
+                                className="p-1.5 rounded-lg bg-blue-50 hover:bg-[#0056d2] hover:text-white text-[#0056d2] transition-all shadow-2xs"
+                                title="Ver historial de servicios y finanzas"
                               >
-                                <Award className="w-3.5 h-3.5" />
-                                <span className="hidden sm:inline">Verificar</span>
+                                <Calendar className="w-4 h-4" />
                               </button>
-                            )}
+
+                              {/* Verificar */}
+                              {!isVerified && (
+                                <button
+                                  onClick={() => handleApproveVerification(u)}
+                                  className="p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 transition-all"
+                                  title="Aprobar verificación oficial en MySQL"
+                                >
+                                  <Award className="w-4 h-4" />
+                                </button>
+                              )}
+
+                              {/* Editar Usuario */}
+                              <button
+                                onClick={() => handleOpenEdit(u)}
+                                className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-700 hover:text-white text-slate-700 transition-all"
+                                title="Editar datos del usuario"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+
+                              {/* Bloquear / Desbloquear */}
+                              <button
+                                onClick={() => handleToggleBlockUser(u)}
+                                className={`p-1.5 rounded-lg transition-all ${
+                                  isBlocked
+                                    ? 'bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700'
+                                    : 'bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-700'
+                                }`}
+                                title={isBlocked ? 'Desbloquear y Activar Cuenta' : 'Bloquear Cuenta'}
+                              >
+                                {isBlocked ? <Check className="w-4 h-4" /> : <Ban className="w-4 h-4" />}
+                              </button>
+
+                              {/* Eliminar */}
+                              <button
+                                onClick={() => handleDeleteUser(u)}
+                                className="p-1.5 rounded-lg bg-slate-100 hover:bg-rose-700 hover:text-white text-slate-400 transition-all"
+                                title="Eliminar usuario de MySQL"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -474,7 +768,261 @@ export default function AdminUsersPage() {
         </div>
       </main>
 
-      {/* MODAL DE HISTORIAL PERSONALIZADO DEL USUARIO */}
+      {/* MODAL CREAR NUEVO USUARIO EN MYSQL */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-5 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center space-x-2">
+                <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
+                  <UserPlus className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-slate-900">Registrar Nuevo Usuario</h3>
+                  <p className="text-xs text-slate-500">Creación directa en la base de datos MySQL</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsCreateModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Nombre *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newFirstName}
+                    onChange={(e) => setNewFirstName(e.target.value)}
+                    placeholder="Ej: Daniel"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:border-blue-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Apellido *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newLastName}
+                    onChange={(e) => setNewLastName(e.target.value)}
+                    placeholder="Ej: Caicedo"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:border-blue-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Correo Electrónico *</label>
+                <input
+                  type="email"
+                  required
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  placeholder="usuario@conecta360.com"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:border-blue-500 outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Contraseña *</label>
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Mínimo 6 caracteres"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:border-blue-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Teléfono / Celular</label>
+                  <input
+                    type="tel"
+                    value={newPhone}
+                    onChange={(e) => setNewPhone(e.target.value)}
+                    placeholder="+57 310 000 0000"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:border-blue-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Rol en Plataforma</label>
+                  <select
+                    value={newRoleId}
+                    onChange={(e) => setNewRoleId(Number(e.target.value))}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:bg-white focus:border-blue-500 outline-none"
+                  >
+                    {roles.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Estado Inicial</label>
+                  <select
+                    value={newStatus}
+                    onChange={(e) => setNewStatus(e.target.value as any)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:bg-white focus:border-blue-500 outline-none"
+                  >
+                    <option value="ACTIVE">Activo</option>
+                    <option value="INACTIVE">Inactivo</option>
+                    <option value="BLOCKED">Bloqueado</option>
+                    <option value="PENDING">Pendiente</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-end space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setIsCreateModalOpen(false)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isCreating}
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center space-x-1"
+                >
+                  {isCreating ? <span>Guardando en MySQL...</span> : <span>Crear Usuario</span>}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL EDITAR USUARIO EN MYSQL */}
+      {isEditModalOpen && editingUser && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-5 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center space-x-2">
+                <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
+                  <Edit2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-slate-900">Editar Usuario #{editingUser.id}</h3>
+                  <p className="text-xs text-slate-500">Actualizar información en tiempo real</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsEditModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Nombre</label>
+                  <input
+                    type="text"
+                    required
+                    value={editFirstName}
+                    onChange={(e) => setEditFirstName(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:border-blue-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Apellido</label>
+                  <input
+                    type="text"
+                    required
+                    value={editLastName}
+                    onChange={(e) => setEditLastName(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:border-blue-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Correo Electrónico</label>
+                <input
+                  type="email"
+                  required
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:border-blue-500 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Teléfono / Celular</label>
+                <input
+                  type="tel"
+                  value={editPhone}
+                  onChange={(e) => setEditPhone(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:border-blue-500 outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Rol</label>
+                  <select
+                    value={editRoleId}
+                    onChange={(e) => setEditRoleId(Number(e.target.value))}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:bg-white focus:border-blue-500 outline-none"
+                  >
+                    {roles.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Estado de Cuenta</label>
+                  <select
+                    value={editStatus}
+                    onChange={(e) => setEditStatus(e.target.value as any)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:bg-white focus:border-blue-500 outline-none"
+                  >
+                    <option value="ACTIVE">Activo</option>
+                    <option value="INACTIVE">Inactivo</option>
+                    <option value="BLOCKED">Bloqueado</option>
+                    <option value="PENDING">Pendiente</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-end space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUpdating}
+                  className="px-5 py-2 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center space-x-1"
+                >
+                  {isUpdating ? <span>Guardando cambios...</span> : <span>Actualizar Usuario</span>}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE HISTORIAL PERSONALIZADO DEL USUARIO CON MYSQL */}
       {selectedUser && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto space-y-6">
@@ -497,6 +1045,11 @@ export default function AdminUsersPage() {
                     ) : (
                       <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-amber-50 text-amber-800 border border-amber-300">
                         Sin verificar
+                      </span>
+                    )}
+                    {isRealHistory && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                        ● Datos en Vivo MySQL
                       </span>
                     )}
                   </div>
@@ -594,104 +1147,110 @@ export default function AdminUsersPage() {
               </div>
 
               <div className="space-y-3">
-                {userHistory.map((item) => (
-                  <div
-                    key={item.id}
-                    className="p-4 rounded-2xl bg-white border border-slate-200 space-y-3 hover:border-blue-300 transition-all shadow-2xs"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
-                            {item.categoryName}
-                          </span>
-                          <span className="text-xs text-slate-400">{item.date}</span>
-                        </div>
-                        <h5 className="font-extrabold text-slate-900 text-sm mt-1">
-                          {item.serviceTitle}
-                        </h5>
-                        <p className="text-xs text-slate-600">
-                          {selectedUser.providerProfile ? (
-                            <>
-                              <strong>Cliente:</strong> {item.clientName} {item.clientPhone ? `(${item.clientPhone})` : ''}
-                            </>
-                          ) : (
-                            <>
-                              <strong>Prestador Asignado:</strong> {item.providerName}
-                            </>
-                          )}
-                        </p>
-                      </div>
-
-                      <div className="text-left sm:text-right shrink-0">
-                        <div className="text-sm font-black text-[#0056d2]">
-                          ${item.amount.toLocaleString('es-CO')} COP
-                        </div>
-                        <div className="flex items-center sm:justify-end space-x-1.5 text-xs mt-0.5">
-                          {/* Badge de Estado del Servicio */}
-                          {item.status === 'COMPLETADO' && (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              Completado
-                            </span>
-                          )}
-                          {item.status === 'EN_PROGRESO' && (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-50 text-[#0056d2] border border-blue-200">
-                              En progreso
-                            </span>
-                          )}
-                          {item.status === 'PENDIENTE' && (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-50 text-amber-800 border border-amber-200">
-                              Pendiente
-                            </span>
-                          )}
-
-                          <span className="text-[10px] font-bold text-slate-400">
-                            &bull; {item.paymentStatus} ({item.paymentMethod})
-                          </span>
-                        </div>
-
-                        {/* Desglose Comisión Conecta 360 y Deuda */}
-                        {item.platformFee && (
-                          <div className="flex items-center sm:justify-end space-x-1.5 text-[11px] pt-1 text-slate-500 font-medium">
-                            <span>Comisión 5%: <strong>${item.platformFee.toLocaleString('es-CO')} COP</strong></span>
-                            {item.platformDebtStatus === 'EN_DEUDA' ? (
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-rose-50 text-rose-700 border border-rose-200">
-                                En Deuda ({item.paymentMethod})
-                              </span>
-                            ) : item.platformDebtStatus === 'AL_DIA' ? (
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                Al Día
-                              </span>
-                            ) : null}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Reseña y estrellas si existen */}
-                    {item.rating && (
-                      <div className="p-3 bg-amber-50/60 rounded-xl border border-amber-200 text-xs space-y-1">
-                        <div className="flex items-center space-x-1.5">
-                          <span className="font-bold text-slate-800">Calificación:</span>
-                          <div className="flex text-amber-400">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`w-3.5 h-3.5 ${
-                                  i < (item.rating || 0) ? 'fill-amber-400 text-amber-400' : 'text-slate-200'
-                                }`}
-                              />
-                            ))}
-                          </div>
-                          <span className="font-bold text-amber-800">({item.rating}.0 / 5)</span>
-                        </div>
-                        {item.reviewComment && (
-                          <p className="text-slate-600 italic">"{item.reviewComment}"</p>
-                        )}
-                      </div>
-                    )}
+                {userHistory.length === 0 ? (
+                  <div className="p-8 text-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                    <p className="text-xs font-semibold">Este usuario aún no registra contrataciones o servicios en la plataforma.</p>
                   </div>
-                ))}
+                ) : (
+                  userHistory.map((item) => (
+                    <div
+                      key={item.id}
+                      className="p-4 rounded-2xl bg-white border border-slate-200 space-y-3 hover:border-blue-300 transition-all shadow-2xs"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                              {item.categoryName}
+                            </span>
+                            <span className="text-xs text-slate-400">{item.date}</span>
+                          </div>
+                          <h5 className="font-extrabold text-slate-900 text-sm mt-1">
+                            {item.serviceTitle}
+                          </h5>
+                          <p className="text-xs text-slate-600">
+                            {selectedUser.providerProfile ? (
+                              <>
+                                <strong>Cliente:</strong> {item.clientName} {item.clientPhone ? `(${item.clientPhone})` : ''}
+                              </>
+                            ) : (
+                              <>
+                                <strong>Prestador Asignado:</strong> {item.providerName}
+                              </>
+                            )}
+                          </p>
+                        </div>
+
+                        <div className="text-left sm:text-right shrink-0">
+                          <div className="text-sm font-black text-[#0056d2]">
+                            ${item.amount.toLocaleString('es-CO')} COP
+                          </div>
+                          <div className="flex items-center sm:justify-end space-x-1.5 text-xs mt-0.5">
+                            {/* Badge de Estado del Servicio */}
+                            {item.status === 'COMPLETADO' && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                Completado
+                              </span>
+                            )}
+                            {item.status === 'EN_PROGRESO' && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-50 text-[#0056d2] border border-blue-200">
+                                En progreso
+                              </span>
+                            )}
+                            {item.status === 'PENDIENTE' && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-50 text-amber-800 border border-amber-200">
+                                Pendiente
+                              </span>
+                            )}
+
+                            <span className="text-[10px] font-bold text-slate-400">
+                              &bull; {item.paymentStatus} ({item.paymentMethod})
+                            </span>
+                          </div>
+
+                          {/* Desglose Comisión Conecta 360 y Deuda */}
+                          {item.platformFee && (
+                            <div className="flex items-center sm:justify-end space-x-1.5 text-[11px] pt-1 text-slate-500 font-medium">
+                              <span>Comisión 5%: <strong>${item.platformFee.toLocaleString('es-CO')} COP</strong></span>
+                              {item.platformDebtStatus === 'EN_DEUDA' ? (
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-rose-50 text-rose-700 border border-rose-200">
+                                  En Deuda ({item.paymentMethod})
+                                </span>
+                              ) : item.platformDebtStatus === 'AL_DIA' ? (
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  Al Día
+                                </span>
+                              ) : null}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Reseña y estrellas si existen */}
+                      {item.rating && (
+                        <div className="p-3 bg-amber-50/60 rounded-xl border border-amber-200 text-xs space-y-1">
+                          <div className="flex items-center space-x-1.5">
+                            <span className="font-bold text-slate-800">Calificación:</span>
+                            <div className="flex text-amber-400">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`w-3.5 h-3.5 ${
+                                    i < (item.rating || 0) ? 'fill-amber-400 text-amber-400' : 'text-slate-200'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                            <span className="font-bold text-amber-800">({item.rating}.0 / 5)</span>
+                          </div>
+                          {item.reviewComment && (
+                            <p className="text-slate-600 italic">"{item.reviewComment}"</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 
@@ -703,7 +1262,7 @@ export default function AdminUsersPage() {
                   className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center space-x-1.5"
                 >
                   <Award className="w-4 h-4" />
-                  <span>Aprobar y Verificar Cuenta</span>
+                  <span>Aprobar y Verificar Cuenta en MySQL</span>
                 </button>
               ) : (
                 <span className="text-xs font-bold text-emerald-700 flex items-center space-x-1">

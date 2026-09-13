@@ -938,3 +938,245 @@ export async function updatePlatformSettingsBackend(payload: any): Promise<any |
   return null;
 }
 
+// ==========================================
+// 12. GESTIÓN DIRECTA DE USUARIOS (Users CRUD)
+// ==========================================
+export async function createAdminUserBackend(dto: {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  roleId: number;
+  status?: 'ACTIVE' | 'INACTIVE' | 'BLOCKED' | 'PENDING';
+}) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/users`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dto),
+      signal: AbortSignal.timeout(4500),
+    });
+    if (res.ok) {
+      if (typeof window !== 'undefined') localStorage.removeItem(USRS_KEY);
+      return await res.json();
+    }
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.message || 'Error al crear usuario en backend');
+  } catch (err: any) {
+    console.warn('[Conecta360 API] Error creando usuario en backend:', err);
+    throw err;
+  }
+}
+
+export async function updateAdminUserBackend(
+  id: number,
+  dto: {
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+    email?: string;
+    roleId?: number;
+    status?: 'ACTIVE' | 'INACTIVE' | 'BLOCKED' | 'PENDING';
+    isActive?: boolean;
+    password?: string;
+  },
+) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/users/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dto),
+      signal: AbortSignal.timeout(4500),
+    });
+    if (res.ok) {
+      if (typeof window !== 'undefined') localStorage.removeItem(USRS_KEY);
+      return await res.json();
+    }
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.message || 'Error al actualizar usuario en backend');
+  } catch (err: any) {
+    console.warn('[Conecta360 API] Error actualizando usuario en backend:', err);
+    throw err;
+  }
+}
+
+export async function deleteAdminUserBackend(id: number) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/users/${id}`, {
+      method: 'DELETE',
+      signal: AbortSignal.timeout(4000),
+    });
+    if (res.ok) {
+      if (typeof window !== 'undefined') localStorage.removeItem(USRS_KEY);
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('[Conecta360 API] Error eliminando usuario en backend:', err);
+  }
+  return null;
+}
+
+// ==========================================
+// 13. GESTIÓN DIRECTA DE CATEGORÍAS & SERVICIOS
+// ==========================================
+export async function createAdminCategoryBackend(dto: {
+  name: string;
+  slug: string;
+  description?: string;
+  icon?: string;
+  isActive?: boolean;
+}) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/categories`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dto),
+      signal: AbortSignal.timeout(4000),
+    });
+    if (res.ok) {
+      if (typeof window !== 'undefined') localStorage.removeItem(CATS_KEY);
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('[Conecta360 API] Error creando categoría en backend:', err);
+  }
+  return null;
+}
+
+export async function updateAdminCategoryBackend(
+  id: number,
+  dto: {
+    name?: string;
+    slug?: string;
+    description?: string;
+    icon?: string;
+    isActive?: boolean;
+  },
+) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/categories/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dto),
+      signal: AbortSignal.timeout(4000),
+    });
+    if (res.ok) {
+      if (typeof window !== 'undefined') localStorage.removeItem(CATS_KEY);
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('[Conecta360 API] Error actualizando categoría en backend:', err);
+  }
+  return null;
+}
+
+export async function deleteAdminCategoryBackend(id: number) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/categories/${id}`, {
+      method: 'DELETE',
+      signal: AbortSignal.timeout(4000),
+    });
+    if (res.ok) {
+      if (typeof window !== 'undefined') localStorage.removeItem(CATS_KEY);
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('[Conecta360 API] Error eliminando categoría en backend:', err);
+  }
+  return null;
+}
+
+export async function createAdminServiceBackend(dto: {
+  categoryId: number;
+  name: string;
+  slug: string;
+  description?: string;
+  isActive?: boolean;
+}) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/services`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dto),
+      signal: AbortSignal.timeout(4000),
+    });
+    if (res.ok) {
+      if (typeof window !== 'undefined') localStorage.removeItem(SRVS_KEY);
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('[Conecta360 API] Error creando servicio en backend:', err);
+  }
+  return null;
+}
+
+export async function updateAdminServiceBackend(
+  id: number,
+  dto: {
+    categoryId?: number;
+    name?: string;
+    slug?: string;
+    description?: string;
+    isActive?: boolean;
+  },
+) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/services/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dto),
+      signal: AbortSignal.timeout(4000),
+    });
+    if (res.ok) {
+      if (typeof window !== 'undefined') localStorage.removeItem(SRVS_KEY);
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('[Conecta360 API] Error actualizando servicio en backend:', err);
+  }
+  return null;
+}
+
+export async function deleteAdminServiceBackend(id: number) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/services/${id}`, {
+      method: 'DELETE',
+      signal: AbortSignal.timeout(4000),
+    });
+    if (res.ok) {
+      if (typeof window !== 'undefined') localStorage.removeItem(SRVS_KEY);
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('[Conecta360 API] Error eliminando servicio en backend:', err);
+  }
+  return null;
+}
+
+// ==========================================
+// 14. SUBIDA DE ARCHIVOS Y MULTIMEDIA (Upload API)
+// ==========================================
+export async function uploadFileBackend(
+  file: File,
+): Promise<{ success: boolean; url: string; filename: string; originalName: string } | null> {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const res = await fetch(`${API_BASE_URL}/upload`, {
+      method: 'POST',
+      body: formData,
+      signal: AbortSignal.timeout(15000),
+    });
+
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('[Conecta360 API] Error subiendo archivo al servidor:', err);
+  }
+  return null;
+}
+
+

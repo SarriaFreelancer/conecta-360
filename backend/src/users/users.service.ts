@@ -105,7 +105,7 @@ export class UsersService {
 
   async create(createUserDto: CreateUserDto) {
     const existingUser = await this.prisma.user.findUnique({
-      where: { email: createUserDto.email },
+      where: { email: createUserDto.email.trim().toLowerCase() },
     });
 
     if (existingUser) {
@@ -114,17 +114,55 @@ export class UsersService {
 
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
+    // Identificar el rol seleccionado
+    const role = await this.prisma.role.findUnique({
+      where: { id: createUserDto.roleId },
+    });
+
+    const isProvider = role?.name === 'PROVIDER';
+    const status = createUserDto.status || 'ACTIVE';
+    const isActive = status === 'ACTIVE';
+
     const user = await this.prisma.user.create({
       data: {
-        ...createUserDto,
+        email: createUserDto.email.trim().toLowerCase(),
         password: hashedPassword,
+        firstName: createUserDto.firstName.trim(),
+        lastName: createUserDto.lastName.trim(),
+        phone: createUserDto.phone?.trim() || null,
+        roleId: createUserDto.roleId,
+        status,
+        isActive,
+        emailVerified: true,
         profile: {
-          create: {},
+          create: {
+            city: 'Cali',
+            department: 'Valle del Cauca',
+            country: 'Colombia',
+            reputationPoints: 100,
+            negativePoints: 0,
+            showWhatsApp: true,
+            whatsappNumber: createUserDto.phone?.trim() || null,
+          },
         },
+        ...(isProvider
+          ? {
+              providerProfile: {
+                create: {
+                  title: 'Profesional de Servicios',
+                  rating: 5.0,
+                  totalReviews: 0,
+                  experienceYears: 1,
+                  isVerified: false,
+                },
+              },
+            }
+          : {}),
       },
       include: {
         role: true,
         profile: true,
+        providerProfile: true,
       },
     });
 
@@ -132,11 +170,38 @@ export class UsersService {
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
-    await this.findOne(String(id));
+    const existing = await this.findOne(String(id));
 
     const dataToUpdate: any = { ...updateUserDto };
     if (updateUserDto.password) {
       dataToUpdate.password = await bcrypt.hash(updateUserDto.password, 10);
+    }
+
+    if (updateUserDto.email) {
+      dataToUpdate.email = updateUserDto.email.trim().toLowerCase();
+    }
+
+    if (updateUserDto.status) {
+      dataToUpdate.isActive = updateUserDto.status === 'ACTIVE';
+    }
+
+    // Si se asigna rol de prestador y no tenía perfil de proveedor, crearlo
+    if (updateUserDto.roleId) {
+      const targetRole = await this.prisma.role.findUnique({
+        where: { id: updateUserDto.roleId },
+      });
+      if (targetRole?.name === 'PROVIDER' && !existing.providerProfile) {
+        await this.prisma.providerProfile.create({
+          data: {
+            userId: id,
+            title: 'Profesional de Servicios',
+            rating: 5.0,
+            totalReviews: 0,
+            experienceYears: 1,
+            isVerified: false,
+          },
+        });
+      }
     }
 
     const updatedUser = await this.prisma.user.update({
@@ -145,6 +210,19 @@ export class UsersService {
       include: {
         role: true,
         profile: true,
+        providerProfile: {
+          include: {
+            providerServices: {
+              include: {
+                service: {
+                  include: {
+                    category: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 

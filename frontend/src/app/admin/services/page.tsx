@@ -15,7 +15,14 @@ import {
   Check
 } from 'lucide-react';
 import AdminSidebar from '@/components/AdminSidebar';
-import { getAdminServices, getAdminCategories, API_BASE_URL } from '@/lib/admin-data';
+import {
+  getAdminServices,
+  getAdminCategories,
+  createAdminServiceBackend,
+  updateAdminServiceBackend,
+  deleteAdminServiceBackend,
+  API_BASE_URL,
+} from '@/lib/admin-data';
 
 interface ServiceItem {
   id: number;
@@ -85,18 +92,20 @@ export default function AdminServicesPage() {
     e.preventDefault();
     if (!name || !slug) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/services`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ categoryId: Number(categoryId), name, slug, description, isActive: true }),
+      const created = await createAdminServiceBackend({
+        categoryId: Number(categoryId),
+        name,
+        slug,
+        description,
+        isActive: true,
       });
-      if (res.ok) {
+      if (created) {
         setIsModalOpen(false);
         setName('');
         setSlug('');
         setDescription('');
-        fetchServices();
-        showToast('Servicio creado exitosamente');
+        await fetchServices();
+        showToast('Servicio creado exitosamente en MySQL');
         return;
       }
     } catch (error) {
@@ -139,22 +148,18 @@ export default function AdminServicesPage() {
     e.preventDefault();
     if (!editingService || !editName || !editSlug) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/services/${editingService.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          categoryId: Number(editCategoryId),
-          name: editName,
-          slug: editSlug,
-          description: editDescription,
-          isActive: editIsActive,
-        }),
+      const updatedBackend = await updateAdminServiceBackend(editingService.id, {
+        categoryId: Number(editCategoryId),
+        name: editName,
+        slug: editSlug,
+        description: editDescription,
+        isActive: editIsActive,
       });
-      if (res.ok) {
+      if (updatedBackend) {
         setIsEditModalOpen(false);
         setEditingService(null);
-        fetchServices();
-        showToast('Servicio actualizado exitosamente');
+        await fetchServices();
+        showToast('Servicio actualizado exitosamente en MySQL');
         return;
       }
     } catch (error) {
@@ -180,9 +185,7 @@ export default function AdminServicesPage() {
   const handleDelete = async (id: number) => {
     if (!confirm('¿Estás seguro de eliminar este servicio?')) return;
     try {
-      await fetch(`${API_BASE_URL}/services/${id}`, {
-        method: 'DELETE',
-      });
+      await deleteAdminServiceBackend(id);
     } catch (error) {
       console.warn('Servidor offline, eliminando servicio localmente:', error);
     }
@@ -191,7 +194,7 @@ export default function AdminServicesPage() {
     if (typeof window !== 'undefined') {
       localStorage.setItem('conecta360_admin_services_v2', JSON.stringify(updated));
     }
-    showToast('Servicio eliminado');
+    showToast('Servicio eliminado de MySQL');
   };
 
   const showToast = (msg: string) => {
