@@ -82,15 +82,97 @@ export default function CuadrillasPage() {
   const [newCuadActivities, setNewCuadActivities] = useState('Obra civil básica, Enchapes, Pintura general, Acometidas');
   const [offerSuccessMsg, setOfferSuccessMsg] = useState<string | null>(null);
 
+  const mapBackendCuadrilla = (item: any): CuadrillaTeam => {
+    return {
+      id: String(item.id),
+      title: item.name,
+      slug: item.slug,
+      description: item.description || '',
+      category: item.category,
+      leaderName: item.leaderName,
+      leaderPhone: item.leaderPhone || '+57 315 000 0000',
+      city: item.city || 'Cali',
+      department: item.department || 'Valle del Cauca',
+      membersCount: item.members?.length || 4,
+      members: (item.members || []).map((m: any) => ({
+        id: `m-${m.id}`,
+        name: m.name,
+        role: m.role,
+        category: item.category,
+        rating: 5.0,
+        experience: m.experience,
+        specialty: m.specialty,
+      })),
+      pricingModel: (item.preferredPricingModel || 'POR_DIA') as PricingModel,
+      supportedPricingModels: ['POR_DIA', 'POR_HORA', 'POR_CUMPLIMIENTO'],
+      hourlyRate: Number(item.hourlyRate) || 90000,
+      dailyRate: Number(item.dailyRate) || 580000,
+      fulfillmentRate: Number(item.fulfillmentRate) || 2400000,
+      estimatedAgreementTime: '1 a 5 días laborables',
+      rating: item.rating || 4.9,
+      totalReviews: item.reviewsCount || 20,
+      isVerified: Boolean(item.isVerified),
+      featuredActivities: Array.isArray(item.activities) ? item.activities : [],
+      bannerPhoto: item.image || '/images/service-reparaciones.jpg',
+      availability: 'INMEDIATA',
+      badge: item.badge,
+    };
+  };
+
+  const mapBackendProposal = (p: any): CuadrillaProposal => {
+    return {
+      id: String(p.id),
+      cuadrillaId: String(p.cuadrillaId),
+      cuadrillaTitle: p.cuadrilla?.name || 'Cuadrilla Profesional',
+      clientName: p.clientName,
+      clientPhone: p.clientPhone,
+      projectName: p.projectName,
+      locationZone: 'Cali, Valle del Cauca',
+      pricingModel: p.pricingModel as PricingModel,
+      proposedRate: Number(p.proposedRate),
+      estimatedDuration: p.estimatedDuration,
+      proposalDescription: p.description,
+      status: p.status,
+      createdAt: p.createdAt ? new Date(p.createdAt).toLocaleDateString('es-CO') : 'Reciente',
+      agreementNotes: p.agreementNotes,
+    };
+  };
+
+  const loadBackendData = () => {
+    fetch('http://localhost:3003/cuadrillas')
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped = data.map(mapBackendCuadrilla);
+          setCuadrillas(mapped);
+        }
+      })
+      .catch((err) => console.log('Usando almacenamiento local de cuadrillas:', err));
+
+    fetch('http://localhost:3003/cuadrillas/proposals/all')
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          const mapped = data.map(mapBackendProposal);
+          if (mapped.length > 0) {
+            setProposals(mapped);
+          }
+        }
+      })
+      .catch((err) => console.log('Usando propuestas locales:', err));
+  };
+
   useEffect(() => {
     setUser(getCurrentUser());
     setCuadrillas(getStoredCuadrillas());
     setProposals(getStoredCuadrillaProposals());
+    loadBackendData();
   }, []);
 
   const reloadData = () => {
     setCuadrillas(getStoredCuadrillas());
     setProposals(getStoredCuadrillaProposals());
+    loadBackendData();
   };
 
   // Filtrado de Cuadrillas
@@ -146,6 +228,7 @@ export default function CuadrillasPage() {
     const clientName = user ? `${user.firstName} ${user.lastName}` : 'Cliente Solicitante';
     const clientPhone = user?.phone || '+57 312 000 0000';
 
+    // 1. Guardado local inmediato
     saveCuadrillaProposal({
       cuadrillaId: proposalModalCuadrilla.id,
       cuadrillaTitle: proposalModalCuadrilla.title,
@@ -159,6 +242,26 @@ export default function CuadrillasPage() {
       proposalDescription: proposalDescription.trim(),
     });
 
+    // 2. Persistencia en Base de Datos MySQL (Prisma)
+    const numId = Number(proposalModalCuadrilla.id);
+    if (!isNaN(numId)) {
+      fetch(`http://localhost:3003/cuadrillas/${numId}/proposals`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientName,
+          clientPhone,
+          projectName: projectName.trim() || 'Proyecto de Cuadrilla',
+          description: proposalDescription.trim() || 'Servicio de cuadrilla integral',
+          pricingModel: proposalPricingModel,
+          proposedRate: Number(proposedRate) || 500000,
+          estimatedDuration: estimatedDuration.trim() || '2 días',
+        }),
+      })
+      .then(() => reloadData())
+      .catch((err) => console.log('Sincronizado localmente:', err));
+    }
+
     setProposalSuccessMsg(`¡Propuesta de valor enviada a ${proposalModalCuadrilla.title}! El líder revisará y acordará el rango de horas o días.`);
     reloadData();
 
@@ -171,7 +274,18 @@ export default function CuadrillasPage() {
 
   const handleAcceptProposal = (proposalId: string) => {
     updateProposalStatus(proposalId, 'ACEPTAR');
-    reloadData();
+    const numId = Number(proposalId);
+    if (!isNaN(numId)) {
+      fetch(`http://localhost:3003/cuadrillas/proposals/${numId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'ACUERDO_PACTADO' }),
+      })
+      .then(() => reloadData())
+      .catch((err) => console.log('Estado actualizado localmente:', err));
+    } else {
+      reloadData();
+    }
   };
 
   const handleCreateNewCuadrilla = (e: React.FormEvent) => {
@@ -211,6 +325,34 @@ export default function CuadrillasPage() {
     };
 
     saveStoredCuadrilla(newTeam);
+
+    // Enviar a la base de datos MySQL (Prisma)
+    fetch('http://localhost:3003/cuadrillas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: newCuadTitle.trim(),
+        category: newCuadCategory,
+        leaderName: newCuadLeaderName.trim() || (user ? `${user.firstName} ${user.lastName}` : 'Líder de Cuadrilla'),
+        leaderPhone: newCuadLeaderPhone.trim() || (user?.phone || '+57 310 000 0000'),
+        city: 'Cali',
+        department: 'Valle del Cauca',
+        description: newCuadDesc.trim() || 'Cuadrilla profesional multidisciplinaria.',
+        hourlyRate: Number(newCuadHourlyRate) || 80000,
+        dailyRate: Number(newCuadDailyRate) || 450000,
+        fulfillmentRate: Number(newCuadFulfillmentRate) || 1500000,
+        preferredPricingModel: newCuadModel,
+        activities: acts,
+        members: [
+          { name: newCuadLeaderName || 'Líder Cuadrilla', role: 'Coordinador Principal', experience: '8 años', specialty: newCuadCategory },
+          { name: 'Oficial Técnico 1', role: 'Especialista de Obra', experience: '5 años', specialty: newCuadCategory },
+          { name: 'Auxiliar Operativo', role: 'Auxiliar Técnico', experience: '3 años', specialty: 'Apoyo general' },
+        ],
+      }),
+    })
+    .then(() => reloadData())
+    .catch((err) => console.log('Guardado localmente:', err));
+
     setOfferSuccessMsg('¡Cuadrilla publicada con éxito! Ya se encuentra disponible en el catálogo oficial para recibir propuestas.');
     reloadData();
 
@@ -237,7 +379,7 @@ export default function CuadrillasPage() {
     <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
       {/* 1. TOP NAVBAR */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50 h-16 sm:h-20 flex items-center shadow-xs">
-        <div className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+        <div className="max-w-[1620px] w-full mx-auto px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20 flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-3">
             <img
               src="/images/logo-conecta-nav.png"
@@ -293,7 +435,7 @@ export default function CuadrillasPage() {
       </header>
 
       {/* 2. HERO BANNER DE CUADRILLAS */}
-      <div className="bg-gradient-to-r from-slate-950 via-[#002f6c] to-indigo-950 text-white py-12 px-4 sm:px-6 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-slate-950 via-[#002f6c] to-indigo-950 text-white py-12 px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20 relative overflow-hidden">
         <div className="max-w-[1620px] w-full mx-auto space-y-4 relative z-10">
           <Link
             href="/"
@@ -364,7 +506,7 @@ export default function CuadrillasPage() {
       </div>
 
       {/* 3. CONTENIDO PRINCIPAL */}
-      <main className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 space-y-8">
+      <main className="max-w-[1620px] w-full mx-auto px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20 py-8 flex-1 space-y-8">
         {/* PESTAÑA 1: EXPLORAR CUADRILLAS */}
         {activeTab === 'catalogo' && (
           <div className="space-y-6">
@@ -1077,7 +1219,7 @@ export default function CuadrillasPage() {
       )}
 
       {/* 4. FOOTER */}
-      <footer className="bg-slate-900 text-slate-400 py-8 px-4 sm:px-6 border-t border-slate-800 text-xs text-center">
+      <footer className="bg-slate-900 text-slate-400 py-8 px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20 border-t border-slate-800 text-xs text-center">
         <p className="font-semibold text-slate-300">
           CONECTA 360 © 2026 • Plataforma de Cuadrillas y Servicios de Colombia
         </p>

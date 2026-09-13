@@ -520,6 +520,207 @@ async function main() {
     console.log(`✓ Prestador creado/actualizado: ${prov.firstName} ${prov.lastName} (${prov.title})`);
   }
 
+  // 6. Seed de Cuadrillas y Equipos de Trabajo en Cali
+  console.log('👷 Sembrando Cuadrillas y Equipos de Trabajo...');
+  const cuadrillasSeed = [
+    {
+      slug: 'cuadrilla-albanileria-obra-blanca-cali',
+      name: 'Cuadrilla Especializada en Albañilería, Obra Blanca y Estructuras',
+      category: 'Albañilería y Construcción',
+      leaderName: 'Don Fernando Valencia',
+      leaderPhone: '+57 315 789 4521',
+      city: 'Cali',
+      department: 'Valle del Cauca',
+      rating: 4.9,
+      reviewsCount: 38,
+      isVerified: true,
+      badge: 'Equipo Certificado &bull; 10 Años en Cali',
+      image: '/images/service-reparaciones.jpg',
+      description: 'Cuadrilla consolidada con más de 10 años en obras residenciales y comerciales en el sur y norte de Cali. Expertos en drywall, mampostería, pañete, enchape y remodelaciones integrales.',
+      hourlyRate: 90000,
+      dailyRate: 580000,
+      fulfillmentRate: 2400000,
+      preferredPricingModel: 'POR_DIA',
+      activities: JSON.stringify(['Levantamiento de muros', 'Drywall y cielo raso', 'Pintura y estuco profesional', 'Enchape porcelanato']),
+      coverage: 'Cali (Norte, Sur, Oeste), Jamundí y Yumbo',
+      experienceYears: 10,
+      completedJobs: 87,
+      members: [
+        { name: 'Fernando Valencia', role: 'Maestro Mayor de Obra', experience: '15 años', specialty: 'Planos, replanteo y dirección' },
+        { name: 'Jairo Domínguez', role: 'Oficial de Enchape', experience: '8 años', specialty: 'Porcelanatos y baños de lujo' },
+        { name: 'Miller Ocampo', role: 'Oficial Drywall y Pintura', experience: '6 años', specialty: 'Acabados finos y estuco veneciano' },
+        { name: 'Brayan Caicedo', role: 'Auxiliar de Construcción', experience: '3 años', specialty: 'Mezclas, demolición limpia y acarreo' },
+      ],
+    },
+    {
+      slug: 'equipo-electrico-retie-cali',
+      name: 'Equipo Integral de Instalaciones Eléctricas y Certificación RETIE',
+      category: 'Electricidad',
+      leaderName: 'Ing. Mauricio Quintero',
+      leaderPhone: '+57 318 456 1234',
+      city: 'Cali',
+      department: 'Valle del Cauca',
+      rating: 5.0,
+      reviewsCount: 42,
+      isVerified: true,
+      badge: 'Técnicos CONTE & RETIE',
+      image: '/images/service-electricista.jpg',
+      description: 'Cuadrilla eléctrica calificada para montajes trifásicos, cableado estructurado, subestaciones, acometidas industriales y residenciales con firma de ingeniero.',
+      hourlyRate: 110000,
+      dailyRate: 720000,
+      fulfillmentRate: 3100000,
+      preferredPricingModel: 'POR_CUMPLIMIENTO',
+      activities: JSON.stringify(['Acometidas bifásicas y trifásicas', 'Certificación RETIE', 'Paneles solares fotovoltaicos', 'Cuadros de distribución']),
+      coverage: 'Cali metropolitana, Zona Industrial Yumbo y Acopi',
+      experienceYears: 12,
+      completedJobs: 115,
+      members: [
+        { name: 'Ing. Mauricio Quintero', role: 'Ingeniero Electricista', experience: '12 años', specialty: 'Diseño RETIE y supervisión' },
+        { name: 'Cristian Rivas', role: 'Técnico Liniero CONTE', experience: '9 años', specialty: 'Cableado pesado y acometidas' },
+        { name: 'Andrés Barona', role: 'Técnico Instrumentista', experience: '5 años', specialty: 'Automatización y protecciones' },
+      ],
+    },
+    {
+      slug: 'cuadrilla-pintura-alturas-cali',
+      name: 'Cuadrilla de Pintura de Alturas, Fachadas y Acabados Arquitectónicos',
+      category: 'Pintura y Acabados',
+      leaderName: 'Héctor Fabio Restrepo',
+      leaderPhone: '+57 311 234 9876',
+      city: 'Cali',
+      department: 'Valle del Cauca',
+      rating: 4.8,
+      reviewsCount: 29,
+      isVerified: true,
+      badge: 'Certificación Trabajo en Alturas',
+      image: '/images/service-pintura.jpg',
+      description: 'Especialistas en impermeabilización de terrazas, pintura de edificios, conjuntos residenciales y bodegas con andamiaje certificado y póliza de seguridad.',
+      hourlyRate: 85000,
+      dailyRate: 520000,
+      fulfillmentRate: 1950000,
+      preferredPricingModel: 'POR_DIA',
+      activities: JSON.stringify(['Pintura de fachadas en altura', 'Impermeabilización manto asfáltico', 'Acabados anticorrosivos', 'Pintura epóxica para pisos']),
+      coverage: 'Cali y Palmira',
+      experienceYears: 8,
+      completedJobs: 64,
+      members: [
+        { name: 'Héctor Fabio Restrepo', role: 'Coordinador de Alturas', experience: '10 años', specialty: 'Seguridad y andamios certificados' },
+        { name: 'Diego Arboleda', role: 'Pintor Especialista', experience: '7 años', specialty: 'Pintura airless e hidrófuga' },
+        { name: 'Jefferson Murillo', role: 'Pintor Oficial', experience: '5 años', specialty: 'Estucos exteriores e impermeabilizantes' },
+        { name: 'Wilson Mera', role: 'Auxiliar de Seguridad', experience: '4 años', specialty: 'Líneas de vida y control perimetral' },
+      ],
+    },
+    {
+      slug: 'cuadrilla-climatizacion-aires-cali',
+      name: 'Equipo Técnico de Climatización, Extracción y Cuartos Fríos',
+      category: 'Climatización',
+      leaderName: 'Carlos Arturo Caicedo',
+      leaderPhone: '+57 316 789 0123',
+      city: 'Cali',
+      department: 'Valle del Cauca',
+      rating: 4.9,
+      reviewsCount: 34,
+      isVerified: true,
+      badge: 'Especialistas Inverter & VRF',
+      image: '/images/service-climatizacion.jpg',
+      description: 'Instalación, ductería y mantenimiento preventivo y correctivo de sistemas de aire acondicionado mini-split, multi-split y chillers centrales en Cali.',
+      hourlyRate: 120000,
+      dailyRate: 780000,
+      fulfillmentRate: 3800000,
+      preferredPricingModel: 'POR_HORA',
+      activities: JSON.stringify(['Mantenimiento de Chillers', 'Instalación Mini-Split Inverter', 'Ductería en lámina galvanizada', 'Carga de gas refrigerante R410']),
+      coverage: 'Cali, Jamundí, Yumbo y Palmira',
+      experienceYears: 11,
+      completedJobs: 92,
+      members: [
+        { name: 'Carlos Arturo Caicedo', role: 'Jefe Técnico Refrigeración', experience: '14 años', specialty: 'VRF, centrales y chillers' },
+        { name: 'Samuel Palacios', role: 'Técnico Electromecánico', experience: '6 años', specialty: 'Soldadura cobre y detección de fugas' },
+        { name: 'Jorge H. Loaiza', role: 'Técnico Instalador', experience: '5 años', specialty: 'Ductos, aislamiento y cableado' },
+      ],
+    },
+    {
+      slug: 'cuadrilla-plomeria-vactor-cali',
+      name: 'Cuadrilla de Plomería Hidrosanitaria, Redes Contra Incendio y Vactor',
+      category: 'Plomería',
+      leaderName: 'Gustavo Adolfo Mina',
+      leaderPhone: '+57 317 890 2345',
+      city: 'Cali',
+      department: 'Valle del Cauca',
+      rating: 4.9,
+      reviewsCount: 51,
+      isVerified: true,
+      badge: 'Atención Emergencias 24/7',
+      image: '/images/service-plomero.jpg',
+      description: 'Equipo dotado con sonda eléctrica, geófono para detección de fugas invisibles, hidrojet y personal calificado para redes de acueducto y alcantarillado.',
+      hourlyRate: 95000,
+      dailyRate: 640000,
+      fulfillmentRate: 2800000,
+      preferredPricingModel: 'POR_CUMPLIMIENTO',
+      activities: JSON.stringify(['Geófono detección de fugas', 'Destape de bajantes y alcantarillas', 'Instalación tanques de reserva', 'Motobombas e hidropresores']),
+      coverage: 'Todo Cali y Corregimientos',
+      experienceYears: 9,
+      completedJobs: 130,
+      members: [
+        { name: 'Gustavo Adolfo Mina', role: 'Maestro Plomero', experience: '12 años', specialty: 'Geófono y termografía' },
+        { name: 'Nelson Prado', role: 'Operador de Sonda Eléctrica', experience: '7 años', specialty: 'Destapes complejos sin romper' },
+        { name: 'Óscar Viveros', role: 'Técnico de Presurización', experience: '5 años', specialty: 'Bombas sumergibles y tanques' },
+        { name: 'Daniel Rengifo', role: 'Auxiliar Fontanero', experience: '3 años', specialty: 'Termofusión y PVC RDE' },
+      ],
+    },
+    {
+      slug: 'cuadrilla-cerrajeria-blindada-cali',
+      name: 'Equipo de Cerrajería Blindada, Portones Automáticos y Control de Acceso',
+      category: 'Cerrajería y Seguridad',
+      leaderName: 'Alonso Bermúdez',
+      leaderPhone: '+57 314 567 8901',
+      city: 'Cali',
+      department: 'Valle del Cauca',
+      rating: 5.0,
+      reviewsCount: 46,
+      isVerified: true,
+      badge: 'Seguridad Perimetral & Automatización',
+      image: '/images/service-cerrajero.jpg',
+      description: 'Expertos en blindaje arquitectónico, instalación de cerraduras electromagnéticas, talanqueras de condominio, motores para portones y cajas fuertes.',
+      hourlyRate: 105000,
+      dailyRate: 690000,
+      fulfillmentRate: 2600000,
+      preferredPricingModel: 'POR_HORA',
+      activities: JSON.stringify(['Automatización de portones', 'Cerraduras biométricas y digitales', 'Cajas fuertes de alta seguridad', 'Cerraduras multipunto']),
+      coverage: 'Cali (Norte y Sur residencial)',
+      experienceYears: 13,
+      completedJobs: 104,
+      members: [
+        { name: 'Alonso Bermúdez', role: 'Maestro Cerrajero Forense', experience: '16 años', specialty: 'Aperturas técnicas y cajas fuertes' },
+        { name: 'Edison Cardona', role: 'Técnico en Automatización', experience: '8 años', specialty: 'Motores corredizos y brazos hidráulicos' },
+        { name: 'Kevin Bermúdez', role: 'Técnico Control de Acceso', experience: '4 años', specialty: 'Biometría, electroimanes y tarjetas RFID' },
+      ],
+    },
+  ];
+
+  for (const cData of cuadrillasSeed) {
+    const { members, ...cuadrillaInfo } = cData;
+    const cuadrilla = await prisma.cuadrilla.upsert({
+      where: { slug: cuadrillaInfo.slug },
+      update: cuadrillaInfo,
+      create: cuadrillaInfo,
+    });
+
+    // Crear/actualizar miembros de la cuadrilla
+    await prisma.cuadrillaMember.deleteMany({
+      where: { cuadrillaId: cuadrilla.id },
+    });
+
+    for (const member of members) {
+      await prisma.cuadrillaMember.create({
+        data: {
+          cuadrillaId: cuadrilla.id,
+          ...member,
+        },
+      });
+    }
+
+    console.log(`✓ Cuadrilla creada/actualizada: ${cuadrilla.name} (${members.length} integrantes)`);
+  }
+
   console.log('🌱 Seed completado exitosamente.');
 }
 

@@ -582,7 +582,7 @@ function ServicesDirectoryContent() {
     <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
       {/* Header */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50 h-16 sm:h-20 flex items-center shadow-xs">
-        <div className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+        <div className="max-w-[1620px] w-full mx-auto px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20 flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-3">
             <img
               src="/images/logo-conecta-nav.png"
@@ -638,7 +638,7 @@ function ServicesDirectoryContent() {
       </header>
 
       {/* Hero Banner del Catálogo */}
-      <div className="bg-gradient-to-r from-[#002f6c] via-[#0056d2] to-slate-900 text-white py-12 px-4 sm:px-6">
+      <div className="bg-gradient-to-r from-[#002f6c] via-[#0056d2] to-slate-900 text-white py-12 px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20">
         <div className="max-w-[1620px] w-full mx-auto space-y-3">
           <Link
             href="/"
@@ -660,7 +660,7 @@ function ServicesDirectoryContent() {
       </div>
 
       {/* Barra de Filtros Avanzada */}
-      <div className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8 -mt-6">
+      <div className="max-w-[1620px] w-full mx-auto px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20 -mt-6">
         <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-4 sm:p-5 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {/* Buscador */}
@@ -819,7 +819,7 @@ function ServicesDirectoryContent() {
       </div>
 
       {/* Grid de Servicios y Profesionales */}
-      <div className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-1">
+      <div className="max-w-[1620px] w-full mx-auto px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20 py-10 flex-1">
         {sorted.length === 0 ? (
           <div className="bg-white border border-slate-200 rounded-3xl p-12 text-center space-y-3 shadow-xs">
             <Wrench className="w-10 h-10 text-slate-400 mx-auto" />
@@ -969,7 +969,7 @@ function ServicesDirectoryContent() {
       </div>
 
       {/* Footer */}
-      <footer className="bg-slate-900 text-slate-400 py-8 px-4 sm:px-6 border-t border-slate-800 text-xs text-center">
+      <footer className="bg-slate-900 text-slate-400 py-8 px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20 border-t border-slate-800 text-xs text-center">
         <p className="font-semibold text-slate-300">
           CONECTA 360 © 2026 • Plataforma de Servicios y Profesionales de Colombia
         </p>

@@ -6,6 +6,7 @@ import { RolesModule } from './roles/roles.module';
 import { CategoriesModule } from './categories/categories.module';
 import { ProvidersModule } from './providers/providers.module';
 import { ServicesModule } from './services/services.module';
+import { CuadrillasModule } from './cuadrillas/cuadrillas.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ServicesModule } from './services/services.module';
     CategoriesModule,
     ProvidersModule,
     ServicesModule,
+    CuadrillasModule,
   ],
   controllers: [],
   providers: [],

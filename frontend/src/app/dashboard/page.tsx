@@ -494,7 +494,7 @@ function UserDashboardContent() {
     <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
       {/* Top Navbar */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-40 h-16 sm:h-20 flex items-center shadow-xs">
-        <div className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+        <div className="max-w-[1620px] w-full mx-auto px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20 flex items-center justify-between">
           <Link href="/" className="flex items-center">
             <img
               src="/images/logo-conecta-nav.png"
@@ -641,7 +641,7 @@ function UserDashboardContent() {
       )}
 
       {/* Main Content Area */}
-      <main className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <main className="max-w-[1620px] w-full mx-auto px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20 py-8 space-y-8">
         {/* Banner de Solicitudes Entrantes para Confirmar (Prestador) */}
         {user.role === 'PROVIDER' && historyItems.filter((h) => h.status === 'SOLICITADO').length > 0 && (
           <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-[#0056d2] text-white rounded-3xl p-6 sm:p-7 shadow-lg shadow-blue-500/20 space-y-4 animate-in fade-in">

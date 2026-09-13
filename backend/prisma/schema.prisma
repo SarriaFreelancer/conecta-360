@@ -164,3 +164,71 @@ model Service {
 
   @@map("services")
 }
+
+model Cuadrilla {
+  id                    Int                 @id @default(autoincrement())
+  name                  String              @db.VarChar(150)
+  slug                  String              @unique @db.VarChar(150)
+  category              String              @db.VarChar(100)
+  categoryId            Int?
+  leaderName            String              @db.VarChar(100)
+  leaderPhone           String?             @db.VarChar(30)
+  city                  String              @default("Cali") @db.VarChar(100)
+  department            String              @default("Valle del Cauca") @db.VarChar(100)
+  rating                Float               @default(4.9)
+  reviewsCount          Int                 @default(0)
+  isVerified            Boolean             @default(true)
+  badge                 String?             @db.VarChar(100)
+  image                 String?             @db.VarChar(255)
+  description           String              @db.Text
+  hourlyRate            Decimal             @db.Decimal(10, 2)
+  dailyRate             Decimal             @db.Decimal(10, 2)
+  fulfillmentRate       Decimal             @db.Decimal(10, 2)
+  preferredPricingModel String              @default("POR_DIA") @db.VarChar(30)
+  activities            String              @db.Text
+  coverage              String?             @db.VarChar(255)
+  experienceYears       Int                 @default(3)
+  completedJobs         Int                 @default(0)
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  members               CuadrillaMember[]
+  proposals             CuadrillaProposal[]
+
+  @@map("cuadrillas")
+}
+
+model CuadrillaMember {
+  id          Int       @id @default(autoincrement())
+  cuadrillaId Int
+  name        String    @db.VarChar(100)
+  role        String    @db.VarChar(100)
+  experience  String    @db.VarChar(50)
+  specialty   String    @db.VarChar(100)
+  createdAt   DateTime  @default(now())
+
+  cuadrilla   Cuadrilla @relation(fields: [cuadrillaId], references: [id], onDelete: Cascade)
+
+  @@map("cuadrilla_members")
+}
+
+model CuadrillaProposal {
+  id                Int       @id @default(autoincrement())
+  cuadrillaId       Int
+  clientName        String    @db.VarChar(100)
+  clientPhone       String    @db.VarChar(30)
+  clientEmail       String?   @db.VarChar(191)
+  projectName       String    @db.VarChar(200)
+  description       String    @db.Text
+  pricingModel      String    @db.VarChar(30)
+  proposedRate      Decimal   @db.Decimal(10, 2)
+  estimatedDuration String    @db.VarChar(100)
+  status            String    @default("PROPUESTA_ENVIADA") @db.VarChar(50)
+  agreementNotes    String?   @db.Text
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  cuadrilla         Cuadrilla @relation(fields: [cuadrillaId], references: [id], onDelete: Cascade)
+
+  @@map("cuadrilla_proposals")
+}

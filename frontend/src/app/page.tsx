@@ -921,7 +921,7 @@ export default function Home() {
     <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans selection:bg-blue-100 selection:text-blue-900">
       {/* 1. TOP NAVBAR */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50 h-16 sm:h-20 flex items-center shadow-xs">
-        <div className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+        <div className="max-w-[1620px] w-full mx-auto px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20 flex items-center justify-between">
           {/* Logo Oficial CONECTA 360 con la imagen subida en tamaño justo para la barra */}
           <Link href="/" className="flex items-center">
             <img
@@ -1115,7 +1115,7 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-t from-[#002f6c]/50 via-transparent to-transparent"></div>
         </div>
 
-        <div className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <div className="max-w-[1620px] w-full mx-auto px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20 py-12 lg:py-16 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           {/* Left Text and Search (Span 7) */}
           <div className="lg:col-span-7 space-y-4 max-w-xl">
             {/* Red pill badge */}
@@ -1273,7 +1273,7 @@ export default function Home() {
       </section>
 
       {/* 3. DUAL ACTION CARDS & 4 TRUST PILLARS */}
-      <section className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8 -mt-6 sm:-mt-8 relative z-20">
+      <section className="max-w-[1620px] w-full mx-auto px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20 -mt-6 sm:-mt-8 relative z-20">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-5">
           {/* Card: Necesito algo */}
           <Link
@@ -1340,7 +1340,7 @@ export default function Home() {
       </section>
 
       {/* 4. CATEGORÍAS MÁS POPULARES */}
-      <section id="categorias" className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
+      <section id="categorias" className="max-w-[1620px] w-full mx-auto px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20 pt-16 pb-8">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
@@ -1390,7 +1390,7 @@ export default function Home() {
       </section>
 
       {/* 5. SERVICIOS DESTACADOS FILTRADOS POR COLOMBIA & CALI */}
-      <section id="servicios" className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <section id="servicios" className="max-w-[1620px] w-full mx-auto px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20 py-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
             <div className="flex items-center space-x-2">
@@ -1546,7 +1546,7 @@ export default function Home() {
 
       {/* 6. ¿CÓMO FUNCIONA? */}
       <section id="como-funciona" className="py-14 sm:py-18 bg-[#f8fafc] border-t border-slate-200/80">
-        <div className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1620px] w-full mx-auto px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20">
           <div className="text-left mb-10">
             <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
               ¿Cómo funciona?
@@ -1634,7 +1634,7 @@ export default function Home() {
 
       {/* 7. ¿POR QUÉ ELEGIR CONECTA360? & APP MÓVIL */}
       <section className="py-14 sm:py-16 bg-white border-t border-slate-200/80">
-        <div className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1620px] w-full mx-auto px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             {/* Left 8 Cols: ¿Por qué elegir Conecta360? */}
             <div className="lg:col-span-8 space-y-6">
@@ -1754,7 +1754,7 @@ export default function Home() {
 
       {/* 8. LO QUE DICEN NUESTROS USUARIOS */}
       <section className="py-14 sm:py-16 bg-[#f8fafc] border-t border-slate-200/80">
-        <div className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1620px] w-full mx-auto px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20">
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
@@ -1862,7 +1862,7 @@ export default function Home() {
       </section>
 
       {/* 9. CALL TO ACTION BANNER */}
-      <section className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8 my-10 sm:my-16">
+      <section className="max-w-[1620px] w-full mx-auto px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20 my-10 sm:my-16">
         <div className="bg-[#002f6c] text-white rounded-3xl p-6 sm:p-10 shadow-2xl flex flex-col lg:flex-row items-center justify-between gap-6 relative overflow-hidden text-center sm:text-left">
           {/* Logo Circular con Slogan */}
           <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-5">
@@ -1906,7 +1906,7 @@ export default function Home() {
 
       {/* 10. FOOTER COMPLETO EXACTO */}
       <footer className="bg-[#050b14] text-slate-300 pt-12 sm:pt-16 pb-8 border-t border-slate-800">
-        <div className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1620px] w-full mx-auto px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-8 pb-10 sm:pb-12">
             {/* Col 1: Brand (Span 3) */}
             <div className="sm:col-span-2 lg:col-span-3 space-y-3">

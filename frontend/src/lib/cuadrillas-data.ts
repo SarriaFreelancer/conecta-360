@@ -9,6 +9,8 @@ export interface CuadrillaMember {
   role: string;
   category: string;
   rating: number;
+  experience?: string;
+  specialty?: string;
 }
 
 export interface CuadrillaTeam {
@@ -35,6 +37,7 @@ export interface CuadrillaTeam {
   featuredActivities: string[];
   bannerPhoto: string;
   availability: 'INMEDIATA' | 'PREVIA_CITA' | 'EN_PROYECTO';
+  badge?: string;
 }
 
 export interface CuadrillaProposal {
@@ -52,6 +55,7 @@ export interface CuadrillaProposal {
   status: 'PROPUESTA_ENVIADA' | 'EN_NEGOCIACION' | 'ACUERDO_PACTADO' | 'RECHAZADA';
   createdAt: string;
   agreementDate?: string;
+  agreementNotes?: string;
   counterOffer?: {
     rate: number;
     duration: string;
