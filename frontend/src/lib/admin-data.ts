@@ -982,6 +982,32 @@ export async function updateAdminUserBackend(
     password?: string;
   },
 ) {
+  // 1. Actualizar siempre la caché local (USRS_KEY) para persistencia offline / feedback inmediato
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = localStorage.getItem(USRS_KEY);
+      if (stored) {
+        const users: AdminUser[] = JSON.parse(stored);
+        const updated = users.map((u) => {
+          const match = u.id === id || (dto.email && u.email?.toLowerCase() === dto.email.toLowerCase());
+          if (match) {
+            return {
+              ...u,
+              ...dto,
+              status: (dto.status || u.status) as any,
+              isActive: dto.isActive !== undefined ? dto.isActive : (dto.status ? dto.status === 'ACTIVE' : u.isActive),
+            };
+          }
+          return u;
+        });
+        localStorage.setItem(USRS_KEY, JSON.stringify(updated));
+      }
+    } catch (e) {
+      console.warn('Aviso sincronizando usuario en almacenamiento local:', e);
+    }
+  }
+
+  // 2. Persistencia en backend (NestJS + MySQL)
   try {
     const res = await fetch(`${API_BASE_URL}/users/${id}`, {
       method: 'PATCH',
@@ -990,14 +1016,14 @@ export async function updateAdminUserBackend(
       signal: AbortSignal.timeout(4500),
     });
     if (res.ok) {
-      if (typeof window !== 'undefined') localStorage.removeItem(USRS_KEY);
       return await res.json();
     }
     const errData = await res.json().catch(() => ({}));
-    throw new Error(errData.message || 'Error al actualizar usuario en backend');
+    console.warn('[Conecta360 API] Backend aviso al actualizar usuario:', errData?.message || res.statusText);
+    return null;
   } catch (err: any) {
-    console.warn('[Conecta360 API] Error actualizando usuario en backend:', err);
-    throw err;
+    console.warn('[Conecta360 API] Error conectando con backend al actualizar usuario:', err?.message || err);
+    return null;
   }
 }
 

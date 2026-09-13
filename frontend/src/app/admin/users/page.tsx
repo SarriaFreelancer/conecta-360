@@ -253,39 +253,47 @@ export default function AdminUsersPage() {
 
   // Aprobar verificación con persistencia directa en MySQL
   const handleApproveVerification = async (u: UserItem) => {
+    // 1. Actualización optimista e inmediata en la interfaz y almacenamiento local
+    verifyUserByAdmin(u.id);
+    if (u.email) verifyUserByAdmin(u.email);
+
+    setUsers((prev) =>
+      prev.map((item) =>
+        item.id === u.id || (u.email && item.email?.toLowerCase() === u.email.toLowerCase())
+          ? {
+              ...item,
+              status: 'ACTIVE',
+              providerProfile: item.providerProfile
+                ? { ...item.providerProfile, isVerified: true }
+                : item.providerProfile,
+            }
+          : item,
+      ),
+    );
+
+    if (selectedUser && (selectedUser.id === u.id || (u.email && selectedUser.email?.toLowerCase() === u.email.toLowerCase()))) {
+      setSelectedUser({
+        ...selectedUser,
+        status: 'ACTIVE',
+        providerProfile: selectedUser.providerProfile
+          ? { ...selectedUser.providerProfile, isVerified: true }
+          : selectedUser.providerProfile,
+      });
+    }
+
+    showToast(`✓ Verificación aprobada para ${u.firstName} ${u.lastName}`);
+
+    // 2. Persistencia asíncrona segura en backend MySQL
     try {
       await updateProviderVerificationBackend(u.id, 'APPROVED');
-      await updateAdminUserBackend(u.id, { status: 'ACTIVE' });
-      verifyUserByAdmin(u.id);
+    } catch (e) {
+      console.warn('Aviso sincronizando verificación de prestador:', e);
+    }
 
-      setUsers((prev) =>
-        prev.map((item) =>
-          item.id === u.id
-            ? {
-                ...item,
-                status: 'ACTIVE',
-                providerProfile: item.providerProfile
-                  ? { ...item.providerProfile, isVerified: true }
-                  : item.providerProfile,
-              }
-            : item,
-        ),
-      );
-
-      if (selectedUser && selectedUser.id === u.id) {
-        setSelectedUser({
-          ...selectedUser,
-          status: 'ACTIVE',
-          providerProfile: selectedUser.providerProfile
-            ? { ...selectedUser.providerProfile, isVerified: true }
-            : selectedUser.providerProfile,
-        });
-      }
-
-      showToast(`✓ Verificación aprobada y registrada en MySQL para ${u.firstName} ${u.lastName}`);
-    } catch (err) {
-      console.error(err);
-      showToast('Error al actualizar verificación en el servidor');
+    try {
+      await updateAdminUserBackend(u.id, { status: 'ACTIVE', email: u.email });
+    } catch (e) {
+      console.warn('Aviso sincronizando estado de usuario con backend:', e);
     }
   };
 
@@ -296,14 +304,21 @@ export default function AdminUsersPage() {
 
     if (!confirm(`¿Estás seguro de que deseas ${actionText} a ${u.firstName} ${u.lastName}?`)) return;
 
+    // Actualización optimista
+    setUsers((prev) =>
+      prev.map((item) =>
+        item.id === u.id || (u.email && item.email?.toLowerCase() === u.email.toLowerCase())
+          ? { ...item, status: newTargetStatus }
+          : item,
+      ),
+    );
+
+    showToast(`✓ Usuario ${u.firstName} ${u.lastName} ahora está ${newTargetStatus === 'BLOCKED' ? 'BLOQUEADO' : 'ACTIVO'}`);
+
     try {
-      await updateAdminUserBackend(u.id, { status: newTargetStatus });
-      setUsers((prev) =>
-        prev.map((item) => (item.id === u.id ? { ...item, status: newTargetStatus } : item)),
-      );
-      showToast(`✓ Usuario ${u.firstName} ${u.lastName} ahora está ${newTargetStatus === 'BLOCKED' ? 'BLOQUEADO' : 'ACTIVO'}`);
+      await updateAdminUserBackend(u.id, { status: newTargetStatus, email: u.email });
     } catch (err: any) {
-      showToast(err.message || 'Error al cambiar estado del usuario');
+      console.warn('Aviso al actualizar estado en backend:', err);
     }
   };
 

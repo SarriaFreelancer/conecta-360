@@ -170,8 +170,24 @@ export class UsersService {
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
-    const existing = await this.findOne(String(id));
+    let existing: any = null;
+    try {
+      existing = await this.findOne(String(id));
+    } catch (notFound) {
+      if (updateUserDto.email) {
+        existing = await this.prisma.user.findUnique({
+          where: { email: updateUserDto.email.trim().toLowerCase() },
+          include: {
+            role: true,
+            profile: true,
+            providerProfile: true,
+          },
+        });
+      }
+      if (!existing) throw notFound;
+    }
 
+    const actualId = existing.id;
     const dataToUpdate: any = { ...updateUserDto };
     if (updateUserDto.password) {
       dataToUpdate.password = await bcrypt.hash(updateUserDto.password, 10);
@@ -193,7 +209,7 @@ export class UsersService {
       if (targetRole?.name === 'PROVIDER' && !existing.providerProfile) {
         await this.prisma.providerProfile.create({
           data: {
-            userId: id,
+            userId: actualId,
             title: 'Profesional de Servicios',
             rating: 5.0,
             totalReviews: 0,
@@ -205,7 +221,7 @@ export class UsersService {
     }
 
     const updatedUser = await this.prisma.user.update({
-      where: { id },
+      where: { id: actualId },
       data: dataToUpdate,
       include: {
         role: true,
