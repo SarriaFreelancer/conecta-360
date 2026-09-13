@@ -67,6 +67,7 @@ import {
 } from '@/lib/auth';
 import { getGlobalSettings } from '@/lib/system-settings';
 import { COLOMBIA_DEPARTMENTS, getCitiesForDepartment, DEFAULT_CITY, DEFAULT_DEPARTMENT } from '@/lib/colombia-data';
+import { fetchBookingsByClient, fetchBookingsByProvider, fetchNotificationsByUser } from '@/lib/admin-data';
 
 function UserDashboardContent() {
   const router = useRouter();
@@ -170,6 +171,78 @@ function UserDashboardContent() {
       setWhatsAppToggle(session.profile.showWhatsApp ?? true);
       setWhatsAppInput(session.profile.whatsappNumber || session.phone);
       setNotifications(getUserNotifications(session.id));
+
+      // Sincronizar historial de reservas reales desde la base de datos MySQL
+      const numUserId = Number(session.id);
+      if (!isNaN(numUserId) && numUserId > 0) {
+        const fetcher = session.role === 'PROVIDER'
+          ? fetchBookingsByProvider(numUserId)
+          : fetchBookingsByClient(numUserId);
+
+        fetcher.then((dbBookings) => {
+          if (Array.isArray(dbBookings) && dbBookings.length > 0) {
+            const mappedItems: ServiceHistoryItem[] = dbBookings.map((b: any) => ({
+              id: String(b.id),
+              serviceTitle: b.serviceTitle,
+              categoryName: b.categoryName,
+              clientName: b.client ? `${b.client.firstName} ${b.client.lastName}` : 'Cliente',
+              clientPhone: b.client?.phone || undefined,
+              providerName: b.provider ? `${b.provider.firstName} ${b.provider.lastName}` : 'Prestador',
+              providerPhone: b.provider?.phone || undefined,
+              date: b.dateString || new Date(b.createdAt).toLocaleDateString('es-CO'),
+              status: b.status,
+              amount: Number(b.amount),
+              paymentStatus: b.paymentStatus,
+              paymentMethod: b.paymentMethod,
+              platformFee: Number(b.platformFee),
+              platformDebtStatus: b.platformDebtStatus,
+              estimatedTimeRange: b.estimatedTimeRange,
+              locationZone: b.locationZone,
+              reviewComment: b.notes,
+              rejectionReason: b.rejectionReason,
+              rejectionExplanation: b.rejectionExplanation,
+              teamBookingId: b.teamBookingId,
+              teamProjectName: b.teamProjectName,
+              teamMembersCount: b.teamMembersCount,
+            }));
+
+            setUser((prev) => {
+              if (!prev) return prev;
+              const currentIds = new Set((prev.history || []).map((h) => h.id));
+              const newItems = mappedItems.filter((m) => !currentIds.has(m.id));
+              if (newItems.length === 0) return prev;
+              return {
+                ...prev,
+                history: [...newItems, ...(prev.history || [])],
+              };
+            });
+          }
+        }).catch(() => {});
+
+        // Sincronizar notificaciones reales desde MySQL
+        fetchNotificationsByUser(numUserId).then((dbNotifs) => {
+          if (Array.isArray(dbNotifs) && dbNotifs.length > 0) {
+            const mappedNotifs: AppNotification[] = dbNotifs.map((n: any) => ({
+              id: String(n.id),
+              userId: n.userId,
+              title: n.title,
+              message: n.message,
+              type: n.type,
+              date: new Date(n.createdAt).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' }),
+              read: n.isRead,
+              link: n.link,
+              actionRequired: n.actionRequired,
+              serviceId: n.serviceId,
+            }));
+
+            setNotifications((prev) => {
+              const currentNotifIds = new Set(prev.map((p) => p.id));
+              const toAppend = mappedNotifs.filter((m) => !currentNotifIds.has(m.id));
+              return [...toAppend, ...prev];
+            });
+          }
+        }).catch(() => {});
+      }
     }
 
     if (openNewServiceParam) {

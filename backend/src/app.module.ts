@@ -7,6 +7,9 @@ import { CategoriesModule } from './categories/categories.module';
 import { ProvidersModule } from './providers/providers.module';
 import { ServicesModule } from './services/services.module';
 import { CuadrillasModule } from './cuadrillas/cuadrillas.module';
+import { BookingsModule } from './bookings/bookings.module';
+import { ReviewsModule } from './reviews/reviews.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -18,6 +21,9 @@ import { CuadrillasModule } from './cuadrillas/cuadrillas.module';
     ProvidersModule,
     ServicesModule,
     CuadrillasModule,
+    BookingsModule,
+    ReviewsModule,
+    NotificationsModule,
   ],
   controllers: [],
   providers: [],

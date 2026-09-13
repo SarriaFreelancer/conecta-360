@@ -558,3 +558,144 @@ export async function getAdminRoles(): Promise<AdminRole[]> {
   }
   return INITIAL_ROLES;
 }
+
+// ==========================================
+// 5. RESERVAS & ÓRDENES (Bookings) API
+// ==========================================
+export async function createBookingBackend(dto: {
+  clientId: number;
+  providerId: number;
+  serviceTitle: string;
+  categoryName: string;
+  amount: number;
+  paymentMethod?: string;
+  estimatedTimeRange?: string;
+  locationZone?: string;
+  dateString?: string;
+  notes?: string;
+  teamBookingId?: string;
+  teamProjectName?: string;
+  teamMembersCount?: number;
+}) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/bookings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dto),
+      signal: AbortSignal.timeout(4000),
+    });
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('[Conecta360 API] Error guardando reserva en backend:', err);
+  }
+  return null;
+}
+
+export async function fetchBookingsByClient(clientId: number) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/bookings/client/${clientId}`, {
+      signal: AbortSignal.timeout(3000),
+    });
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('[Conecta360 API] Error consultando reservas de cliente en backend:', err);
+  }
+  return [];
+}
+
+export async function fetchBookingsByProvider(providerId: number) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/bookings/provider/${providerId}`, {
+      signal: AbortSignal.timeout(3000),
+    });
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('[Conecta360 API] Error consultando reservas de prestador en backend:', err);
+  }
+  return [];
+}
+
+export async function updateBookingStatusBackend(
+  bookingId: number,
+  status: 'CONFIRMADO' | 'EN_PROGRESO' | 'COMPLETADO' | 'CANCELADO' | 'RECHAZADO',
+  rejectionReason?: string,
+  rejectionExplanation?: string
+) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/bookings/${bookingId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, rejectionReason, rejectionExplanation }),
+      signal: AbortSignal.timeout(3500),
+    });
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('[Conecta360 API] Error actualizando estado de reserva en backend:', err);
+  }
+  return null;
+}
+
+// ==========================================
+// 6. RESEÑAS & CALIFICACIONES (Reviews) API
+// ==========================================
+export async function createReviewBackend(dto: {
+  clientId: number;
+  providerId: number;
+  bookingId?: number;
+  rating: number;
+  comment?: string;
+}) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/reviews`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dto),
+      signal: AbortSignal.timeout(3500),
+    });
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('[Conecta360 API] Error guardando reseña en backend:', err);
+  }
+  return null;
+}
+
+export async function fetchReviewsByProvider(providerId: number) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/reviews/provider/${providerId}`, {
+      signal: AbortSignal.timeout(3000),
+    });
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('[Conecta360 API] Error consultando reseñas en backend:', err);
+  }
+  return [];
+}
+
+// ==========================================
+// 7. NOTIFICACIONES (Notifications) API
+// ==========================================
+export async function fetchNotificationsByUser(userId: number) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/notifications/user/${userId}`, {
+      signal: AbortSignal.timeout(3000),
+    });
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('[Conecta360 API] Error consultando notificaciones en backend:', err);
+  }
+  return [];
+}
+
+export async function markNotificationAsReadBackend(notifId: number) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/notifications/${notifId}/read`, {
+      method: 'PATCH',
+      signal: AbortSignal.timeout(3000),
+    });
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('[Conecta360 API] Error marcando notificación como leída:', err);
+  }
+  return null;
+}
+

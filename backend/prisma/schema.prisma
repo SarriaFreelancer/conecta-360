@@ -65,23 +65,33 @@ model User {
   profile         Profile?
   providerProfile ProviderProfile?
 
+  bookingsAsClient   Booking[]      @relation("ClientBookings")
+  bookingsAsProvider Booking[]      @relation("ProviderBookings")
+  reviewsGiven       Review[]       @relation("ClientReviews")
+  reviewsReceived    Review[]       @relation("ProviderReviews")
+  notifications      Notification[]
+
   @@map("users")
 }
 
 model Profile {
-  id           Int      @id @default(autoincrement())
-  userId       Int      @unique
-  profilePhoto String?  @db.VarChar(255)
-  bio          String?  @db.Text
-  city         String?  @db.VarChar(100)
-  department   String?  @db.VarChar(100)
-  country      String?  @default("Colombia") @db.VarChar(100)
-  address      String?  @db.VarChar(255)
-  latitude     Float?
-  longitude    Float?
-  website      String?  @db.VarChar(255)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id               Int      @id @default(autoincrement())
+  userId           Int      @unique
+  profilePhoto     String?  @db.VarChar(255)
+  bio              String?  @db.Text
+  city             String?  @db.VarChar(100)
+  department       String?  @db.VarChar(100)
+  country          String?  @default("Colombia") @db.VarChar(100)
+  address          String?  @db.VarChar(255)
+  whatsappNumber   String?  @db.VarChar(30)
+  showWhatsApp     Boolean  @default(true)
+  reputationPoints Int      @default(100)
+  negativePoints   Int      @default(0)
+  latitude         Float?
+  longitude        Float?
+  website          String?  @db.VarChar(255)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -89,18 +99,22 @@ model Profile {
 }
 
 model ProviderProfile {
-  id           Int      @id @default(autoincrement())
-  userId       Int      @unique
-  title        String?  @db.VarChar(100)
-  hourlyRate   Decimal? @db.Decimal(10, 2)
-  isVerified   Boolean  @default(false)
-  rating       Float    @default(0)
-  totalReviews Int      @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                    Int                    @id @default(autoincrement())
+  userId                Int                    @unique
+  title                 String?                @db.VarChar(100)
+  hourlyRate            Decimal?               @db.Decimal(10, 2)
+  isVerified            Boolean                @default(false)
+  rating                Float                  @default(0)
+  totalReviews          Int                    @default(0)
+  experienceYears       Int                    @default(5)
+  coverageZones         String?                @db.VarChar(255)
+  activities            String?                @db.Text
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
 
-  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  providerServices ProviderService[]
+  user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  providerServices      ProviderService[]
+  verificationDocuments VerificationDocument[]
 
   @@map("provider_profiles")
 }
@@ -231,4 +245,111 @@ model CuadrillaProposal {
   cuadrilla         Cuadrilla @relation(fields: [cuadrillaId], references: [id], onDelete: Cascade)
 
   @@map("cuadrilla_proposals")
+}
+
+model Booking {
+  id                   Int                @id @default(autoincrement())
+  clientId             Int
+  providerId           Int
+  serviceTitle         String             @db.VarChar(150)
+  categoryName         String             @db.VarChar(100)
+  amount               Decimal            @db.Decimal(10, 2)
+  status               BookingStatus      @default(SOLICITADO)
+  paymentMethod        String             @default("Transferencia Bancaria") @db.VarChar(50)
+  paymentStatus        PaymentStatus      @default(PENDIENTE)
+  platformFee          Decimal            @default(0) @db.Decimal(10, 2)
+  platformDebtStatus   PlatformDebtStatus @default(EN_DEUDA)
+  estimatedTimeRange   String             @default("2 a 4 horas") @db.VarChar(100)
+  locationZone         String?            @db.VarChar(150)
+  bookingDate          DateTime?
+  dateString           String?            @db.VarChar(100)
+  notes                String?            @db.Text
+  rejectionReason      String?            @db.VarChar(200)
+  rejectionExplanation String?            @db.Text
+  teamBookingId        String?            @db.VarChar(100)
+  teamProjectName      String?            @db.VarChar(200)
+  teamMembersCount     Int?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  client               User               @relation("ClientBookings", fields: [clientId], references: [id], onDelete: Cascade)
+  provider             User               @relation("ProviderBookings", fields: [providerId], references: [id], onDelete: Cascade)
+  reviews              Review[]
+
+  @@map("bookings")
+}
+
+model Review {
+  id         Int      @id @default(autoincrement())
+  bookingId  Int?
+  clientId   Int
+  providerId Int
+  rating     Float
+  comment    String?  @db.Text
+  createdAt  DateTime @default(now())
+
+  booking    Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  client     User     @relation("ClientReviews", fields: [clientId], references: [id], onDelete: Cascade)
+  provider   User     @relation("ProviderReviews", fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@map("reviews")
+}
+
+model Notification {
+  id             Int      @id @default(autoincrement())
+  userId         Int
+  title          String   @db.VarChar(150)
+  message        String   @db.Text
+  type           String   @default("SYSTEM") @db.VarChar(50)
+  isRead         Boolean  @default(false)
+  link           String?  @db.VarChar(255)
+  actionRequired Boolean  @default(false)
+  serviceId      String?  @db.VarChar(100)
+  createdAt      DateTime @default(now())
+
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model VerificationDocument {
+  id                Int             @id @default(autoincrement())
+  providerProfileId Int
+  documentType      String          @db.VarChar(50)
+  documentNumber    String?         @db.VarChar(100)
+  fileUrl           String          @db.VarChar(255)
+  status            DocumentStatus  @default(PENDIENTE)
+  reviewNotes       String?         @db.Text
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  providerProfile   ProviderProfile @relation(fields: [providerProfileId], references: [id], onDelete: Cascade)
+
+  @@map("verification_documents")
+}
+
+enum BookingStatus {
+  SOLICITADO
+  CONFIRMADO
+  EN_PROGRESO
+  COMPLETADO
+  CANCELADO
+  RECHAZADO
+}
+
+enum PaymentStatus {
+  PENDIENTE
+  PAGADO
+}
+
+enum PlatformDebtStatus {
+  EN_DEUDA
+  AL_DIA
+  NO_APLICA
+}
+
+enum DocumentStatus {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
 }

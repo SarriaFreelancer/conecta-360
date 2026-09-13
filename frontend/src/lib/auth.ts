@@ -1,5 +1,6 @@
 // Servicio y utilidades de Autenticación y Gestión de Proveedores para Conecta 360 Colombia
 import { getGlobalSettings, calculatePlatformFee } from './system-settings';
+import { createBookingBackend, updateBookingStatusBackend } from './admin-data';
 
 export interface ServiceHistoryItem {
   id: string;
@@ -741,6 +742,25 @@ export function createServiceBooking(booking: {
     timeRange: booking.estimatedTimeRange || '2 a 4 horas',
   });
 
+  // 5. Persistencia paralela en Base de Datos MySQL (Prisma + NestJS)
+  const numClientId = Number(current.id);
+  const numProviderId = Number(booking.providerId);
+  if (!isNaN(numClientId) && !isNaN(numProviderId)) {
+    createBookingBackend({
+      clientId: numClientId,
+      providerId: numProviderId,
+      serviceTitle: booking.serviceTitle,
+      categoryName: booking.categoryName,
+      amount: booking.amount,
+      estimatedTimeRange: booking.estimatedTimeRange,
+      locationZone: booking.locationZone,
+      notes: booking.notes,
+      teamBookingId: booking.teamBookingId,
+      teamProjectName: booking.teamProjectName,
+      teamMembersCount: booking.teamMembersCount,
+    }).catch(() => {});
+  }
+
   return true;
 }
 
@@ -801,6 +821,11 @@ export function confirmServiceBooking(bookingId: string, confirmedTimeRange?: st
     actionRequired: false,
     serviceId: bookingId,
   });
+
+  const numId = Number(bookingId.replace(/[^0-9]/g, ''));
+  if (!isNaN(numId) && numId > 0) {
+    updateBookingStatusBackend(numId, 'CONFIRMADO').catch(() => {});
+  }
 
   return true;
 }
@@ -887,6 +912,11 @@ export function rejectServiceBooking(
     actionRequired: penalty > 0,
     serviceId: bookingId,
   });
+
+  const numId = Number(bookingId.replace(/[^0-9]/g, ''));
+  if (!isNaN(numId) && numId > 0) {
+    updateBookingStatusBackend(numId, 'RECHAZADO', rejectionData.reason, rejectionData.explanation).catch(() => {});
+  }
 
   return true;
 }
