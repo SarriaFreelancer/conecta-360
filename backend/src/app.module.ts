@@ -11,11 +11,13 @@ import { BookingsModule } from './bookings/bookings.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { AuthModule } from './auth/auth.module';
+import { SettingsModule } from './settings/settings.module';
 
 @Module({
   imports: [
     PrismaModule,
     AuthModule,
+    SettingsModule,
     UsersModule,
     ProfilesModule,
     RolesModule,

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Settings,
@@ -24,7 +24,8 @@ import {
   ToggleRight
 } from 'lucide-react';
 import AdminSidebar from '@/components/AdminSidebar';
-import { getGlobalSettings, saveGlobalSettings } from '@/lib/system-settings';
+import { getGlobalSettings, saveGlobalSettings, syncGlobalSettingsFromBackend } from '@/lib/system-settings';
+import { updatePlatformSettingsBackend } from '@/lib/admin-data';
 
 export default function AdminSettingsPage() {
   const [globalSettings, setGlobalSettings] = useState(getGlobalSettings());
@@ -70,18 +71,26 @@ export default function AdminSettingsPage() {
 
   const [savedSuccess, setSavedSuccess] = useState(false);
 
-  const menuItems = [
-    { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-    { name: 'Usuarios', href: '/admin/users', icon: Users },
-    { name: 'Categorías', href: '/admin/categories', icon: Layers },
-    { name: 'Servicios', href: '/admin/services', icon: Wrench },
-    { name: 'Roles', href: '/admin/roles', icon: ShieldAlert },
-    { name: 'Verificaciones', href: '/admin/verifications', icon: Award },
-    { name: 'Suscripciones', href: '/admin/subscriptions', icon: CreditCard },
-    { name: 'Configuración', href: '/admin/settings', icon: Settings, active: true },
-  ];
+  useEffect(() => {
+    syncGlobalSettingsFromBackend().then((settings) => {
+      setGlobalSettings(settings);
+      setGeneralConfig((prev) => ({
+        ...prev,
+        platformName: settings.platformName || prev.platformName,
+        country: settings.country || prev.country,
+        currency: settings.currency || prev.currency,
+      }));
+      setFinancialRules((prev) => ({
+        ...prev,
+        platformCommission: String(settings.platformCommission ?? 5.0),
+        minPlatformFee: String(settings.minPlatformFee ?? 2500),
+        minHourlyRate: String(settings.minHourlyRate ?? 25000),
+        cashTransferDebtEnabled: settings.cashTransferDebtEnabled ?? true,
+      }));
+    });
+  }, []);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     const updated = saveGlobalSettings({
       platformName: generalConfig.platformName,
@@ -94,6 +103,28 @@ export default function AdminSettingsPage() {
     });
     setGlobalSettings(updated);
     setSavedSuccess(true);
+
+    try {
+      await updatePlatformSettingsBackend({
+        platformName: generalConfig.platformName,
+        primarySlogan: generalConfig.primarySlogan,
+        secondarySlogan: generalConfig.secondarySlogan,
+        supportEmail: generalConfig.supportEmail,
+        supportPhone: generalConfig.supportPhone,
+        supportWhatsApp: generalConfig.supportPhone,
+        country: generalConfig.country,
+        currency: generalConfig.currency,
+        platformCommission: parseFloat(financialRules.platformCommission) || 5.0,
+        minPlatformFee: parseFloat(financialRules.minPlatformFee) || 2500,
+        minHourlyRate: parseFloat(financialRules.minHourlyRate) || 25000,
+        cashTransferDebtEnabled: financialRules.cashTransferDebtEnabled,
+        requireIdentityVerification: securityRules.requireIdentityVerification,
+        requirePoliceRecord: securityRules.requirePoliceRecord,
+      });
+    } catch (err) {
+      console.warn('Error guardando en MySQL:', err);
+    }
+
     setTimeout(() => setSavedSuccess(false), 4000);
   };
 

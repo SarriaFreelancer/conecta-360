@@ -353,3 +353,29 @@ enum DocumentStatus {
   APROBADO
   RECHAZADO
 }
+
+model SystemSetting {
+  id                          Int      @id @default(autoincrement())
+  platformName                String   @default("CONECTA 360") @db.VarChar(100)
+  primarySlogan               String   @default("Conecta lo que necesitas con quien puede hacerlo.") @db.VarChar(200)
+  secondarySlogan             String   @default("Necesitas. Encuentras. Contratas.") @db.VarChar(200)
+  country                     String   @default("Colombia") @db.VarChar(50)
+  currency                    String   @default("COP ($)") @db.VarChar(20)
+  defaultCity                 String   @default("Cali") @db.VarChar(100)
+  defaultDepartment           String   @default("Valle del Cauca") @db.VarChar(100)
+  supportEmail                String   @default("contacto@conecta360.co") @db.VarChar(100)
+  supportPhone                String   @default("+57 315 789 4521") @db.VarChar(30)
+  supportWhatsApp             String   @default("+57 315 789 4521") @db.VarChar(30)
+  platformCommission          Float    @default(5.0)
+  minPlatformFee              Decimal  @default(2500) @db.Decimal(10, 2)
+  minHourlyRate               Decimal  @default(25000) @db.Decimal(10, 2)
+  freePlanMaxServices         Int      @default(1)
+  maxActivitiesPerService     Int      @default(10)
+  requireIdentityVerification Boolean  @default(true)
+  requirePoliceRecord         Boolean  @default(true)
+  cashTransferDebtEnabled     Boolean  @default(true)
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+
+  @@map("system_settings")
+}

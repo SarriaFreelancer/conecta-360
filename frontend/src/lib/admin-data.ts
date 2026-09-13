@@ -908,3 +908,33 @@ export async function payPlatformDebtBackend(bookingId: number) {
   return null;
 }
 
+// ==========================================
+// 11. CONFIGURACIÓN GLOBAL DEL SISTEMA (Settings)
+// ==========================================
+export async function fetchPlatformSettingsBackend(): Promise<any | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/settings`, {
+      signal: AbortSignal.timeout(3500),
+    });
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('[Conecta360 API] Error consultando configuraciones en backend:', err);
+  }
+  return null;
+}
+
+export async function updatePlatformSettingsBackend(payload: any): Promise<any | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/settings`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(4000),
+    });
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('[Conecta360 API] Error actualizando configuraciones en backend:', err);
+  }
+  return null;
+}
+
