@@ -79,6 +79,9 @@ export interface AdminRole {
   name: string;
   description: string;
   createdAt: string;
+  _count?: {
+    users: number;
+  };
 }
 
 // 8 Categorías Oficiales (Prisma Seed & Maqueta)
@@ -557,6 +560,21 @@ export async function getAdminRoles(): Promise<AdminRole[]> {
     console.warn(`[Conecta360 API] Backend en ${API_BASE_URL}/roles no disponible. Usando roles iniciales.`);
   }
   return INITIAL_ROLES;
+}
+
+export async function updateAdminRole(id: number, description: string): Promise<AdminRole | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/roles/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ description }),
+      signal: AbortSignal.timeout(4000),
+    });
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('[Conecta360 API] Error actualizando rol en backend:', err);
+  }
+  return null;
 }
 
 // ==========================================

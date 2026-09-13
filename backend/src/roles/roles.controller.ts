@@ -1,5 +1,13 @@
-import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Param,
+  Body,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { RolesService } from './roles.service';
+import { UpdateRoleDto } from './dto/role.dto';
 
 @Controller('roles')
 export class RolesController {
@@ -13,5 +21,13 @@ export class RolesController {
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.rolesService.findOne(id);
+  }
+
+  @Patch(':id')
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateRoleDto,
+  ) {
+    return this.rolesService.update(id, dto);
   }
 }
