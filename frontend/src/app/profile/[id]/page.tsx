@@ -208,12 +208,30 @@ function ProfileContent() {
   const reviewsCount = user.providerProfile?.totalReviews || 34;
 
   // Garantizar que el cliente siempre pueda ver las 10 actividades del profesional
-  const titleForActivities = user.providerProfile?.title || user.profile?.profession || '';
-  const defaultTen = getDefaultActivities(titleForActivities);
+  const serviceName = user.providerProfile?.providerServices?.[0]?.service?.name || '';
+  const categoryName = user.providerProfile?.providerServices?.[0]?.service?.category?.name || '';
+  const titleForActivities =
+    user.providerProfile?.title ||
+    user.profile?.profession ||
+    serviceName ||
+    categoryName ||
+    '';
+
+  const defaultTen = getDefaultActivities(titleForActivities, Number(user.id || id));
   const userActivities = user.providerProfile?.activities || [];
   const combinedActivities = Array.from(new Set([...userActivities, ...defaultTen]));
   const activities = (combinedActivities.length >= 10 ? combinedActivities : defaultTen).slice(0, 10);
   const featuredActivities = (user.providerProfile as any)?.featuredActivities || activities.slice(0, 4);
+
+  // Configuración y formateo seguro de WhatsApp
+  const rawPhone = user.profile?.whatsappNumber || user.phone || '3157894521';
+  const cleanPhone = rawPhone.replace(/[^0-9]/g, '');
+  const finalPhone = cleanPhone.startsWith('57') ? cleanPhone : (cleanPhone.length === 10 ? `57${cleanPhone}` : cleanPhone);
+  const whatsappMessage = encodeURIComponent(
+    `Hola ${user.firstName}, vi tu perfil profesional en Conecta 360 y me gustaría cotizar tus servicios de ${titleForActivities || 'Servicios Técnicos'} en Cali.`
+  );
+  const whatsappUrl = `https://wa.me/${finalPhone}?text=${whatsappMessage}`;
+  const isWhatsAppEnabled = user.profile?.showWhatsApp !== false;
 
   const experienceYears = user.providerProfile?.experienceYears || 6;
   const coverageZones = user.providerProfile?.coverageZones || 'Cali (Norte, Sur, Oeste, Centro), Palmira y Jamundí';
@@ -278,16 +296,16 @@ function ProfileContent() {
                 </div>
               </div>
 
-              {/* Botón de Contratación y Estado de Verificación */}
-              <div className="flex flex-wrap items-center gap-3 pt-2 sm:pt-0">
+              {/* Botón de Contratación y Estado de Verificación Reorganizados */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2 sm:pt-0">
                 {isVerified ? (
-                  <div className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs shadow-xs">
+                  <div className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs shadow-xs shrink-0 self-start sm:self-auto">
                     <ShieldCheck className="w-4 h-4 text-emerald-600" />
                     <span>Verificado Oficial Conecta 360</span>
                   </div>
                 ) : (
                   <div
-                    className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full bg-amber-100 text-amber-900 font-bold text-xs shadow-xs"
+                    className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-full bg-amber-100 text-amber-900 font-bold text-xs shadow-xs shrink-0 self-start sm:self-auto"
                     title="Cuenta en proceso de verificación por la administración"
                   >
                     <Clock className="w-4 h-4 text-amber-600" />
@@ -295,24 +313,29 @@ function ProfileContent() {
                   </div>
                 )}
 
-                {user.profile?.showWhatsApp && (
+                {/* Botón de WhatsApp Reorganizado y Destacado */}
+                {isWhatsAppEnabled && (
                   <a
-                    href={`https://wa.me/${(user.profile?.whatsappNumber || user.phone || '573151234567').replace(/[^0-9]/g, '')}?text=Hola%20${encodeURIComponent(user.firstName)},%20te%20contacto%20desde%20Conecta%20360%20para%20solicitar%20tus%20servicios%20en%20Cali.`}
+                    href={whatsappUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-black text-sm shadow-md hover:shadow-lg transition-all flex items-center space-x-2 cursor-pointer"
+                    className="inline-flex items-center justify-center space-x-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 active:scale-[0.98] text-white font-black text-sm shadow-md hover:shadow-emerald-600/30 transition-all cursor-pointer group"
+                    title={`Chatear por WhatsApp con ${user.firstName}`}
                   >
-                    <MessageCircle className="w-4 h-4" />
-                    <span>WhatsApp</span>
+                    <div className="relative">
+                      <MessageCircle className="w-4 h-4" />
+                      <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
+                    </div>
+                    <span>WhatsApp Directo</span>
                   </a>
                 )}
 
                 <button
                   onClick={handleOpenBooking}
-                  className="px-6 py-3 rounded-2xl bg-gradient-to-r from-[#0056d2] to-blue-600 hover:from-[#0046a8] hover:to-blue-700 text-white font-black text-sm shadow-md hover:shadow-lg transition-all flex items-center space-x-2 cursor-pointer group"
+                  className="inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-[#0056d2] to-blue-600 hover:from-[#0046a8] hover:to-blue-700 active:scale-[0.98] text-white font-black text-sm shadow-md hover:shadow-blue-600/30 transition-all cursor-pointer group"
                 >
                   <Send className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                  <span>Solicitar / Contratar Servicio</span>
+                  <span>Solicitar / Contratar</span>
                 </button>
               </div>
             </div>
@@ -356,14 +379,53 @@ function ProfileContent() {
               {/* Left Column: Info de la Persona y Contacto (Span 1) */}
               <div className="space-y-6">
                 {/* Información Personal y Contacto */}
+                {/* Información Personal y Contacto Reorganizada */}
                 <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs space-y-4">
                   <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center space-x-2">
                     <User className="w-4 h-4 text-[#0056d2]" />
-                    <span>Datos de Contacto</span>
+                    <span>Contacto Directo</span>
                   </h3>
 
                   <div className="space-y-3.5 text-xs text-slate-700">
-                    <div className="flex items-start space-x-3">
+                    {/* Caja destacada de WhatsApp y Teléfono */}
+                    <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-50 to-green-50/50 border border-emerald-200/80 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-1.5">
+                          <Phone className="w-4 h-4 text-emerald-600" />
+                          <span className="text-[10.5px] font-extrabold text-emerald-900 uppercase tracking-wider">
+                            Teléfono / WhatsApp
+                          </span>
+                        </div>
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-200/70 text-emerald-900 text-[9.5px] font-black uppercase tracking-tight">
+                          Disponible
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-baseline space-x-2">
+                        <span className="text-base font-black text-slate-900 tracking-tight">
+                          {user.phone || user.profile?.whatsappNumber || '+57 315 789 4521'}
+                        </span>
+                        <span className="text-[11px] text-slate-500 font-medium">Colombia</span>
+                      </div>
+
+                      {isWhatsAppEnabled ? (
+                        <a
+                          href={whatsappUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 active:scale-[0.98] text-white font-bold text-xs flex items-center justify-center space-x-2 shadow-sm transition-all cursor-pointer"
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                          <span>Chatear por WhatsApp</span>
+                        </a>
+                      ) : (
+                        <p className="text-[10.5px] text-slate-500 italic text-center">
+                          El profesional prefiere recibir solicitudes a través de la plataforma.
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex items-start space-x-3 pt-1">
                       <Mail className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                       <div>
                         <span className="text-[10px] text-slate-400 block font-semibold">Correo Electrónico</span>
@@ -372,40 +434,11 @@ function ProfileContent() {
                     </div>
 
                     <div className="flex items-start space-x-3">
-                      <Phone className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                      <MapPin className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-semibold">Teléfono / WhatsApp</span>
-                        <span className="font-bold">{user.phone || '+57 315 123 4567'}</span>
+                        <span className="text-[10px] text-slate-400 block font-semibold">Ubicación y Sede</span>
+                        <span className="font-bold">{locationCity}, {locationDept} (Colombia)</span>
                       </div>
-                    </div>
-
-                    <div className="flex flex-col space-y-3">
-                      <div className="flex items-start space-x-3">
-                        <MapPin className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-                        <div>
-                          <span className="text-[10px] text-slate-400 block font-semibold">Ubicación y Sede</span>
-                          <span className="font-bold">{locationCity}, {locationDept} (Colombia)</span>
-                        </div>
-                      </div>
-
-                      {/* Botón directo de WhatsApp según configuración del profesional (Interruptor ON/OFF) */}
-                      {user.profile?.showWhatsApp ? (
-                        <div className="pt-2">
-                          <a
-                            href={`https://wa.me/${(user.profile?.whatsappNumber || user.phone || '573151234567').replace(/[^0-9]/g, '')}?text=Hola%20${encodeURIComponent(user.firstName)},%20te%20contacto%20desde%20Conecta%20360%20para%20solicitar%20tus%20servicios%20en%20Cali.`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold text-xs flex items-center justify-center space-x-2 shadow-sm transition-all"
-                          >
-                            <MessageCircle className="w-4 h-4" />
-                            <span>Contactar por WhatsApp</span>
-                          </a>
-                        </div>
-                      ) : (
-                        <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-500 italic text-center">
-                          El profesional tiene desactivado el contacto directo por WhatsApp. Utiliza el botón oficial "Solicitar Servicio".
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -779,76 +812,182 @@ function ProfileContent() {
   );
 }
 
-// Generador de hasta 10 actividades según el servicio
-function getDefaultActivities(title: string): string[] {
-  const t = title.toLowerCase();
-  if (t.includes('cerraj')) {
+// Generador de las 10 actividades según el servicio o especialidad
+function getDefaultActivities(title: string, id?: number): string[] {
+  const t = (title || '').toLowerCase();
+
+  // 1. Cerrajería
+  if (t.includes('cerraj') || t.includes('llav') || t.includes('chapa') || t.includes('cerradur') || id === 1) {
     return [
-      'Apertura técnica de cerraduras sin daño a la puerta',
-      'Cambio y suministro de guardas de alta seguridad',
-      'Instalación de cerraduras digitales, biométricas y embutidas',
-      'Duplicado de llaves de seguridad multipunto',
-      'Reparación de cerrojos y chapas residenciales o comerciales',
-      'Mantenimiento y lubricación de cilindros y pasadores',
-      'Ajuste de marcos, bisagras y holguras de puertas',
-      'Instalación de cantoneras y escudos antibumping',
-      'Asistencia técnica de urgencia en Cali',
-      'Garantía escrita de instalación y repuestos',
+      'Apertura técnica de cerraduras residenciales y comerciales sin daño a la puerta',
+      'Cambio, suministro e igualamiento de guardas y bombines de seguridad',
+      'Instalación de cerraduras digitales, biométricas e invisibles con clave',
+      'Duplicado de llaves de alta seguridad, computarizadas y multipunto',
+      'Reparación y mantenimiento de cerrojos, candados y chapas embutidas',
+      'Mantenimiento y lubricación profunda de cilindros y pasadores de seguridad',
+      'Ajuste de marcos descolgados, bisagras pesadas y holguras de puertas',
+      'Instalación de cantoneras blindadas y escudos protectores antibumping',
+      'Atención y asistencia técnica de urgencia 24/7 en Cali y área metropolitana',
+      'Diagnóstico y garantía certificada sobre instalación, ajustes y materiales'
     ];
   }
-  if (t.includes('electr')) {
+
+  // 2. Electricidad
+  if (t.includes('electr') || t.includes('cable') || t.includes('iluminac') || t.includes('breaker') || id === 2 || id === 999) {
     return [
-      'Diagnóstico y detección de cortocircuitos y fugas eléctricas',
-      'Instalación y reposición de cableado residencial e industrial',
-      'Montaje de tableros de distribución y breakers termomagnéticos',
-      'Instalación de iluminación LED, lámparas y reflectores',
-      'Conexión y balanceo de cargas en sistemas bifásicos y trifásicos',
-      'Instalación de tomas con protección polo a tierra y GFCI',
-      'Mantenimiento preventivo de redes eléctricas locativas',
-      'Medición de aislamiento y puesta a tierra',
-      'Certificación RETIE y cumplimiento de norma técnica colombiana',
-      'Asesoría en ahorro y eficiencia de energía',
+      'Diagnóstico y detección de cortocircuitos y fugas de corriente con instrumentos',
+      'Instalación y recableado general residencial, comercial e industrial',
+      'Montaje y balanceo de tableros eléctricos y breakers termomagnéticos',
+      'Instalación de iluminación LED, paneles decorativos, reflectores y dimmers',
+      'Conexión y balanceo de acometidas para líneas monofásicas, bifásicas y trifásicas',
+      'Instalación de tomas con polo a tierra y circuitos protegidos GFCI para zonas húmedas',
+      'Mantenimiento preventivo de redes eléctricas y tableros locativos',
+      'Instalación y medición de varillas de puesta a tierra con telurómetro',
+      'Asesoría técnica en eficiencia energética y adecuación a norma RETIE en Colombia',
+      'Adecuación de puntos de fuerza independientes para aires acondicionados y hornos'
     ];
   }
-  if (t.includes('plom') || t.includes('tuber')) {
+
+  // 3. Tecnología y Redes
+  if (t.includes('tecno') || t.includes('red') || t.includes('comput') || t.includes('sistema') || t.includes('wifi') || t.includes('cctv') || id === 3) {
     return [
-      'Destape mecánico de cañerías, sanitarios y sifones',
-      'Reparación y reemplazo de tuberías de PVC, CPVC y cobre',
-      'Detección técnica de fugas no visibles e infiltraciones',
-      'Instalación de griferías, duchas y sanitarios ahorradores',
-      'Mantenimiento e instalación de motobombas e hidróflores',
-      'Limpieza y desinfección de tanques de agua potable',
-      'Instalación y conexión de calentadores de paso y acumulación',
-      'Adecuación de puntos de agua para lavadoras y lavavajillas',
-      'Pruebas hidrostáticas de presión en la red',
-      'Garantía de estanqueidad y hermeticidad',
+      'Configuración de redes Wi-Fi empresariales y repetidores Mesh de alta cobertura',
+      'Mantenimiento preventivo, formateo y repotenciación de computadores y servidores',
+      'Instalación y certificación de cableado estructurado Cat 6 y 6A',
+      'Configuración y seguridad de routers, switches administrables y cortafuegos',
+      'Eliminación de virus, malware y optimización de rendimiento en Windows y Mac',
+      'Implementación de copias de seguridad automáticas y sincronización en la nube',
+      'Instalación y configuración de cámaras de seguridad IP y circuitos CCTV',
+      'Soporte técnico integral a impresoras de red y periféricos corporativos',
+      'Asistencia remota de urgencia y solución de incidentes en sitio en Cali',
+      'Asesoría en compras de hardware, licenciamiento de software y ciberseguridad'
     ];
   }
-  if (t.includes('tecno') || t.includes('red')) {
+
+  // 4. Plomería y Fontanería
+  if (t.includes('plom') || t.includes('tuber') || t.includes('fontan') || t.includes('sifon') || t.includes('grif') || t.includes('destape') || id === 4) {
     return [
-      'Configuración de redes Wi-Fi empresariales y repetidores Mesh',
-      'Mantenimiento preventivo y correctivo de computadores y servidores',
-      'Instalación y certificación de cableado estructurado Cat 6/6A',
-      'Configuración de routers, switches administrables y cortafuegos',
-      'Eliminación de malware, virus y optimización del sistema operativo',
-      'Configuración de copias de seguridad automáticas en la nube',
-      'Instalación de sistemas de cámaras de seguridad IP y CCTV',
-      'Soporte técnico remoto y presencial en Cali',
-      'Instalación de software legal y licencias corporativas',
-      'Asesoría técnica en equipamiento informático',
+      'Detección técnica de fugas no visibles e infiltraciones de agua en muros y pisos',
+      'Destape mecánico y con sonda eléctrica de cañerías, sanitarios y sifones',
+      'Reparación y reemplazo de tuberías de presión y sanitarias en PVC, CPVC y cobre',
+      'Instalación y cambio de griferías monomando, duchas y sanitarios ahorradores',
+      'Mantenimiento e instalación de motobombas, presurizadores e hidróflores',
+      'Lavado, desinfección y mantenimiento sanitario de tanques de agua potable',
+      'Instalación y mantenimiento de calentadores de paso a gas y eléctricos',
+      'Adecuación de puntos de suministro de agua potable y desagüe para lavadoras',
+      'Pruebas hidrostáticas de presión y hermeticidad de la red hidráulica',
+      'Garantía de estanqueidad y asesoría técnica para prevención de humedades'
     ];
   }
+
+  // 5. Mantenimiento y Reparaciones Locativas
+  if (t.includes('manten') || t.includes('locativ') || t.includes('reparac') || t.includes('drywall') || t.includes('obra') || id === 5) {
+    return [
+      'Reparación de grietas, fisuras y desprendimientos en muros y techos',
+      'Resane, estuco profesional y nivelación de superficies de mampostería',
+      'Instalación y reparación de cielo raso en drywall, PVC y panel yeso',
+      'Mantenimiento, desmonte y ajuste de puertas, marcos y ventanas corredizas',
+      'Instalación y reparación de enchapes cerámicos, porcelanatos y guardescobas',
+      'Sellado e impermeabilización de filtraciones en cubiertas, tejas y terrazas',
+      'Armado, anclaje y montaje de muebles modulares, repisas y estanterías',
+      'Mantenimiento correctivo de herrajes, bisagras y cerraduras en carpintería',
+      'Inspección locativa detallada para entrega o recepción de inmuebles en arriendo',
+      'Remodelaciones y adecuaciones funcionales en viviendas y locales comerciales'
+    ];
+  }
+
+  // 6. Diseño Gráfico y Publicidad Digital
+  if (t.includes('diseñ') || t.includes('grafic') || t.includes('publicid') || t.includes('logo') || t.includes('marca') || id === 6) {
+    return [
+      'Diseño de identidad corporativa, logotipos y manual de estilo de marca',
+      'Creación de piezas publicitarias de alto impacto para Instagram, Facebook y TikTok',
+      'Diseño de material impreso: volantes, afiches, brochures, carpetas y tarjetas',
+      'Edición y retoque fotográfico profesional de productos y retratos comerciales',
+      'Diseño de banners y creatividades para campañas de pauta digital en Google y Meta',
+      'Diseño de etiquetas, empaques (packaging) y material publicitario POP',
+      'Creación de infografías visuales, catálogos en PDF y presentaciones corporativas',
+      'Preparación de artes finales y archivos vectoriales aptos para imprenta gran formato',
+      'Asesoría estratégica en coherencia visual y comunicación de marca',
+      'Entrega de recursos en formatos editables (AI, PSD) y versiones web optimizadas'
+    ];
+  }
+
+  // 7. Pintura y Acabados
+  if (t.includes('pintur') || t.includes('acabad') || t.includes('estuco') || t.includes('muro') || t.includes('fachada') || id === 7) {
+    return [
+      'Aplicación de pintura vinilo lavable tipo 1 en muros interiores y cielos',
+      'Pintura de exteriores y fachadas con recubrimientos impermeabilizantes elastoméricos',
+      'Estuco veneciano, texturas rústicas y acabados arquitectónicos de alta gama',
+      'Pintura en esmalte sintético y anticorrosivo para rejas, portones y ventanas metálicas',
+      'Lijado, barnizado y restauración de puertas y elementos de carpintería en madera',
+      'Preparación integral de superficies: raspado de pintura soplada, masillado y lijado',
+      'Impermeabilización preventiva de muros con humedad y sellado de microfisuras',
+      'Protección rigurosa de pisos, zócalos, muebles y marcos con plástico y cinta',
+      'Asesoría en combinación de color y cartas cromáticas para iluminar espacios',
+      'Limpieza completa y entrega de áreas impecables listas para habitar'
+    ];
+  }
+
+  // 8. Tutorías Escolares e Idiomas
+  if (t.includes('tutor') || t.includes('clase') || t.includes('idioma') || t.includes('ingles') || t.includes('profesor') || t.includes('educac') || id === 8) {
+    return [
+      'Nivelación y refuerzo académico en Matemáticas, Álgebra, Trigonometría y Cálculo',
+      'Clases particulares de Inglés conversacional, comprensión auditiva y gramática',
+      'Preparación intensiva para pruebas de estado Saber 11 (Icfes) y admisión universitaria',
+      'Refuerzo escolar guiado en Física, Química y Ciencias Naturales',
+      'Tutoría en lectoescritura, comprensión de textos y redacción de ensayos académicos',
+      'Técnicas de estudio personalizadas, manejo del tiempo y preparación para exámenes',
+      'Acompañamiento en tareas dirigidas y proyectos escolares para primaria y secundaria',
+      'Entrenamiento para certificaciones internacionales de idioma (TOEFL, IELTS, Cambridge)',
+      'Metodología lúdica e interactiva orientada a la motivación y confianza del estudiante',
+      'Reportes periódicos de avance y retroalimentación pedagógica para acudientes'
+    ];
+  }
+
+  // 9. Enfermería y Cuidado de Adulto Mayor
+  if (t.includes('enferm') || t.includes('cuidado') || t.includes('adulto') || t.includes('salud') || t.includes('terapia') || id === 9) {
+    return [
+      'Acompañamiento asistencial diario y cuidado compasivo en el domicilio del paciente',
+      'Administración puntual de medicamentos según estricta formulación médica',
+      'Control diario de signos vitales: presión arterial, frecuencia cardíaca y glucometría',
+      'Curación técnica de heridas quirúrgicas, úlceras por presión y retiro de puntos',
+      'Asistencia integral en higiene personal: baño en cama o ducha y cambio de pañal',
+      'Movilización segura, prevención de caídas y cambios posturales programados',
+      'Acompañamiento a citas médicas, terapias de rehabilitación y trámites de salud',
+      'Apoyo en la alimentación balanceada según dietas especiales y requerimientos nutricionales',
+      'Estimulación cognitiva, ejercicios de memoria y actividades recreativas en casa',
+      'Registro diario de evolución y comunicación constante con familiares y médicos'
+    ];
+  }
+
+  // 10. Limpieza Profunda y Aseo Locativo
+  if (t.includes('limpieza') || t.includes('aseo') || t.includes('desinfec') || t.includes('hogar') || t.includes('lavado') || id === 10) {
+    return [
+      'Desinfección profunda y desmanchado de baños, sanitarios, azulejos y griferías',
+      'Lavado intensivo y desengrase de cocinas integrales, estufas, hornos y campanas',
+      'Aspirado, desmanchado y desinfección de alfombras, colchones y sofás tapizados',
+      'Limpieza técnica de ventanales, espejos y cancelería de vidrio sin rayas ni marcas',
+      'Barrido, trapeado, desmanchado y abrillantado de pisos según su material',
+      'Limpieza exhaustiva post-obra y remoción de restos de pintura y polvo de construcción',
+      'Aseo integral para entregas o mudanzas de apartamentos y casas en arriendo',
+      'Desinfección ambiental con productos de alta eficiencia y fragancias agradables',
+      'Lavado y planchado ordenado de prendas delicadas, lencería y mantelería',
+      'Organización integral de clósets, vestidores, alacenas y áreas de despensa'
+    ];
+  }
+
+  // Fallback por defecto con 10 actividades técnicas completas
   return [
-    'Evaluación y diagnóstico técnico en sitio',
-    'Cotización detallada con desglose de mano de obra y repuestos en COP',
-    'Ejecución del servicio con herramientas especializadas',
-    'Reemplazo de partes defectuosas por insumos de primera calidad',
-    'Pruebas rigurosas de funcionamiento tras la intervención',
-    'Limpieza y orden del área de trabajo al finalizar',
-    'Capacitación al usuario sobre buenas prácticas de uso',
-    'Seguimiento posterior al servicio para verificar satisfacción',
-    'Emisión de reporte técnico del trabajo ejecutado',
-    'Garantía de servicio avalada por Conecta 360',
+    'Evaluación técnica inicial y diagnóstico detallado en el sitio del servicio',
+    'Elaboración de cotización clara y transparente con desglose de materiales y mano de obra',
+    'Ejecución del servicio con herramientas profesionales y normas de bioseguridad',
+    'Reemplazo de componentes defectuosos con repuestos certificados y de primera línea',
+    'Pruebas operativas rigurosas de funcionamiento tras la intervención técnica',
+    'Limpieza, orden y recolección de residuos en el área de trabajo intervenida',
+    'Capacitación al cliente sobre uso adecuado y cuidados preventivos del servicio',
+    'Emisión de reporte técnico con recomendaciones de mantenimiento futuro',
+    'Seguimiento posterior al servicio para asegurar la total satisfacción del usuario',
+    'Garantía por escrito de cumplimiento y respaldo oficial a través de Conecta 360'
   ];
 }
 
@@ -896,21 +1035,27 @@ function enrichUserData(data: any, id: number): UserData {
     }
   } catch (e) {}
 
+  const srvName = data.providerProfile?.providerServices?.[0]?.service?.name || '';
+  const resolvedTitle = data.providerProfile?.title || fallback.providerProfile?.title || srvName || 'Servicio Profesional';
+
   return {
     ...data,
     profile: {
       ...fallback.profile,
       ...data.profile,
+      showWhatsApp: data.profile?.showWhatsApp ?? fallback.profile?.showWhatsApp ?? true,
+      whatsappNumber: data.profile?.whatsappNumber || data.phone || fallback.profile?.whatsappNumber || fallback.phone,
     },
     providerProfile: {
       ...fallback.providerProfile,
       ...data.providerProfile,
-      hourlyRate: data.providerProfile?.hourlyRate || fallback.providerProfile?.hourlyRate,
-      isVerified: Boolean(data.providerProfile?.isVerified),
-      activities: providerActivities || fallback.providerProfile?.activities,
+      title: resolvedTitle,
+      hourlyRate: data.providerProfile?.hourlyRate || fallback.providerProfile?.hourlyRate || 45000,
+      isVerified: data.providerProfile?.isVerified !== undefined ? Boolean(data.providerProfile.isVerified) : Boolean(fallback.providerProfile?.isVerified),
+      activities: providerActivities || fallback.providerProfile?.activities || getDefaultActivities(resolvedTitle, id),
       featuredActivities: featuredActivities,
-      coverageZones: fallback.providerProfile?.coverageZones,
-      experienceYears: fallback.providerProfile?.experienceYears,
+      coverageZones: fallback.providerProfile?.coverageZones || 'Cali (Norte, Sur, Oeste, Centro), Palmira y Jamundí',
+      experienceYears: fallback.providerProfile?.experienceYears || 6,
     } as any,
   };
 }
@@ -928,6 +1073,8 @@ function getDetailedProviderData(id: number): UserData {
         profession: 'Técnico Electricista e Instalaciones',
         bio: 'Especialista en instalaciones eléctricas residenciales, cuadros de mando y mantenimiento 24/7 en Cali y área metropolitana.',
         profilePhoto: '/images/service-electricista.jpg',
+        showWhatsApp: true,
+        whatsappNumber: '+57 315 789 4521',
       },
       providerProfile: {
         id: 999,
@@ -938,7 +1085,7 @@ function getDetailedProviderData(id: number): UserData {
         totalReviews: 48,
         experienceYears: 8,
         coverageZones: 'Cali (Norte, Sur, Oeste), Jamundí, Yumbo',
-        activities: getDefaultActivities('electricidad'),
+        activities: getDefaultActivities('electricidad', 999),
         bio: 'Especialista en instalaciones eléctricas residenciales, cuadros de mando y mantenimiento 24/7 en Cali y área metropolitana.',
       },
     },
@@ -953,6 +1100,8 @@ function getDetailedProviderData(id: number): UserData {
         profession: 'Cerrajero Maestro Certificado',
         bio: 'Cerrajero con más de 10 años de experiencia en Cali. Especialista en apertura de cerraduras residenciales, comerciales y vehículos sin daño.',
         profilePhoto: null,
+        showWhatsApp: true,
+        whatsappNumber: '+57 315 123 4567',
       },
       providerProfile: {
         id: 1,
@@ -963,7 +1112,7 @@ function getDetailedProviderData(id: number): UserData {
         totalReviews: 124,
         experienceYears: 10,
         coverageZones: 'Cali (Norte, Sur, Oeste, Centro), Jamundí y Yumbo',
-        activities: getDefaultActivities('cerrajeria'),
+        activities: getDefaultActivities('cerrajeria', 1),
         bio: 'Cerrajero con más de 10 años de experiencia en Cali. Especialista en apertura de cerraduras residenciales, comerciales y vehículos sin daño.',
       },
     },
@@ -978,6 +1127,8 @@ function getDetailedProviderData(id: number): UserData {
         profession: 'Técnico Electricista Matriculado Conte',
         bio: 'Especialista en instalaciones eléctricas residenciales e industriales, tableros de control y certificación RETIE en Cali y el Valle.',
         profilePhoto: null,
+        showWhatsApp: true,
+        whatsappNumber: '+57 316 234 5678',
       },
       providerProfile: {
         id: 2,
@@ -988,7 +1139,7 @@ function getDetailedProviderData(id: number): UserData {
         totalReviews: 98,
         experienceYears: 8,
         coverageZones: 'Cali metropolitana, Palmira, Yumbo y Candelaria',
-        activities: getDefaultActivities('electricidad'),
+        activities: getDefaultActivities('electricidad', 2),
         bio: 'Especialista en instalaciones eléctricas residenciales e industriales, tableros de control y certificación RETIE en Cali y el Valle.',
       },
     },
@@ -1003,6 +1154,8 @@ function getDetailedProviderData(id: number): UserData {
         profession: 'Ingeniera de Sistemas y Telecomunicaciones',
         bio: 'Ingeniera especialista en redes, soporte corporativo, mantenimiento de hardware y servidores para pymes y hogares en Cali.',
         profilePhoto: null,
+        showWhatsApp: true,
+        whatsappNumber: '+57 317 345 6789',
       },
       providerProfile: {
         id: 3,
@@ -1013,7 +1166,7 @@ function getDetailedProviderData(id: number): UserData {
         totalReviews: 156,
         experienceYears: 7,
         coverageZones: 'Cali, Jamundí y soporte remoto nacional',
-        activities: getDefaultActivities('tecnologia'),
+        activities: getDefaultActivities('tecnologia', 3),
         bio: 'Ingeniera especialista en redes, soporte corporativo, mantenimiento de hardware y servidores para pymes y hogares en Cali.',
       },
     },
@@ -1028,6 +1181,8 @@ function getDetailedProviderData(id: number): UserData {
         profession: 'Fontanero e Hidráulico Certificado',
         bio: 'Plomero profesional con equipos de detección por ultrasonido y destapes con sonda eléctrica.',
         profilePhoto: null,
+        showWhatsApp: true,
+        whatsappNumber: '+57 318 456 7890',
       },
       providerProfile: {
         id: 4,
@@ -1038,8 +1193,170 @@ function getDetailedProviderData(id: number): UserData {
         totalReviews: 87,
         experienceYears: 12,
         coverageZones: 'Cali Norte, Sur, Oeste y Centro',
-        activities: getDefaultActivities('plomeria'),
+        activities: getDefaultActivities('plomeria', 4),
         bio: 'Plomero profesional con equipos de detección por ultrasonido y destapes con sonda eléctrica.',
+      },
+    },
+    5: {
+      firstName: 'Roberto',
+      lastName: 'Vaca',
+      phone: '+57 319 567 8901',
+      profile: {
+        city: 'Cali',
+        department: 'Valle del Cauca',
+        country: 'Colombia',
+        profession: 'Maestro de Mantenimiento Locativo',
+        bio: 'Especialista en mantenimiento integral locativo, drywall, resanes, carpintería y reparaciones residenciales en Cali.',
+        profilePhoto: null,
+        showWhatsApp: true,
+        whatsappNumber: '+57 319 567 8901',
+      },
+      providerProfile: {
+        id: 5,
+        title: 'Reparaciones y Mantenimiento Locativo',
+        hourlyRate: 38000,
+        isVerified: true,
+        rating: 4.8,
+        totalReviews: 110,
+        experienceYears: 9,
+        coverageZones: 'Cali (Norte, Sur, Oriente, Oeste), Yumbo',
+        activities: getDefaultActivities('mantenimiento', 5),
+        bio: 'Especialista en mantenimiento integral locativo, drywall, resanes, carpintería y reparaciones residenciales en Cali.',
+      },
+    },
+    6: {
+      firstName: 'Diana',
+      lastName: 'Castillo',
+      phone: '+57 310 678 9012',
+      profile: {
+        city: 'Cali',
+        department: 'Valle del Cauca',
+        country: 'Colombia',
+        profession: 'Diseñadora Visual y Publicista Digital',
+        bio: 'Diseñadora profesional enfocada en marcas, branding corporativo, publicidad para redes sociales y piezas de alto impacto.',
+        profilePhoto: null,
+        showWhatsApp: true,
+        whatsappNumber: '+57 310 678 9012',
+      },
+      providerProfile: {
+        id: 6,
+        title: 'Diseño Gráfico y Publicidad Digital',
+        hourlyRate: 42000,
+        isVerified: true,
+        rating: 4.9,
+        totalReviews: 64,
+        experienceYears: 6,
+        coverageZones: 'Cali, Palmira y modalidad 100% remota',
+        activities: getDefaultActivities('diseno', 6),
+        bio: 'Diseñadora profesional enfocada en marcas, branding corporativo, publicidad para redes sociales y piezas de alto impacto.',
+      },
+    },
+    7: {
+      firstName: 'Esteban',
+      lastName: 'Ríos',
+      phone: '+57 311 789 0123',
+      profile: {
+        city: 'Cali',
+        department: 'Valle del Cauca',
+        country: 'Colombia',
+        profession: 'Pintor Profesional y Especialista en Acabados',
+        bio: 'Pintura interior y exterior de alta durabilidad, estucos venecianos, preparación de superficies y acabados arquitectónicos en Cali.',
+        profilePhoto: null,
+        showWhatsApp: true,
+        whatsappNumber: '+57 311 789 0123',
+      },
+      providerProfile: {
+        id: 7,
+        title: 'Pintura Interior y Acabados de Muros',
+        hourlyRate: 32000,
+        isVerified: true,
+        rating: 4.7,
+        totalReviews: 92,
+        experienceYears: 11,
+        coverageZones: 'Cali, Jamundí, Candelaria y Palmira',
+        activities: getDefaultActivities('pintura', 7),
+        bio: 'Pintura interior y exterior de alta durabilidad, estucos venecianos, preparación de superficies y acabados arquitectónicos en Cali.',
+      },
+    },
+    8: {
+      firstName: 'Camila',
+      lastName: 'Gómez',
+      phone: '+57 312 890 1234',
+      profile: {
+        city: 'Cali',
+        department: 'Valle del Cauca',
+        country: 'Colombia',
+        profession: 'Licenciada en Pedagogía e Idiomas',
+        bio: 'Tutorías personalizadas en matemáticas, inglés y preparación para exámenes Saber 11 con metodologías pedagógicas adaptadas.',
+        profilePhoto: null,
+        showWhatsApp: true,
+        whatsappNumber: '+57 312 890 1234',
+      },
+      providerProfile: {
+        id: 8,
+        title: 'Tutorías Escolares e Idiomas',
+        hourlyRate: 30000,
+        isVerified: true,
+        rating: 4.9,
+        totalReviews: 76,
+        experienceYears: 5,
+        coverageZones: 'Cali (Presencial) y clases virtuales a todo Colombia',
+        activities: getDefaultActivities('tutorias', 8),
+        bio: 'Tutorías personalizadas en matemáticas, inglés y preparación para exámenes Saber 11 con metodologías pedagógicas adaptadas.',
+      },
+    },
+    9: {
+      firstName: 'Patricia',
+      lastName: 'Méndez',
+      phone: '+57 313 901 2345',
+      profile: {
+        city: 'Cali',
+        department: 'Valle del Cauca',
+        country: 'Colombia',
+        profession: 'Enfermera Profesional y Cuidadora Certificada',
+        bio: 'Atención domiciliaria a pacientes y adultos mayores con calidez humana, administración de medicamentos y cuidados posoperatorios.',
+        profilePhoto: null,
+        showWhatsApp: true,
+        whatsappNumber: '+57 313 901 2345',
+      },
+      providerProfile: {
+        id: 9,
+        title: 'Enfermería y Cuidado de Adulto Mayor',
+        hourlyRate: 40000,
+        isVerified: true,
+        rating: 5.0,
+        totalReviews: 89,
+        experienceYears: 13,
+        coverageZones: 'Cali metropolitana y Jamundí',
+        activities: getDefaultActivities('enfermeria', 9),
+        bio: 'Atención domiciliaria a pacientes y adultos mayores con calidez humana, administración de medicamentos y cuidados posoperatorios.',
+      },
+    },
+    10: {
+      firstName: 'Sandra',
+      lastName: 'Botero',
+      phone: '+57 314 012 3456',
+      profile: {
+        city: 'Cali',
+        department: 'Valle del Cauca',
+        country: 'Colombia',
+        profession: 'Especialista en Aseo y Desinfección Locativa',
+        bio: 'Limpieza profunda residencial, comercial y post-obra con productos biodegradables de alta eficiencia y personal de total confianza.',
+        profilePhoto: null,
+        showWhatsApp: true,
+        whatsappNumber: '+57 314 012 3456',
+      },
+      providerProfile: {
+        id: 10,
+        title: 'Limpieza Profunda y Aseo Locativo',
+        hourlyRate: 28000,
+        isVerified: true,
+        rating: 4.8,
+        totalReviews: 142,
+        experienceYears: 8,
+        coverageZones: 'Cali Norte, Sur, Oeste y Jamundí',
+        activities: getDefaultActivities('limpieza', 10),
+        bio: 'Limpieza profunda residencial, comercial y post-obra con productos biodegradables de alta eficiencia y personal de total confianza.',
       },
     },
   };
@@ -1047,7 +1364,7 @@ function getDetailedProviderData(id: number): UserData {
   const current = providersMap[id] || {
     firstName: 'Profesional',
     lastName: `Especialista #${id}`,
-    phone: '+57 315 000 0000',
+    phone: '+57 315 789 4521',
     profile: {
       city: 'Cali',
       department: 'Valle del Cauca',
@@ -1055,23 +1372,25 @@ function getDetailedProviderData(id: number): UserData {
       profession: 'Especialista en Servicios para el Hogar',
       bio: 'Profesional verificado en Conecta 360 con garantía de calidad y atención técnica personalizada.',
       profilePhoto: null,
+      showWhatsApp: true,
+      whatsappNumber: '+57 315 789 4521',
     },
     providerProfile: {
       id: id,
       title: 'Servicio Técnico Profesional Calificado',
       hourlyRate: 45000,
-      isVerified: id % 2 === 0,
+      isVerified: true,
       rating: 4.9,
       totalReviews: 35,
       experienceYears: 6,
       coverageZones: 'Cali y municipios aledaños del Valle del Cauca',
-      activities: getDefaultActivities('general'),
+      activities: getDefaultActivities('general', id),
       bio: 'Profesional verificado en Conecta 360 con garantía de calidad y atención técnica personalizada.',
     },
   };
 
   let showWhatsApp = true;
-  let whatsappNumber = current.phone || '+57 315 123 4567';
+  let whatsappNumber = current.phone || '+57 315 789 4521';
   try {
     const session = getCurrentUser();
     if (session && String(session.id) === String(id)) {
@@ -1086,7 +1405,7 @@ function getDetailedProviderData(id: number): UserData {
     firstName: current.firstName || 'Profesional',
     lastName: current.lastName || 'Conecta 360',
     email: `${(current.firstName || 'pro').toLowerCase()}@conecta360.co`,
-    phone: current.phone || '+57 315 123 4567',
+    phone: current.phone || '+57 315 789 4521',
     status: 'ACTIVE',
     role: { name: 'PROVIDER', description: 'Proveedor' },
     profile: {
@@ -1094,7 +1413,10 @@ function getDetailedProviderData(id: number): UserData {
       showWhatsApp,
       whatsappNumber,
     } as any,
-    providerProfile: current.providerProfile as any,
+    providerProfile: {
+      ...current.providerProfile,
+      activities: current.providerProfile?.activities || getDefaultActivities(current.providerProfile?.title || '', id),
+    } as any,
   };
 }
 
