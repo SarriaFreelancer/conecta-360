@@ -809,11 +809,11 @@ export default function Home() {
     return (
       <div
         key={`${prov.id}-${idx}`}
-        className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs hover:shadow-lg transition-all flex flex-col justify-between group"
+        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs hover:shadow-lg transition-all flex flex-col justify-between group"
       >
         <div>
           {/* Imagen por defecto del servicio con badge de verificación y favorito */}
-          <div className="relative h-32 sm:h-36 w-full overflow-hidden bg-slate-100">
+          <div className="relative h-32 sm:h-36 w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
             <img
               src={photoUrl}
               alt={`${categoryTitle} - ${fullName}`}
@@ -822,7 +822,7 @@ export default function Home() {
             <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent"></div>
 
             {/* Botón de favorito */}
-            <div className="absolute top-2 left-2 w-6 h-6 rounded-full bg-white/80 backdrop-blur-xs flex items-center justify-center text-slate-600 shadow-xs">
+            <div className="absolute top-2 left-2 w-6 h-6 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xs flex items-center justify-center text-slate-600 dark:text-slate-300 shadow-xs">
               <Heart className="w-3.5 h-3.5 hover:text-red-500 transition-colors" />
             </div>
 
@@ -850,49 +850,49 @@ export default function Home() {
           {/* Contenido con datos reales del usuario */}
           <div className="p-3 sm:p-3.5 space-y-1.5">
             {/* Categoría con icono circular */}
-            <div className="flex items-center space-x-1.5 text-[10px] font-bold text-[#0056d2]">
-              <div className="w-4 h-4 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
-                <CatIcon className="w-2.5 h-2.5 text-[#0056d2]" />
+            <div className="flex items-center space-x-1.5 text-[10px] font-bold text-[#0056d2] dark:text-blue-400">
+              <div className="w-4 h-4 rounded-full bg-blue-50 dark:bg-blue-950/60 flex items-center justify-center shrink-0">
+                <CatIcon className="w-2.5 h-2.5 text-[#0056d2] dark:text-blue-400" />
               </div>
               <span className="truncate">{categoryTitle}</span>
             </div>
 
             {/* Nombre del Proveedor */}
             <div>
-              <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-[#0056d2] transition-colors leading-tight truncate">
+              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white group-hover:text-[#0056d2] dark:group-hover:text-blue-400 transition-colors leading-tight truncate">
                 {fullName}
               </h3>
             </div>
 
             {/* Calificación, estrellas y Ubicación en UNA MISMA FILA */}
-            <div className="flex items-center justify-between text-xs text-slate-500 gap-1.5 pt-0.5">
+            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 gap-1.5 pt-0.5">
               <div className="flex items-center space-x-1 shrink-0">
                 <div className="flex items-center text-amber-500 font-bold">
                   <Star className="w-3.5 h-3.5 fill-amber-400 mr-0.5" />
                   <span>{prov.rating > 0 ? prov.rating.toFixed(1) : '5.0'}</span>
                 </div>
-                <span className="text-slate-400 text-[10.5px]">
+                <span className="text-slate-400 dark:text-slate-400 text-[10.5px]">
                   ({prov.totalReviews || 12})
                 </span>
               </div>
-              <div className="flex items-center text-slate-500 text-[10.5px] font-medium truncate shrink min-w-0">
+              <div className="flex items-center text-slate-500 dark:text-slate-400 text-[10.5px] font-medium truncate shrink min-w-0">
                 <MapPin className="w-3 h-3 text-rose-500 mr-0.5 shrink-0" />
                 <span className="truncate">{locationStr}</span>
               </div>
             </div>
 
             {/* 4 Actividades Principales de la Persona en la Tarjeta Exterior */}
-            <div className="pt-1.5 border-t border-slate-100 space-y-1">
-              <span className="text-[9.5px] font-bold text-slate-400 block uppercase tracking-wider">
+            <div className="pt-1.5 border-t border-slate-100 dark:border-slate-800 space-y-1">
+              <span className="text-[9.5px] font-bold text-slate-400 dark:text-slate-400 block uppercase tracking-wider">
                 Actividades Principales ({activitiesToShow.length}):
               </span>
               <div className="flex flex-wrap gap-1">
                 {activitiesToShow.map((act, i) => (
                   <span
                     key={i}
-                    className="px-2 py-0.5 rounded-md bg-slate-50 text-slate-700 text-[9.5px] font-semibold border border-slate-200/70 flex items-center space-x-1"
+                    className="px-2 py-0.5 rounded-md bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 text-[9.5px] font-semibold border border-slate-200/70 dark:border-slate-700 flex items-center space-x-1"
                   >
-                    <Tag className="w-2.5 h-2.5 text-[#0056d2] shrink-0" />
+                    <Tag className="w-2.5 h-2.5 text-[#0056d2] dark:text-blue-400 shrink-0" />
                     <span className="truncate max-w-[130px]">{act}</span>
                   </span>
                 ))}
@@ -902,17 +902,17 @@ export default function Home() {
         </div>
 
         {/* Footer de la tarjeta: Precio y botones con autenticación previa */}
-        <div className="p-3 sm:p-3.5 pt-0 border-t border-slate-100 mt-1.5 flex items-center justify-between gap-2">
+        <div className="p-3 sm:p-3.5 pt-0 border-t border-slate-100 dark:border-slate-800 mt-1.5 flex items-center justify-between gap-2">
           <div>
-            <span className="text-[9.5px] text-slate-400 block font-semibold">Tarifa {modelBadge.label.toLowerCase()}</span>
-            <span className="text-xs font-black text-[#0056d2]">
+            <span className="text-[9.5px] text-slate-400 dark:text-slate-400 block font-semibold">Tarifa {modelBadge.label.toLowerCase()}</span>
+            <span className="text-xs font-black text-[#0056d2] dark:text-blue-400">
               {formatRateWithModel(prov.hourlyRate, pricingModel)}
             </span>
           </div>
           <div className="flex items-center space-x-1.5">
             <Link
               href={`/profile/${prov.userId}`}
-              className="px-2.5 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-bold transition-all"
+              className="px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-200 text-xs font-bold transition-all"
             >
               Perfil
             </Link>
@@ -997,28 +997,28 @@ export default function Home() {
 
             {/* Search Pill Bar con Selector de Ciudades de Colombia (Inicialmente Cali) */}
             <div className="pt-3 relative">
-              <div className="bg-white rounded-2xl sm:rounded-full p-2 sm:p-1.5 shadow-2xl flex flex-col sm:flex-row items-stretch sm:items-center border border-white max-w-lg gap-2 sm:gap-0">
-                <div className="flex items-center px-3 sm:px-4 py-1.5 sm:py-2 flex-1 w-full text-slate-700">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-full p-2 sm:p-1.5 shadow-2xl flex flex-col sm:flex-row items-stretch sm:items-center border border-white dark:border-slate-800 max-w-lg gap-2 sm:gap-0">
+                <div className="flex items-center px-3 sm:px-4 py-1.5 sm:py-2 flex-1 w-full text-slate-700 dark:text-slate-200">
                   <Search className="w-4 h-4 text-slate-400 mr-2.5 shrink-0" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="¿Qué servicio necesitas?"
-                    className="w-full bg-transparent border-none outline-none text-slate-800 placeholder-slate-400 text-xs sm:text-sm font-semibold"
+                    className="w-full bg-transparent border-none outline-none text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-400 text-xs sm:text-sm font-semibold"
                   />
                 </div>
 
-                <div className="h-px w-full bg-slate-100 sm:hidden"></div>
-                <div className="h-6 w-px bg-slate-200 hidden sm:block"></div>
+                <div className="h-px w-full bg-slate-100 dark:bg-slate-800 sm:hidden"></div>
+                <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block"></div>
 
                 {/* Dropdown de Ciudades de Colombia */}
                 <div
                   onClick={() => setIsCityDropdownOpen(!isCityDropdownOpen)}
-                  className="flex items-center justify-between sm:justify-start px-3 sm:px-4 py-1.5 sm:py-2 text-slate-700 text-xs sm:text-sm font-semibold cursor-pointer shrink-0 hover:bg-slate-50 rounded-xl sm:rounded-full transition-colors relative"
+                  className="flex items-center justify-between sm:justify-start px-3 sm:px-4 py-1.5 sm:py-2 text-slate-700 dark:text-slate-200 text-xs sm:text-sm font-semibold cursor-pointer shrink-0 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl sm:rounded-full transition-colors relative"
                 >
                   <div className="flex items-center">
-                    <MapPin className="w-3.5 h-3.5 text-[#0056d2] mr-1.5 shrink-0" />
+                    <MapPin className="w-3.5 h-3.5 text-[#0056d2] dark:text-blue-400 mr-1.5 shrink-0" />
                     <span className="font-bold truncate max-w-[120px] sm:max-w-none">{selectedCity}</span>
                   </div>
                   <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-1.5 shrink-0" />
@@ -1031,14 +1031,14 @@ export default function Home() {
 
               {/* Menú desplegable de Ciudades de Colombia conectadas por transporte */}
               {isCityDropdownOpen && (
-                <div className="absolute left-0 right-0 sm:right-auto sm:left-auto sm:right-28 top-full mt-2 max-w-[calc(100vw-2.5rem)] sm:w-72 bg-white rounded-2xl shadow-2xl border border-slate-200 p-3 z-50 text-slate-800 space-y-2">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                    <span className="text-xs font-bold text-slate-600">
+                <div className="absolute left-0 right-0 sm:right-auto sm:left-auto sm:right-28 top-full mt-2 max-w-[calc(100vw-2.5rem)] sm:w-72 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-3 z-50 text-slate-800 dark:text-slate-100 space-y-2">
+                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
                       Ciudades y Transportes
                     </span>
                     <button
                       onClick={() => setIsCityDropdownOpen(false)}
-                      className="text-slate-400 hover:text-slate-600"
+                      className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -1049,7 +1049,7 @@ export default function Home() {
                     value={citySearchTerm}
                     onChange={(e) => setCitySearchTerm(e.target.value)}
                     placeholder="Buscar ciudad o departamento..."
-                    className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-[#0056d2]"
+                    className="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:border-[#0056d2] dark:focus:border-blue-500 text-slate-800 dark:text-slate-100"
                   />
 
                   <div className="max-h-56 overflow-y-auto space-y-1">
@@ -1059,11 +1059,11 @@ export default function Home() {
                         setIsCityDropdownOpen(false);
                       }}
                       className={`w-full text-left px-3 py-1.5 text-xs rounded-lg font-semibold flex items-center justify-between ${
-                        selectedCity === 'Todas' ? 'bg-blue-50 text-[#0056d2]' : 'hover:bg-slate-50'
+                        selectedCity === 'Todas' ? 'bg-blue-50 dark:bg-blue-950/50 text-[#0056d2] dark:text-blue-400 font-bold' : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
                       }`}
                     >
                       <span>Todas las ciudades (Colombia)</span>
-                      {selectedCity === 'Todas' && <Check className="w-3.5 h-3.5 text-[#0056d2]" />}
+                      {selectedCity === 'Todas' && <Check className="w-3.5 h-3.5 text-[#0056d2] dark:text-blue-400" />}
                     </button>
 
                     {filteredCityList.map((item, idx) => (
@@ -1075,17 +1075,17 @@ export default function Home() {
                         }}
                         className={`w-full text-left px-3 py-1.5 text-xs rounded-lg flex items-center justify-between ${
                           selectedCity === item.city
-                            ? 'bg-blue-50 text-[#0056d2] font-bold'
-                            : 'hover:bg-slate-50 text-slate-700'
+                            ? 'bg-blue-50 dark:bg-blue-950/50 text-[#0056d2] dark:text-blue-400 font-bold'
+                            : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
                         }`}
                       >
                         <div>
                           <span className="block font-medium">
                             {item.city} {item.city === 'Cali' ? '⭐ (Principal)' : ''}
                           </span>
-                          <span className="text-[10px] text-slate-400">{item.department}</span>
+                          <span className="text-[10px] text-slate-400 dark:text-slate-400">{item.department}</span>
                         </div>
-                        {selectedCity === item.city && <Check className="w-3.5 h-3.5 text-[#0056d2]" />}
+                        {selectedCity === item.city && <Check className="w-3.5 h-3.5 text-[#0056d2] dark:text-blue-400" />}
                       </button>
                     ))}
                   </div>
@@ -1125,18 +1125,18 @@ export default function Home() {
           {/* Card: Necesito algo */}
           <Link
             href="#servicios"
-            className="md:col-span-3.5 lg:col-span-4 bg-[#eff6ff] border border-blue-100 rounded-2xl p-4 sm:p-5 shadow-lg flex items-center space-x-3.5 sm:space-x-4 hover:shadow-xl transition-all group"
+            className="md:col-span-3.5 lg:col-span-4 bg-[#eff6ff] dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/50 rounded-2xl p-4 sm:p-5 shadow-lg flex items-center space-x-3.5 sm:space-x-4 hover:shadow-xl dark:hover:bg-blue-900/40 transition-all group"
           >
             <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-[#0056d2] text-white flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
               <User className="w-6 h-6 sm:w-7 sm:h-7 fill-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-sm sm:text-base font-black text-slate-900 leading-tight">Necesito algo</h3>
-              <p className="text-[11px] text-slate-500 font-medium mt-1 leading-snug">
+              <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-white leading-tight">Necesito algo</h3>
+              <p className="text-[11px] text-slate-500 dark:text-slate-300 font-medium mt-1 leading-snug">
                 Busca personas en Cali por categoría, experiencia, precio en COP y verificación.
               </p>
             </div>
-            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-blue-100 text-[#0056d2] flex items-center justify-center shrink-0">
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-blue-100 dark:bg-blue-900/60 text-[#0056d2] dark:text-blue-300 flex items-center justify-center shrink-0">
               <ArrowRight className="w-3.5 h-3.5" />
             </div>
           </Link>
@@ -1144,43 +1144,43 @@ export default function Home() {
           {/* Card: Quiero ofrecer */}
           <Link
             href={user ? '/dashboard' : '/register?role=provider'}
-            className="md:col-span-3.5 lg:col-span-4 bg-[#fef2f2] border border-red-100 rounded-2xl p-4 sm:p-5 shadow-lg flex items-center space-x-3.5 sm:space-x-4 hover:shadow-xl transition-all group"
+            className="md:col-span-3.5 lg:col-span-4 bg-[#fef2f2] dark:bg-red-950/40 border border-red-100 dark:border-red-900/50 rounded-2xl p-4 sm:p-5 shadow-lg flex items-center space-x-3.5 sm:space-x-4 hover:shadow-xl dark:hover:bg-red-900/40 transition-all group"
           >
             <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-[#ef4444] text-white flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
               <Wrench className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-sm sm:text-base font-black text-slate-900 leading-tight">Quiero ofrecer</h3>
-              <p className="text-[11px] text-slate-500 font-medium mt-1 leading-snug">
+              <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-white leading-tight">Quiero ofrecer</h3>
+              <p className="text-[11px] text-slate-500 dark:text-slate-300 font-medium mt-1 leading-snug">
                 Registra tus servicios en Cali y consigue clientes. Plan gratis con 1 servicio.
               </p>
             </div>
-            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-red-100 text-[#ef4444] flex items-center justify-center shrink-0">
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-red-100 dark:bg-red-900/60 text-[#ef4444] dark:text-red-300 flex items-center justify-center shrink-0">
               <ArrowRight className="w-3.5 h-3.5" />
             </div>
           </Link>
 
           {/* Trust 4 Pillars Block */}
-          <div className="md:col-span-5 lg:col-span-4 bg-white border border-slate-200 rounded-2xl p-4 shadow-lg grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-2 text-center items-center">
+          <div className="md:col-span-5 lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-lg grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-2 text-center items-center">
             <div className="flex flex-col items-center">
-              <Shield className="w-5 h-5 text-[#0056d2] mb-1" />
-              <p className="text-xs font-bold text-slate-900 leading-tight">Seguridad</p>
-              <p className="text-[10px] text-slate-400 font-medium">Perfiles verificados</p>
+              <Shield className="w-5 h-5 text-[#0056d2] dark:text-blue-400 mb-1" />
+              <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight">Seguridad</p>
+              <p className="text-[10px] text-slate-400 dark:text-slate-400 font-medium">Perfiles verificados</p>
             </div>
             <div className="flex flex-col items-center">
-              <Star className="w-5 h-5 text-[#0056d2] mb-1" />
-              <p className="text-xs font-bold text-slate-900 leading-tight">Calidad</p>
-              <p className="text-[10px] text-slate-400 font-medium">Calificaciones reales</p>
+              <Star className="w-5 h-5 text-[#0056d2] dark:text-blue-400 mb-1" />
+              <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight">Calidad</p>
+              <p className="text-[10px] text-slate-400 dark:text-slate-400 font-medium">Calificaciones reales</p>
             </div>
             <div className="flex flex-col items-center">
-              <FastIcon className="w-5 h-5 text-[#0056d2] mb-1" />
-              <p className="text-xs font-bold text-slate-900 leading-tight">Rapidez</p>
-              <p className="text-[10px] text-slate-400 font-medium">En minutos</p>
+              <FastIcon className="w-5 h-5 text-[#0056d2] dark:text-blue-400 mb-1" />
+              <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight">Rapidez</p>
+              <p className="text-[10px] text-slate-400 dark:text-slate-400 font-medium">En minutos</p>
             </div>
             <div className="flex flex-col items-center">
-              <MapPin className="w-5 h-5 text-[#0056d2] mb-1" />
-              <p className="text-xs font-bold text-slate-900 leading-tight">Cercanía</p>
-              <p className="text-[10px] text-slate-400 font-medium">Sede Cali y Valle</p>
+              <MapPin className="w-5 h-5 text-[#0056d2] dark:text-blue-400 mb-1" />
+              <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight">Cercanía</p>
+              <p className="text-[10px] text-slate-400 dark:text-slate-400 font-medium">Sede Cali y Valle</p>
             </div>
           </div>
         </div>
@@ -1190,17 +1190,17 @@ export default function Home() {
       <section id="categorias" className="max-w-[1620px] w-full mx-auto px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20 pt-16 pb-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
               Categorías más populares
             </h2>
-            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
               Encuentra a los profesionales más solicitados en Cali y alrededores
             </p>
           </div>
           {selectedCategory && (
             <button
               onClick={() => setSelectedCategory(null)}
-              className="text-xs font-bold text-[#0056d2] hover:underline flex items-center space-x-1"
+              className="text-xs font-bold text-[#0056d2] dark:text-blue-400 hover:underline flex items-center space-x-1"
             >
               <span>Mostrar todas</span>
               <X className="w-3.5 h-3.5" />
@@ -1218,8 +1218,8 @@ export default function Home() {
                 onClick={() => setSelectedCategory(isSelected ? null : cat.name)}
                 className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-all ${
                   isSelected
-                    ? 'bg-blue-50 border-[#0056d2] shadow-md scale-105'
-                    : 'bg-white border-slate-200 hover:border-[#0056d2] hover:shadow-md'
+                    ? 'bg-blue-50 dark:bg-blue-950/60 border-[#0056d2] dark:border-blue-500 shadow-md scale-105'
+                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-[#0056d2] dark:hover:border-blue-500 hover:shadow-md'
                 }`}
               >
                 <div
@@ -1227,7 +1227,7 @@ export default function Home() {
                 >
                   <Icon className="w-6 h-6 stroke-[2.2]" />
                 </div>
-                <span className="text-xs font-extrabold text-slate-800 text-center leading-tight">
+                <span className="text-xs font-extrabold text-slate-800 dark:text-slate-100 text-center leading-tight">
                   {cat.name}
                 </span>
               </button>
@@ -1241,19 +1241,19 @@ export default function Home() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-xs font-bold text-[#0056d2] uppercase tracking-wider bg-blue-50 px-2.5 py-0.5 rounded-full">
+              <span className="text-xs font-bold text-[#0056d2] dark:text-blue-400 uppercase tracking-wider bg-blue-50 dark:bg-blue-950/60 px-2.5 py-0.5 rounded-full">
                 {selectedCity === 'Todas' ? 'Colombia' : `Ciudad: ${selectedCity}`}
               </span>
               {selectedCategory && (
-                <span className="text-xs font-bold text-red-600 bg-red-50 px-2.5 py-0.5 rounded-full">
+                <span className="text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/60 px-2.5 py-0.5 rounded-full">
                   {selectedCategory}
                 </span>
               )}
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight mt-1">
               Profesionales y Servicios Disponibles
             </h2>
-            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
               Tarifas en pesos colombianos, perfiles verificados y atención garantizada
             </p>
           </div>
@@ -1264,7 +1264,7 @@ export default function Home() {
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 selectedCity === 'Cali'
                   ? 'bg-[#0056d2] text-white shadow-xs'
-                  : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                  : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
               }`}
             >
               ⭐ Solo Cali
@@ -1274,7 +1274,7 @@ export default function Home() {
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 selectedCity === 'Todas'
                   ? 'bg-[#0056d2] text-white shadow-xs'
-                  : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                  : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
               }`}
             >
               Toda Colombia
@@ -1284,7 +1284,7 @@ export default function Home() {
 
         {/* Filtros por Modalidad de Cobro: Por Horas, Por Día, Por Cumplimiento */}
         <div className="mb-6 flex flex-wrap items-center gap-2">
-          <span className="text-xs font-bold text-slate-500 mr-1 flex items-center gap-1">
+          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mr-1 flex items-center gap-1">
             <Filter className="w-3.5 h-3.5" />
             Modalidad:
           </span>
@@ -1299,8 +1299,8 @@ export default function Home() {
               onClick={() => setSelectedPricingModel(mod.id)}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 shadow-xs ${
                 selectedPricingModel === mod.id
-                  ? 'bg-slate-900 text-white shadow-sm ring-2 ring-slate-900/20'
-                  : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'
+                  ? 'bg-slate-900 dark:bg-blue-600 text-white shadow-sm ring-2 ring-slate-900/20 dark:ring-blue-500/30'
+                  : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
               }`}
               title={mod.desc}
             >
@@ -1311,7 +1311,7 @@ export default function Home() {
           {selectedPricingModel !== 'TODOS' && (
             <button
               onClick={() => setSelectedPricingModel('TODOS')}
-              className="text-xs text-red-600 hover:text-red-700 font-bold px-2 py-1 ml-1 transition-colors"
+              className="text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-bold px-2 py-1 ml-1 transition-colors"
             >
               Limpiar filtro
             </button>
@@ -1352,12 +1352,12 @@ export default function Home() {
 
         {/* Grid de Tarjetas de Servicios */}
         {filteredProviders.length === 0 ? (
-          <div className="bg-white border border-slate-200 rounded-3xl p-12 text-center space-y-3">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-12 text-center space-y-3">
             <MapPin className="w-10 h-10 text-slate-400 mx-auto" />
-            <h3 className="text-lg font-black text-slate-800">
+            <h3 className="text-lg font-black text-slate-800 dark:text-slate-100">
               No se encontraron servicios en {selectedCity}
             </h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
               Intenta buscar en Cali o seleccionar "Toda Colombia" para ver todos los prestadores disponibles.
             </p>
             <button
@@ -1392,13 +1392,13 @@ export default function Home() {
       </section>
 
       {/* 6. ¿CÓMO FUNCIONA? */}
-      <section id="como-funciona" className="py-14 sm:py-18 bg-[#f8fafc] border-t border-slate-200/80">
+      <section id="como-funciona" className="py-14 sm:py-18 bg-[#f8fafc] dark:bg-[#0b101b] border-t border-slate-200/80 dark:border-slate-800/80">
         <div className="max-w-[1620px] w-full mx-auto px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20">
           <div className="text-left mb-10">
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
               ¿Cómo funciona?
             </h2>
-            <p className="text-xs sm:text-sm text-[#0056d2] font-semibold mt-1">
+            <p className="text-xs sm:text-sm text-[#0056d2] dark:text-blue-400 font-semibold mt-1">
               Es muy fácil, solo sigue estos pasos.
             </p>
           </div>
@@ -1410,14 +1410,14 @@ export default function Home() {
                 <div className="w-6 h-6 rounded-full bg-[#0056d2] text-white font-black text-xs flex items-center justify-center shadow-xs">
                   1
                 </div>
-                <div className="w-12 h-12 rounded-full border-2 border-[#0056d2] flex items-center justify-center text-[#0056d2]">
+                <div className="w-12 h-12 rounded-full border-2 border-[#0056d2] dark:border-blue-500 flex items-center justify-center text-[#0056d2] dark:text-blue-400">
                   <Search className="w-6 h-6 stroke-[2.2]" />
                 </div>
               </div>
-              <h3 className="text-base font-black text-slate-900 pt-1">
+              <h3 className="text-base font-black text-slate-900 dark:text-white pt-1">
                 Busca el servicio
               </h3>
-              <p className="text-xs text-slate-500 leading-relaxed font-medium">
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
                 Explora las categorías o usa el buscador para encontrar lo que necesitas.
               </p>
             </div>
@@ -1428,14 +1428,14 @@ export default function Home() {
                 <div className="w-6 h-6 rounded-full bg-[#ef4444] text-white font-black text-xs flex items-center justify-center shadow-xs">
                   2
                 </div>
-                <div className="w-12 h-12 rounded-full border-2 border-[#ef4444] flex items-center justify-center text-[#ef4444]">
+                <div className="w-12 h-12 rounded-full border-2 border-[#ef4444] dark:border-red-500 flex items-center justify-center text-[#ef4444] dark:text-red-400">
                   <User className="w-6 h-6 stroke-[2.2]" />
                 </div>
               </div>
-              <h3 className="text-base font-black text-slate-900 pt-1">
+              <h3 className="text-base font-black text-slate-900 dark:text-white pt-1">
                 Elige un proveedor
               </h3>
-              <p className="text-xs text-slate-500 leading-relaxed font-medium">
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
                 Revisa perfiles, calificaciones, experiencia y precios.
               </p>
             </div>
@@ -1446,14 +1446,14 @@ export default function Home() {
                 <div className="w-6 h-6 rounded-full bg-[#10b981] text-white font-black text-xs flex items-center justify-center shadow-xs">
                   3
                 </div>
-                <div className="w-12 h-12 rounded-full border-2 border-[#10b981] flex items-center justify-center text-[#10b981]">
+                <div className="w-12 h-12 rounded-full border-2 border-[#10b981] dark:border-emerald-500 flex items-center justify-center text-[#10b981] dark:text-emerald-400">
                   <Calendar className="w-6 h-6 stroke-[2.2]" />
                 </div>
               </div>
-              <h3 className="text-base font-black text-slate-900 pt-1">
+              <h3 className="text-base font-black text-slate-900 dark:text-white pt-1">
                 Agenda y contrata
               </h3>
-              <p className="text-xs text-slate-500 leading-relaxed font-medium">
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
                 Comunícate con el proveedor, acuerda los detalles y confirma el servicio.
               </p>
             </div>
@@ -1464,14 +1464,14 @@ export default function Home() {
                 <div className="w-6 h-6 rounded-full bg-[#8b5cf6] text-white font-black text-xs flex items-center justify-center shadow-xs">
                   4
                 </div>
-                <div className="w-12 h-12 rounded-full border-2 border-[#8b5cf6] flex items-center justify-center text-[#8b5cf6]">
+                <div className="w-12 h-12 rounded-full border-2 border-[#8b5cf6] dark:border-purple-500 flex items-center justify-center text-[#8b5cf6] dark:text-purple-400">
                   <Check className="w-6 h-6 stroke-[3]" />
                 </div>
               </div>
-              <h3 className="text-base font-black text-slate-900 pt-1">
+              <h3 className="text-base font-black text-slate-900 dark:text-white pt-1">
                 ¡Listo!
               </h3>
-              <p className="text-xs text-slate-500 leading-relaxed font-medium">
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
                 Disfruta de tu servicio con la tranquilidad de estar en una plataforma segura.
               </p>
             </div>
@@ -1480,16 +1480,16 @@ export default function Home() {
       </section>
 
       {/* 7. ¿POR QUÉ ELEGIR CONECTA360? & APP MÓVIL */}
-      <section className="py-14 sm:py-16 bg-white border-t border-slate-200/80">
+      <section className="py-14 sm:py-16 bg-white dark:bg-[#090d16] border-t border-slate-200/80 dark:border-slate-800/80">
         <div className="max-w-[1620px] w-full mx-auto px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             {/* Left 8 Cols: ¿Por qué elegir Conecta360? */}
             <div className="lg:col-span-8 space-y-6">
               <div>
-                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
                   ¿Por qué elegir Conecta360?
                 </h2>
-                <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
                   Más que una plataforma, es una comunidad de confianza.
                 </p>
               </div>
@@ -1500,10 +1500,10 @@ export default function Home() {
                   <div className="w-10 h-10 rounded-full bg-[#0056d2] text-white flex items-center justify-center shadow-xs">
                     <Shield className="w-5 h-5 fill-white" />
                   </div>
-                  <h4 className="text-xs sm:text-sm font-black text-slate-900 leading-snug">
+                  <h4 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white leading-snug">
                     Profesionales verificados
                   </h4>
-                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
                     Todos nuestros proveedores son revisados y cuentan con respaldo.
                   </p>
                 </div>
@@ -1513,10 +1513,10 @@ export default function Home() {
                   <div className="w-10 h-10 rounded-full bg-[#8b5cf6] text-white flex items-center justify-center shadow-xs">
                     <Star className="w-5 h-5 fill-white" />
                   </div>
-                  <h4 className="text-xs sm:text-sm font-black text-slate-900 leading-snug">
+                  <h4 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white leading-snug">
                     Valoraciones reales
                   </h4>
-                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
                     Consulta opiniones de otros usuarios antes de contratar.
                   </p>
                 </div>
@@ -1526,10 +1526,10 @@ export default function Home() {
                   <div className="w-10 h-10 rounded-full bg-[#10b981] text-white flex items-center justify-center shadow-xs">
                     <Clock className="w-5 h-5 stroke-[2.5]" />
                   </div>
-                  <h4 className="text-xs sm:text-sm font-black text-slate-900 leading-snug">
+                  <h4 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white leading-snug">
                     Ahorra tiempo
                   </h4>
-                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
                     Encuentra el servicio ideal en minutos, sin complicaciones.
                   </p>
                 </div>
@@ -1539,10 +1539,10 @@ export default function Home() {
                   <div className="w-10 h-10 rounded-full bg-[#ef4444] text-white flex items-center justify-center shadow-xs">
                     <Heart className="w-5 h-5 fill-white" />
                   </div>
-                  <h4 className="text-xs sm:text-sm font-black text-slate-900 leading-snug">
+                  <h4 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white leading-snug">
                     Apoyo local
                   </h4>
-                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
                     Impulsamos el talento y los servicios de tu ciudad.
                   </p>
                 </div>
@@ -1614,20 +1614,20 @@ export default function Home() {
       </section>
 
       {/* 8. LO QUE DICEN NUESTROS USUARIOS */}
-      <section className="py-14 sm:py-16 bg-[#f8fafc] border-t border-slate-200/80">
+      <section className="py-14 sm:py-16 bg-[#f8fafc] dark:bg-[#0b101b] border-t border-slate-200/80 dark:border-slate-800/80">
         <div className="max-w-[1620px] w-full mx-auto px-6 sm:px-10 md:px-12 lg:px-16 xl:px-20">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
                 Lo que dicen nuestros usuarios
               </h2>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1">
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
                 La confianza de nuestra comunidad nos impulsa a seguir.
               </p>
             </div>
             <a
               href="#"
-              className="text-xs font-bold text-[#0056d2] hover:underline flex items-center space-x-1"
+              className="text-xs font-bold text-[#0056d2] dark:text-blue-400 hover:underline flex items-center space-x-1"
             >
               <span>Ver más reseñas</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -1636,15 +1636,15 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {/* Reseña 1: Laura Gómez */}
-            <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4 hover:shadow-md transition-all">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4 hover:shadow-md transition-all">
               <div className="flex items-center space-x-3">
                 <img
                   src="/images/avatar-laura.png"
                   alt="Laura Gómez"
-                  className="w-11 h-11 rounded-full object-cover shrink-0 shadow-xs border border-slate-100"
+                  className="w-11 h-11 rounded-full object-cover shrink-0 shadow-xs border border-slate-100 dark:border-slate-700"
                 />
                 <div>
-                  <h4 className="font-extrabold text-sm text-[#0056d2]">
+                  <h4 className="font-extrabold text-sm text-[#0056d2] dark:text-blue-400">
                     Laura Gómez
                   </h4>
                   <div className="flex items-center text-amber-400 text-xs">
@@ -1653,26 +1653,26 @@ export default function Home() {
                 </div>
               </div>
 
-              <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                &ldquo;Usé <span className="font-bold text-slate-800">Conecta360</span> para encontrar un electricista y fue excelente. Llegó puntual, hizo un gran trabajo y el precio fue justo. ¡Muy recomendado!&rdquo;
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+                &ldquo;Usé <span className="font-bold text-slate-800 dark:text-white">Conecta360</span> para encontrar un electricista y fue excelente. Llegó puntual, hizo un gran trabajo y el precio fue justo. ¡Muy recomendado!&rdquo;
               </p>
 
-              <div className="pt-2 border-t border-slate-100 flex items-center text-slate-500 text-[11px] font-medium">
-                <MapPin className="w-3 h-3 text-[#0056d2] mr-1 shrink-0" />
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center text-slate-500 dark:text-slate-400 text-[11px] font-medium">
+                <MapPin className="w-3 h-3 text-[#0056d2] dark:text-blue-400 mr-1 shrink-0" />
                 <span>Cali</span>
               </div>
             </div>
 
             {/* Reseña 2: Andrés Ramírez */}
-            <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4 hover:shadow-md transition-all">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4 hover:shadow-md transition-all">
               <div className="flex items-center space-x-3">
                 <img
                   src="/images/avatar-andres.png"
                   alt="Andrés Ramírez"
-                  className="w-11 h-11 rounded-full object-cover shrink-0 shadow-xs border border-slate-100"
+                  className="w-11 h-11 rounded-full object-cover shrink-0 shadow-xs border border-slate-100 dark:border-slate-700"
                 />
                 <div>
-                  <h4 className="font-extrabold text-sm text-[#0056d2]">
+                  <h4 className="font-extrabold text-sm text-[#0056d2] dark:text-blue-400">
                     Andrés Ramírez
                   </h4>
                   <div className="flex items-center text-amber-400 text-xs">
@@ -1681,26 +1681,26 @@ export default function Home() {
                 </div>
               </div>
 
-              <p className="text-xs text-slate-600 leading-relaxed font-medium">
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
                 &ldquo;La plataforma es muy fácil de usar y los proveedores son de confianza. Encontré un servicio de limpieza rápido y profesional.&rdquo;
               </p>
 
-              <div className="pt-2 border-t border-slate-100 flex items-center text-slate-500 text-[11px] font-medium">
-                <MapPin className="w-3 h-3 text-[#0056d2] mr-1 shrink-0" />
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center text-slate-500 dark:text-slate-400 text-[11px] font-medium">
+                <MapPin className="w-3 h-3 text-[#0056d2] dark:text-blue-400 mr-1 shrink-0" />
                 <span>Palmira</span>
               </div>
             </div>
 
             {/* Reseña 3: Sofía Martínez */}
-            <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4 hover:shadow-md transition-all">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4 hover:shadow-md transition-all">
               <div className="flex items-center space-x-3">
                 <img
                   src="/images/avatar-sofia.png"
                   alt="Sofía Martínez"
-                  className="w-11 h-11 rounded-full object-cover shrink-0 shadow-xs border border-slate-100"
+                  className="w-11 h-11 rounded-full object-cover shrink-0 shadow-xs border border-slate-100 dark:border-slate-700"
                 />
                 <div>
-                  <h4 className="font-extrabold text-sm text-[#0056d2]">
+                  <h4 className="font-extrabold text-sm text-[#0056d2] dark:text-blue-400">
                     Sofía Martínez
                   </h4>
                   <div className="flex items-center text-amber-400 text-xs">
@@ -1709,12 +1709,12 @@ export default function Home() {
                 </div>
               </div>
 
-              <p className="text-xs text-slate-600 leading-relaxed font-medium">
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
                 &ldquo;Me ayudaron a encontrar un tutor de matemáticas para mi hijo. Todo fue muy organizado y la atención fue excelente.&rdquo;
               </p>
 
-              <div className="pt-2 border-t border-slate-100 flex items-center text-slate-500 text-[11px] font-medium">
-                <MapPin className="w-3 h-3 text-[#0056d2] mr-1 shrink-0" />
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center text-slate-500 dark:text-slate-400 text-[11px] font-medium">
+                <MapPin className="w-3 h-3 text-[#0056d2] dark:text-blue-400 mr-1 shrink-0" />
                 <span>Cali</span>
               </div>
             </div>
@@ -1771,35 +1771,35 @@ export default function Home() {
       {/* MODAL: Solicitar Equipo de Trabajo / Cuadrilla Multi-Profesional */}
       {isTeamModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto space-y-6 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 dark:border-slate-800 max-h-[90vh] overflow-y-auto space-y-6 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#0056d2] flex items-center justify-center font-black">
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-[#0056d2] dark:text-blue-400 flex items-center justify-center font-black">
                   <Users className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+                  <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight">
                     Solicitar Equipo de Trabajo / Cuadrilla
                   </h3>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     Contrata y coordina a varios profesionales de una o varias categorías en Cali
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setIsTeamModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition-colors"
+                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {teamBookingSuccess ? (
-              <div className="p-6 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-center space-y-3">
-                <CheckCircle2 className="w-12 h-12 text-emerald-600 mx-auto" />
+              <div className="p-6 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 text-center space-y-3">
+                <CheckCircle2 className="w-12 h-12 text-emerald-600 dark:text-emerald-400 mx-auto" />
                 <h4 className="text-base font-black">¡Solicitud de Equipo Enviada!</h4>
-                <p className="text-xs text-emerald-800 leading-relaxed">{teamBookingSuccess}</p>
-                <p className="text-[11px] text-emerald-600 font-semibold">
+                <p className="text-xs text-emerald-800 dark:text-emerald-300 leading-relaxed">{teamBookingSuccess}</p>
+                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
                   * Cada especialista recibirá la notificación en su portal para confirmar en el rango de tiempo solicitado.
                 </p>
               </div>
@@ -1807,7 +1807,7 @@ export default function Home() {
               <form onSubmit={handleSubmitTeamBooking} className="space-y-5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wide">
                       Nombre o Motivo del Proyecto *
                     </label>
                     <input
@@ -1816,18 +1816,18 @@ export default function Home() {
                       onChange={(e) => setTeamProjectName(e.target.value)}
                       placeholder="Ej: Remodelación Integral Oficina Norte Cali"
                       required
-                      className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#0056d2] outline-none font-medium text-slate-800"
+                      className="w-full px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-slate-900 focus:border-[#0056d2] dark:focus:border-blue-500 outline-none font-medium text-slate-800 dark:text-slate-100"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wide">
                       Rango de Tiempo Estimado *
                     </label>
                     <select
                       value={teamEstimatedTime}
                       onChange={(e) => setTeamEstimatedTime(e.target.value)}
-                      className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#0056d2] outline-none font-semibold text-slate-800"
+                      className="w-full px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-slate-900 focus:border-[#0056d2] dark:focus:border-blue-500 outline-none font-semibold text-slate-800 dark:text-slate-100"
                     >
                       <option value="2 a 4 horas (Media jornada)">2 a 4 horas (Media jornada)</option>
                       <option value="4 a 8 horas (1 día completo)">4 a 8 horas (1 día completo)</option>
@@ -1839,7 +1839,7 @@ export default function Home() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wide">
                     Mensaje e Instrucciones para el Equipo *
                   </label>
                   <textarea
@@ -1848,22 +1848,22 @@ export default function Home() {
                     onChange={(e) => setTeamMessage(e.target.value)}
                     placeholder="Describe las tareas específicas, dirección exacta en Cali, herramientas necesarias y requerimientos para el equipo..."
                     required
-                    className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#0056d2] outline-none resize-none font-medium text-slate-800"
+                    className="w-full px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-slate-900 focus:border-[#0056d2] dark:focus:border-blue-500 outline-none resize-none font-medium text-slate-800 dark:text-slate-100"
                   />
                 </div>
 
                 {/* Selección de Profesionales para la cuadrilla */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
                       Selecciona a los Integrantes del Equipo ({selectedTeamProviderIds.length} seleccionados):
                     </label>
-                    <span className="text-[11px] text-[#0056d2] font-bold">
+                    <span className="text-[11px] text-[#0056d2] dark:text-blue-400 font-bold">
                       Puedes seleccionar de varias categorías
                     </span>
                   </div>
 
-                  <div className="max-h-60 overflow-y-auto space-y-2 border border-slate-200 rounded-2xl p-3 bg-slate-50/50">
+                  <div className="max-h-60 overflow-y-auto space-y-2 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 bg-slate-50/50 dark:bg-slate-800/40">
                     {(providers.length > 0 ? providers : fallbackProviders).map((p, idx) => {
                       const pId = p.userId || p.id;
                       const isSelected = selectedTeamProviderIds.includes(pId);
@@ -1873,12 +1873,12 @@ export default function Home() {
                           onClick={() => handleToggleTeamProvider(pId)}
                           className={`p-3 rounded-xl border flex items-center justify-between gap-3 cursor-pointer transition-all ${
                             isSelected
-                              ? 'bg-blue-50 border-[#0056d2] shadow-xs'
-                              : 'bg-white border-slate-200 hover:border-slate-300'
+                              ? 'bg-blue-50 dark:bg-blue-950/60 border-[#0056d2] dark:border-blue-500 shadow-xs'
+                              : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
                           }`}
                         >
                           <div className="flex items-center space-x-3 min-w-0">
-                            <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 ${isSelected ? 'text-[#0056d2]' : 'text-slate-300'}`}>
+                            <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 ${isSelected ? 'text-[#0056d2] dark:text-blue-400' : 'text-slate-300 dark:text-slate-600'}`}>
                               {isSelected ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5" />}
                             </div>
                             <img
@@ -1887,20 +1887,20 @@ export default function Home() {
                               className="w-10 h-10 rounded-xl object-cover shrink-0"
                             />
                             <div className="min-w-0">
-                              <h5 className="text-xs font-black text-slate-900 truncate">
+                              <h5 className="text-xs font-black text-slate-900 dark:text-white truncate">
                                 {p.user.firstName} {p.user.lastName}
                               </h5>
-                              <p className="text-[11px] text-slate-500 truncate">
-                                {p.title || 'Especialista'} &bull; <span className="font-semibold text-[#0056d2]">{p.user.profile?.city || 'Cali'}</span>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                                {p.title || 'Especialista'} &bull; <span className="font-semibold text-[#0056d2] dark:text-blue-400">{p.user.profile?.city || 'Cali'}</span>
                               </p>
                             </div>
                           </div>
 
                           <div className="text-right shrink-0">
-                            <span className="text-xs font-black text-slate-900 block">
+                            <span className="text-xs font-black text-slate-900 dark:text-white block">
                               {formatRate(p.hourlyRate)}
                             </span>
-                            <span className="text-[10px] text-slate-400">Tarifa hora</span>
+                            <span className="text-[10px] text-slate-400 dark:text-slate-400">Tarifa hora</span>
                           </div>
                         </div>
                       );
@@ -1908,23 +1908,23 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
-                  <div className="text-xs text-slate-600">
-                    Total integrantes: <strong className="text-slate-900">{selectedTeamProviderIds.length}</strong> &bull; Rango: <strong className="text-[#0056d2]">{teamEstimatedTime}</strong>
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div className="text-xs text-slate-600 dark:text-slate-300">
+                    Total integrantes: <strong className="text-slate-900 dark:text-white">{selectedTeamProviderIds.length}</strong> &bull; Rango: <strong className="text-[#0056d2] dark:text-blue-400">{teamEstimatedTime}</strong>
                   </div>
 
                   <div className="flex items-center space-x-2 w-full sm:w-auto">
                     <button
                       type="button"
                       onClick={() => setIsTeamModalOpen(false)}
-                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold transition-all"
+                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold transition-all"
                     >
                       Cancelar
                     </button>
                     <button
                       type="submit"
                       disabled={selectedTeamProviderIds.length === 0}
-                      className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#0056d2] hover:bg-[#0046a8] disabled:bg-slate-300 text-white text-xs font-black shadow-md shadow-blue-600/20 transition-all flex items-center justify-center space-x-1.5"
+                      className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#0056d2] hover:bg-[#0046a8] disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white text-xs font-black shadow-md shadow-blue-600/20 transition-all flex items-center justify-center space-x-1.5"
                     >
                       <Send className="w-3.5 h-3.5" />
                       <span>Solicitar Equipo ({selectedTeamProviderIds.length})</span>
