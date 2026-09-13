@@ -773,7 +773,7 @@ export default function Home() {
           </div>
 
           {/* Contenido con datos reales del usuario */}
-          <div className="p-3.5 space-y-2">
+          <div className="p-3 sm:p-3.5 space-y-1.5">
             {/* Categoría con icono circular */}
             <div className="flex items-center space-x-1.5 text-[10px] font-bold text-[#0056d2]">
               <div className="w-4 h-4 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
@@ -784,41 +784,38 @@ export default function Home() {
 
             {/* Nombre del Proveedor */}
             <div>
-              <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-[#0056d2] transition-colors leading-snug">
+              <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-[#0056d2] transition-colors leading-tight truncate">
                 {fullName}
               </h3>
-              <p className="text-[11px] text-slate-500 font-medium">
-                {categoryTitle}
-              </p>
             </div>
 
-            {/* Calificación y reseñas */}
-            <div className="flex items-center space-x-1.5 text-xs">
-              <div className="flex items-center text-amber-500 font-bold">
-                <Star className="w-3.5 h-3.5 fill-amber-400 mr-0.5" />
-                <span>{prov.rating > 0 ? prov.rating.toFixed(1) : '5.0'}</span>
+            {/* Calificación, estrellas y Ubicación en UNA MISMA FILA */}
+            <div className="flex items-center justify-between text-xs text-slate-500 gap-1.5 pt-0.5">
+              <div className="flex items-center space-x-1 shrink-0">
+                <div className="flex items-center text-amber-500 font-bold">
+                  <Star className="w-3.5 h-3.5 fill-amber-400 mr-0.5" />
+                  <span>{prov.rating > 0 ? prov.rating.toFixed(1) : '5.0'}</span>
+                </div>
+                <span className="text-slate-400 text-[10.5px]">
+                  ({prov.totalReviews || 12})
+                </span>
               </div>
-              <span className="text-slate-400 text-[11px]">
-                ({prov.totalReviews || 12} reseñas)
-              </span>
-            </div>
-
-            {/* Ubicación en Colombia */}
-            <div className="flex items-center text-slate-500 text-[11px] font-medium pt-0.5">
-              <MapPin className="w-3 h-3 text-slate-400 mr-1 shrink-0" />
-              <span className="truncate">{locationStr}</span>
+              <div className="flex items-center text-slate-500 text-[10.5px] font-medium truncate shrink min-w-0">
+                <MapPin className="w-3 h-3 text-rose-500 mr-0.5 shrink-0" />
+                <span className="truncate">{locationStr}</span>
+              </div>
             </div>
 
             {/* 4 Actividades Principales de la Persona en la Tarjeta Exterior */}
-            <div className="pt-2 border-t border-slate-100 space-y-1">
-              <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">
+            <div className="pt-1.5 border-t border-slate-100 space-y-1">
+              <span className="text-[9.5px] font-bold text-slate-400 block uppercase tracking-wider">
                 Actividades Principales ({activitiesToShow.length}):
               </span>
               <div className="flex flex-wrap gap-1">
                 {activitiesToShow.map((act, i) => (
                   <span
                     key={i}
-                    className="px-2 py-0.5 rounded-md bg-slate-50 text-slate-700 text-[10px] font-semibold border border-slate-200/70 flex items-center space-x-1"
+                    className="px-2 py-0.5 rounded-md bg-slate-50 text-slate-700 text-[9.5px] font-semibold border border-slate-200/70 flex items-center space-x-1"
                   >
                     <Tag className="w-2.5 h-2.5 text-[#0056d2] shrink-0" />
                     <span className="truncate max-w-[130px]">{act}</span>
@@ -830,9 +827,9 @@ export default function Home() {
         </div>
 
         {/* Footer de la tarjeta: Precio y botones con autenticación previa */}
-        <div className="p-3.5 pt-0 border-t border-slate-100 mt-2 flex items-center justify-between gap-2">
+        <div className="p-3 sm:p-3.5 pt-0 border-t border-slate-100 mt-1.5 flex items-center justify-between gap-2">
           <div>
-            <span className="text-[10px] text-slate-400 block font-semibold">Tarifa hora</span>
+            <span className="text-[9.5px] text-slate-400 block font-semibold">Tarifa hora</span>
             <span className="text-xs font-black text-[#0056d2]">
               {formatRate(prov.hourlyRate)}/h
             </span>
@@ -871,7 +868,7 @@ export default function Home() {
     <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans selection:bg-blue-100 selection:text-blue-900">
       {/* 1. TOP NAVBAR */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50 h-16 sm:h-20 flex items-center shadow-xs">
-        <div className="max-w-[1240px] w-full mx-auto px-4 sm:px-6 flex items-center justify-between">
+        <div className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           {/* Logo Oficial CONECTA 360 con la imagen subida en tamaño justo para la barra */}
           <Link href="/" className="flex items-center">
             <img
@@ -1049,7 +1046,7 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-t from-[#002f6c]/50 via-transparent to-transparent"></div>
         </div>
 
-        <div className="max-w-[1240px] w-full mx-auto px-4 sm:px-6 py-12 lg:py-16 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <div className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           {/* Left Text and Search (Span 7) */}
           <div className="lg:col-span-7 space-y-4 max-w-xl">
             {/* Red pill badge */}
@@ -1207,7 +1204,7 @@ export default function Home() {
       </section>
 
       {/* 3. DUAL ACTION CARDS & 4 TRUST PILLARS */}
-      <section className="max-w-[1240px] w-full mx-auto px-4 sm:px-6 -mt-6 sm:-mt-8 relative z-20">
+      <section className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8 -mt-6 sm:-mt-8 relative z-20">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-5">
           {/* Card: Necesito algo */}
           <Link
@@ -1274,7 +1271,7 @@ export default function Home() {
       </section>
 
       {/* 4. CATEGORÍAS MÁS POPULARES */}
-      <section id="categorias" className="max-w-[1240px] w-full mx-auto px-4 sm:px-6 pt-16 pb-8">
+      <section id="categorias" className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
@@ -1324,7 +1321,7 @@ export default function Home() {
       </section>
 
       {/* 5. SERVICIOS DESTACADOS FILTRADOS POR COLOMBIA & CALI */}
-      <section id="servicios" className="max-w-[1240px] w-full mx-auto px-4 sm:px-6 py-8">
+      <section id="servicios" className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
             <div className="flex items-center space-x-2">
@@ -1424,7 +1421,7 @@ export default function Home() {
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
               {filteredProviders.map((prov, idx) => renderProviderCard(prov, idx))}
             </div>
 
@@ -1444,7 +1441,7 @@ export default function Home() {
 
       {/* 6. ¿CÓMO FUNCIONA? */}
       <section id="como-funciona" className="py-14 sm:py-18 bg-[#f8fafc] border-t border-slate-200/80">
-        <div className="max-w-[1240px] w-full mx-auto px-4 sm:px-6">
+        <div className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-left mb-10">
             <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
               ¿Cómo funciona?
@@ -1532,7 +1529,7 @@ export default function Home() {
 
       {/* 7. ¿POR QUÉ ELEGIR CONECTA360? & APP MÓVIL */}
       <section className="py-14 sm:py-16 bg-white border-t border-slate-200/80">
-        <div className="max-w-[1240px] w-full mx-auto px-4 sm:px-6">
+        <div className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             {/* Left 8 Cols: ¿Por qué elegir Conecta360? */}
             <div className="lg:col-span-8 space-y-6">
@@ -1652,7 +1649,7 @@ export default function Home() {
 
       {/* 8. LO QUE DICEN NUESTROS USUARIOS */}
       <section className="py-14 sm:py-16 bg-[#f8fafc] border-t border-slate-200/80">
-        <div className="max-w-[1240px] w-full mx-auto px-4 sm:px-6">
+        <div className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
@@ -1760,7 +1757,7 @@ export default function Home() {
       </section>
 
       {/* 9. CALL TO ACTION BANNER */}
-      <section className="max-w-[1240px] w-full mx-auto px-4 sm:px-6 my-10 sm:my-16">
+      <section className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8 my-10 sm:my-16">
         <div className="bg-[#002f6c] text-white rounded-3xl p-6 sm:p-10 shadow-2xl flex flex-col lg:flex-row items-center justify-between gap-6 relative overflow-hidden text-center sm:text-left">
           {/* Logo Circular con Slogan */}
           <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-5">
@@ -1804,7 +1801,7 @@ export default function Home() {
 
       {/* 10. FOOTER COMPLETO EXACTO */}
       <footer className="bg-[#050b14] text-slate-300 pt-12 sm:pt-16 pb-8 border-t border-slate-800">
-        <div className="max-w-[1240px] w-full mx-auto px-4 sm:px-6">
+        <div className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-8 pb-10 sm:pb-12">
             {/* Col 1: Brand (Span 3) */}
             <div className="sm:col-span-2 lg:col-span-3 space-y-3">

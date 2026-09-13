@@ -485,7 +485,7 @@ function UserDashboardContent() {
     <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
       {/* Top Navbar */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-40 h-16 sm:h-20 flex items-center shadow-xs">
-        <div className="max-w-[1240px] w-full mx-auto px-4 sm:px-6 flex items-center justify-between">
+        <div className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           <Link href="/" className="flex items-center">
             <img
               src="/images/logo-conecta-nav.png"
@@ -615,7 +615,7 @@ function UserDashboardContent() {
       )}
 
       {/* Main Content Area */}
-      <main className="max-w-[1240px] w-full mx-auto px-4 sm:px-6 py-8 space-y-8">
+      <main className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Banner de Solicitudes Entrantes para Confirmar (Prestador) */}
         {user.role === 'PROVIDER' && historyItems.filter((h) => h.status === 'SOLICITADO').length > 0 && (
           <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-[#0056d2] text-white rounded-3xl p-6 sm:p-7 shadow-lg shadow-blue-500/20 space-y-4 animate-in fade-in">
@@ -1282,29 +1282,39 @@ function UserDashboardContent() {
                     )}
                   </div>
 
-                  <div className="p-4 space-y-2">
+                  <div className="p-3 sm:p-3.5 space-y-1.5">
                     <div className="flex items-center space-x-1.5 text-[10px] font-bold text-[#0056d2]">
                       <Wrench className="w-3 h-3 text-[#0056d2]" />
                       <span>{user.services[0].categoryName}</span>
                     </div>
 
-                    <h4 className="text-sm font-extrabold text-slate-900 leading-tight">
+                    <h4 className="text-sm font-extrabold text-slate-900 leading-tight truncate">
                       {user.services[0].title}
                     </h4>
 
-                    <p className="text-xs text-slate-600 font-semibold">
+                    <p className="text-xs text-slate-600 font-semibold truncate">
                       {user.firstName} {user.lastName} &bull;{' '}
                       <span className="text-slate-500 font-normal">
                         {user.profile.profession || 'Especialista'}
                       </span>
                     </p>
 
-                    <p className="text-[11px] text-slate-500 flex items-center space-x-1">
-                      <MapPin className="w-3 h-3 text-slate-400" />
-                      <span>
-                        {user.services[0].city}, {user.services[0].department}
-                      </span>
-                    </p>
+                    {/* Calificación, estrellas y Ubicación en UNA MISMA FILA */}
+                    <div className="flex items-center justify-between text-xs text-slate-500 gap-1.5 pt-0.5">
+                      <div className="flex items-center space-x-1 shrink-0">
+                        <div className="flex items-center text-amber-500 font-bold">
+                          <Star className="w-3.5 h-3.5 fill-amber-400 mr-0.5" />
+                          <span>5.0</span>
+                        </div>
+                        <span className="text-slate-400 text-[10.5px]">(Nuevo)</span>
+                      </div>
+                      <div className="flex items-center text-slate-500 text-[10.5px] font-medium truncate shrink min-w-0">
+                        <MapPin className="w-3 h-3 text-rose-500 mr-0.5 shrink-0" />
+                        <span className="truncate">
+                          {user.services[0].city}, {user.services[0].department}
+                        </span>
+                      </div>
+                    </div>
 
                     {/* Actividades principales mostradas afuera en la tarjeta pública (máx 4) */}
                     <div className="pt-1.5 space-y-1">

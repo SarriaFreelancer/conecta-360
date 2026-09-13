@@ -537,7 +537,7 @@ function ServicesDirectoryContent() {
     <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
       {/* Header */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50 h-16 sm:h-20 flex items-center shadow-xs">
-        <div className="max-w-[1240px] w-full mx-auto px-4 sm:px-6 flex items-center justify-between">
+        <div className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-3">
             <img
               src="/images/logo-conecta-nav.png"
@@ -556,6 +556,9 @@ function ServicesDirectoryContent() {
             <Link href="/#categorias" className="hover:text-[#0056d2] transition-colors">
               Categorías
             </Link>
+            <Link href="/#como-funciona" className="hover:text-[#0056d2] transition-colors">
+              Cómo funciona
+            </Link>
             <Link href="/admin" className="hover:text-[#0056d2] transition-colors">
               Admin
             </Link>
@@ -565,16 +568,18 @@ function ServicesDirectoryContent() {
             {user ? (
               <Link
                 href="/dashboard"
-                className="px-4 py-2 rounded-full bg-blue-50 text-[#0056d2] text-xs sm:text-sm font-bold border border-blue-200"
+                className="px-3.5 py-2 rounded-full bg-blue-50 hover:bg-blue-100 text-[#0056d2] text-xs sm:text-sm font-bold flex items-center space-x-2 border border-blue-200 transition-all shadow-xs"
               >
-                {user.firstName}
+                <span className={`w-2 h-2 rounded-full ${user.isVerified ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                <span>{user.firstName}</span>
               </Link>
             ) : (
               <Link
-                href="/login"
-                className="px-4 py-2 rounded-full bg-[#0056d2] hover:bg-[#0046a8] text-white text-xs sm:text-sm font-bold shadow-sm"
+                href="/login?redirect=/services"
+                className="px-4 py-2 rounded-full bg-[#0056d2] hover:bg-[#0046a8] text-white text-xs sm:text-sm font-bold flex items-center space-x-1.5 shadow-sm transition-all"
               >
-                Ingresar
+                <User className="w-3.5 h-3.5" />
+                <span>Ingresar</span>
               </Link>
             )}
           </div>
@@ -583,7 +588,7 @@ function ServicesDirectoryContent() {
 
       {/* Hero Banner del Catálogo */}
       <div className="bg-gradient-to-r from-[#002f6c] via-[#0056d2] to-slate-900 text-white py-12 px-4 sm:px-6">
-        <div className="max-w-[1240px] w-full mx-auto space-y-3">
+        <div className="max-w-[1620px] w-full mx-auto space-y-3">
           <Link
             href="/"
             className="inline-flex items-center space-x-1.5 text-xs text-blue-200 hover:text-white font-bold mb-2 transition-colors"
@@ -604,7 +609,7 @@ function ServicesDirectoryContent() {
       </div>
 
       {/* Barra de Filtros Avanzada */}
-      <div className="max-w-[1240px] w-full mx-auto px-4 sm:px-6 -mt-6">
+      <div className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8 -mt-6">
         <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-4 sm:p-5 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {/* Buscador */}
@@ -726,7 +731,7 @@ function ServicesDirectoryContent() {
       </div>
 
       {/* Grid de Servicios y Profesionales */}
-      <div className="max-w-[1240px] w-full mx-auto px-4 sm:px-6 py-10 flex-1">
+      <div className="max-w-[1620px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-1">
         {sorted.length === 0 ? (
           <div className="bg-white border border-slate-200 rounded-3xl p-12 text-center space-y-3 shadow-xs">
             <Wrench className="w-10 h-10 text-slate-400 mx-auto" />
@@ -747,7 +752,7 @@ function ServicesDirectoryContent() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
             {sorted.map((prov, idx) => {
               const fullName = `${prov.user.firstName} ${prov.user.lastName}`;
               const categoryTitle = prov.title || 'Servicio Profesional';
@@ -787,41 +792,41 @@ function ServicesDirectoryContent() {
                     </div>
 
                     {/* Contenido */}
-                    <div className="p-4 space-y-2">
+                    <div className="p-3 sm:p-3.5 space-y-1.5">
                       <span className="text-[10px] font-bold text-[#0056d2] uppercase tracking-wider block truncate">
                         {categoryTitle}
                       </span>
-                      <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-[#0056d2] transition-colors leading-snug">
+                      <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-[#0056d2] transition-colors leading-tight truncate">
                         {fullName}
                       </h3>
 
-                      {/* Calificación */}
-                      <div className="flex items-center space-x-1.5 text-xs">
-                        <div className="flex items-center text-amber-500 font-bold">
-                          <Star className="w-3.5 h-3.5 fill-amber-400 mr-0.5" />
-                          <span>{prov.rating ? prov.rating.toFixed(1) : '4.9'}</span>
+                      {/* Calificación, estrellas y Ubicación en UNA MISMA FILA */}
+                      <div className="flex items-center justify-between text-xs text-slate-500 gap-1.5 pt-0.5">
+                        <div className="flex items-center space-x-1 shrink-0">
+                          <div className="flex items-center text-amber-500 font-bold">
+                            <Star className="w-3.5 h-3.5 fill-amber-400 mr-0.5" />
+                            <span>{prov.rating ? prov.rating.toFixed(1) : '4.9'}</span>
+                          </div>
+                          <span className="text-slate-400 text-[10.5px]">
+                            ({prov.totalReviews || 24})
+                          </span>
                         </div>
-                        <span className="text-slate-400 text-[11px]">
-                          ({prov.totalReviews || 24} valoraciones)
-                        </span>
-                      </div>
-
-                      {/* Ubicación */}
-                      <div className="flex items-center text-slate-500 text-[11px] font-medium pt-0.5">
-                        <MapPin className="w-3 h-3 text-slate-400 mr-1 shrink-0" />
-                        <span className="truncate">{locationStr}</span>
+                        <div className="flex items-center text-slate-500 text-[10.5px] font-medium truncate shrink min-w-0">
+                          <MapPin className="w-3 h-3 text-rose-500 mr-0.5 shrink-0" />
+                          <span className="truncate">{locationStr}</span>
+                        </div>
                       </div>
 
                       {/* 4 Actividades Principales de la Persona */}
-                      <div className="pt-2 border-t border-slate-100 space-y-1">
-                        <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">
+                      <div className="pt-1.5 border-t border-slate-100 space-y-1">
+                        <span className="text-[9.5px] font-bold text-slate-400 block uppercase tracking-wider">
                           Actividades Principales ({getProviderFeaturedActivities(prov).length}):
                         </span>
                         <div className="flex flex-wrap gap-1">
                           {getProviderFeaturedActivities(prov).map((act, i) => (
                             <span
                               key={i}
-                              className="px-2 py-0.5 rounded-md bg-slate-50 text-slate-700 text-[10px] font-semibold border border-slate-200/70 flex items-center space-x-1"
+                              className="px-2 py-0.5 rounded-md bg-slate-50 text-slate-700 text-[9.5px] font-semibold border border-slate-200/70 flex items-center space-x-1"
                             >
                               <Tag className="w-2.5 h-2.5 text-[#0056d2] shrink-0" />
                               <span className="truncate max-w-[130px]">{act}</span>
