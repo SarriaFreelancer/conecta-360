@@ -329,7 +329,7 @@ function UserDashboardContent() {
     }
   };
 
-  // Escoger cuáles de las actividades mostrar afuera en la tarjeta pública (máx 5)
+  // Escoger cuáles de las actividades mostrar afuera en la tarjeta pública (máx 4)
   const handleToggleFeaturedActivity = (serviceId: string, activityName: string) => {
     if (!user) return;
     const service = user.services.find((s) => s.id === serviceId);
@@ -337,7 +337,7 @@ function UserDashboardContent() {
 
     const currentFeatured = service.featuredActivities && service.featuredActivities.length > 0
       ? service.featuredActivities
-      : service.activities.slice(0, 5);
+      : service.activities.slice(0, 4);
 
     let nextFeatured: string[];
     if (currentFeatured.includes(activityName)) {
@@ -347,8 +347,8 @@ function UserDashboardContent() {
       }
       nextFeatured = currentFeatured.filter((a) => a !== activityName);
     } else {
-      if (currentFeatured.length >= 5) {
-        alert('Puedes seleccionar un máximo de 5 actividades principales para tu tarjeta exterior.');
+      if (currentFeatured.length >= 4) {
+        alert('Puedes seleccionar un máximo de 4 actividades principales para tu tarjeta exterior.');
         return;
       }
       nextFeatured = [...currentFeatured, activityName];
@@ -1075,24 +1075,24 @@ function UserDashboardContent() {
                         </div>
                       </div>
 
-                      {/* Actividades relacionadas & Selección para Tarjeta Pública Exterior (Hasta 5) */}
+                      {/* Actividades relacionadas & Selección para Tarjeta Pública Exterior (Hasta 4) */}
                       <div className="space-y-2 pt-2 border-t border-slate-100">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs">
                           <span className="font-bold text-slate-800">
                             Actividades y Especialidades ({service.activities.length}/10):
                           </span>
                           <span className="text-[11px] font-bold text-[#0056d2] bg-blue-50 px-2.5 py-0.5 rounded-full inline-flex items-center space-x-1">
-                            <span>{(service.featuredActivities || service.activities.slice(0, 5)).length}/5 visibles en tarjeta pública</span>
+                            <span>{(service.featuredActivities || service.activities.slice(0, 4)).length}/4 visibles en tarjeta pública</span>
                           </span>
                         </div>
                         <p className="text-[11px] text-slate-500">
-                          Selecciona hasta 5 actividades principales para que se muestren afuera en tu tarjeta pública:
+                          Selecciona hasta 4 actividades principales para que se muestren afuera en tu tarjeta pública:
                         </p>
                         <div className="flex flex-wrap gap-1.5">
                           {service.activities.map((act, i) => {
                             const currentFeatured = service.featuredActivities && service.featuredActivities.length > 0
                               ? service.featuredActivities
-                              : service.activities.slice(0, 5);
+                              : service.activities.slice(0, 4);
                             const isFeatured = currentFeatured.includes(act);
                             return (
                               <button
@@ -1233,15 +1233,15 @@ function UserDashboardContent() {
                       </span>
                     </p>
 
-                    {/* Actividades principales mostradas afuera en la tarjeta pública (máx 5) */}
+                    {/* Actividades principales mostradas afuera en la tarjeta pública (máx 4) */}
                     <div className="pt-1.5 space-y-1">
                       <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">
-                        Actividades Principales ({((user.services[0].featuredActivities && user.services[0].featuredActivities.length > 0) ? user.services[0].featuredActivities : user.services[0].activities.slice(0, 5)).length}):
+                        Actividades Principales ({((user.services[0].featuredActivities && user.services[0].featuredActivities.length > 0) ? user.services[0].featuredActivities : user.services[0].activities.slice(0, 4)).length}):
                       </span>
                       <div className="flex flex-wrap gap-1">
                         {((user.services[0].featuredActivities && user.services[0].featuredActivities.length > 0)
                           ? user.services[0].featuredActivities
-                          : user.services[0].activities.slice(0, 5)
+                          : user.services[0].activities.slice(0, 4)
                         ).map((act, idx) => (
                           <span
                             key={idx}

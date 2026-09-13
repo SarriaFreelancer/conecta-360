@@ -206,7 +206,15 @@ function ProfileContent() {
   const hourlyRate = Number(user.providerProfile?.hourlyRate) || 45000;
   const ratingVal = user.providerProfile?.rating || 4.9;
   const reviewsCount = user.providerProfile?.totalReviews || 34;
-  const activities = user.providerProfile?.activities || getDefaultActivities(user.providerProfile?.title || '');
+
+  // Garantizar que el cliente siempre pueda ver las 10 actividades del profesional
+  const titleForActivities = user.providerProfile?.title || user.profile?.profession || '';
+  const defaultTen = getDefaultActivities(titleForActivities);
+  const userActivities = user.providerProfile?.activities || [];
+  const combinedActivities = Array.from(new Set([...userActivities, ...defaultTen]));
+  const activities = (combinedActivities.length >= 10 ? combinedActivities : defaultTen).slice(0, 10);
+  const featuredActivities = (user.providerProfile as any)?.featuredActivities || activities.slice(0, 4);
+
   const experienceYears = user.providerProfile?.experienceYears || 6;
   const coverageZones = user.providerProfile?.coverageZones || 'Cali (Norte, Sur, Oeste, Centro), Palmira y Jamundí';
 
@@ -457,34 +465,58 @@ function ProfileContent() {
                   </p>
                 </div>
 
-                {/* Actividades Detalladas del Servicio (Hasta 10 actividades) */}
+                {/* Actividades Detalladas del Servicio (Las 10 actividades completas) */}
                 <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
                     <div>
-                      <h3 className="text-sm font-black text-slate-900">
-                        Actividades Incluidas en el Servicio ({activities.length} actividades)
+                      <h3 className="text-sm font-black text-slate-900 flex items-center space-x-2">
+                        <Sparkles className="w-4 h-4 text-[#0056d2]" />
+                        <span>Las 10 Actividades y Especialidades del Profesional</span>
                       </h3>
                       <p className="text-xs text-slate-500 mt-0.5">
-                        Tareas y procedimientos cubiertos por el profesional según las directrices de Conecta 360:
+                        Tareas completas y procedimientos técnicos que el cliente puede contratar con este profesional en Cali:
                       </p>
                     </div>
-                    <span className="px-2.5 py-1 rounded-full bg-blue-50 text-[#0056d2] font-bold text-xs">
-                      Límite 10 actividades
+                    <span className="px-3 py-1 rounded-full bg-blue-50 text-[#0056d2] font-bold text-xs border border-blue-100 shrink-0 self-start sm:self-auto">
+                      10 actividades disponibles
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-                    {activities.map((act, index) => (
-                      <div
-                        key={index}
-                        className="flex items-start space-x-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200/80 hover:border-blue-200 transition-colors"
-                      >
-                        <div className="w-5 h-5 rounded-md bg-blue-100 text-[#0056d2] flex items-center justify-center font-bold text-[11px] shrink-0 mt-0.5">
-                          {index + 1}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    {activities.slice(0, 10).map((act, index) => {
+                      const isMainFeatured = featuredActivities.includes(act) || index < 4;
+                      return (
+                        <div
+                          key={index}
+                          className={`flex items-start space-x-3 p-3.5 rounded-xl border transition-all ${
+                            isMainFeatured
+                              ? 'bg-blue-50/40 border-blue-200/80 shadow-xs'
+                              : 'bg-slate-50/70 border-slate-200/80 hover:border-slate-300'
+                          }`}
+                        >
+                          <div
+                            className={`w-6 h-6 rounded-lg flex items-center justify-center font-black text-xs shrink-0 mt-0.5 ${
+                              isMainFeatured
+                                ? 'bg-[#0056d2] text-white shadow-xs'
+                                : 'bg-slate-200 text-slate-700'
+                            }`}
+                          >
+                            {index + 1}
+                          </div>
+                          <div className="space-y-1 min-w-0 flex-1">
+                            <span className="text-xs font-bold text-slate-800 leading-snug block">
+                              {act}
+                            </span>
+                            {isMainFeatured && (
+                              <span className="inline-flex items-center space-x-1 text-[10px] font-extrabold text-[#0056d2] bg-blue-100/70 px-2 py-0.5 rounded-md">
+                                <Check className="w-3 h-3 stroke-[2.5]" />
+                                <span>Actividad Principal (Visible en Tarjeta)</span>
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <span className="text-xs font-semibold text-slate-800 leading-snug">{act}</span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -848,6 +880,22 @@ function getMockReviewsForUser(userId: number) {
 
 function enrichUserData(data: any, id: number): UserData {
   const fallback = getDetailedProviderData(id);
+  let providerActivities = fallback.providerProfile?.activities;
+  let featuredActivities: string[] | undefined = undefined;
+
+  try {
+    const session = getCurrentUser();
+    if (session && String(session.id) === String(id) && session.services?.[0]) {
+      const s = session.services[0];
+      if (s.activities && s.activities.length > 0) {
+        providerActivities = s.activities;
+      }
+      if (s.featuredActivities && s.featuredActivities.length > 0) {
+        featuredActivities = s.featuredActivities;
+      }
+    }
+  } catch (e) {}
+
   return {
     ...data,
     profile: {
@@ -859,15 +907,41 @@ function enrichUserData(data: any, id: number): UserData {
       ...data.providerProfile,
       hourlyRate: data.providerProfile?.hourlyRate || fallback.providerProfile?.hourlyRate,
       isVerified: Boolean(data.providerProfile?.isVerified),
-      activities: fallback.providerProfile?.activities,
+      activities: providerActivities || fallback.providerProfile?.activities,
+      featuredActivities: featuredActivities,
       coverageZones: fallback.providerProfile?.coverageZones,
       experienceYears: fallback.providerProfile?.experienceYears,
-    },
+    } as any,
   };
 }
 
 function getDetailedProviderData(id: number): UserData {
   const providersMap: Record<number, Partial<UserData>> = {
+    999: {
+      firstName: 'Carlos Andrés',
+      lastName: 'Rodríguez',
+      phone: '+57 315 789 4521',
+      profile: {
+        city: 'Cali',
+        department: 'Valle del Cauca',
+        country: 'Colombia',
+        profession: 'Técnico Electricista e Instalaciones',
+        bio: 'Especialista en instalaciones eléctricas residenciales, cuadros de mando y mantenimiento 24/7 en Cali y área metropolitana.',
+        profilePhoto: '/images/service-electricista.jpg',
+      },
+      providerProfile: {
+        id: 999,
+        title: 'Instalaciones Eléctricas y Reparaciones Residenciales',
+        hourlyRate: 45000,
+        isVerified: true,
+        rating: 4.9,
+        totalReviews: 48,
+        experienceYears: 8,
+        coverageZones: 'Cali (Norte, Sur, Oeste), Jamundí, Yumbo',
+        activities: getDefaultActivities('electricidad'),
+        bio: 'Especialista en instalaciones eléctricas residenciales, cuadros de mando y mantenimiento 24/7 en Cali y área metropolitana.',
+      },
+    },
     1: {
       firstName: 'Juan',
       lastName: 'Pérez',

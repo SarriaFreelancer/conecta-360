@@ -527,7 +527,7 @@ export default function Home() {
           isVerified: user.isVerified, // Tarjeta muestra si está verificado o aún no
           rating: 5.0,
           totalReviews: 0,
-          featuredActivities: srv.featuredActivities || srv.activities.slice(0, 5),
+          featuredActivities: srv.featuredActivities || srv.activities.slice(0, 4),
           user: {
             id: user.id,
             firstName: user.firstName,
@@ -682,18 +682,18 @@ export default function Home() {
     return `$${num.toLocaleString('es-CO')} COP`;
   };
 
-  // Obtener las actividades principales (hasta 5) de la persona para mostrar en la tarjeta exterior
+  // Obtener las actividades principales (hasta 4) de la persona para mostrar en la tarjeta exterior
   const getProviderFeaturedActivities = (prov: ProviderData): string[] => {
     if (prov.featuredActivities && prov.featuredActivities.length > 0) {
-      return prov.featuredActivities.slice(0, 5);
+      return prov.featuredActivities.slice(0, 4);
     }
 
     if (user && user.role === 'PROVIDER' && String(prov.userId) === String(user.id)) {
       const s = user.services.find((srv) => srv.id === prov.id) || user.services[0];
       if (s) {
         return (s.featuredActivities && s.featuredActivities.length > 0)
-          ? s.featuredActivities.slice(0, 5)
-          : s.activities.slice(0, 5);
+          ? s.featuredActivities.slice(0, 4)
+          : s.activities.slice(0, 4);
       }
     }
 
@@ -701,30 +701,30 @@ export default function Home() {
     const nameLower = `${prov.user?.firstName || ''} ${prov.user?.lastName || ''}`.toLowerCase();
 
     if (titleLower.includes('cerraj') || nameLower.includes('juan')) {
-      return ['Apertura de cerraduras', 'Duplicado de llaves chip', 'Cerraduras digitales', 'Apertura de autos', 'Cilindros de seguridad'];
+      return ['Apertura de cerraduras', 'Duplicado de llaves chip', 'Cerraduras digitales', 'Apertura de autos'];
     }
     if (titleLower.includes('electr') || nameLower.includes('carlos')) {
-      return ['Cableado estructurado', 'Paneles solares', 'Reparación cortocircuitos', 'Certificación RETIE', 'Tableros eléctricos'];
+      return ['Cableado estructurado', 'Paneles solares', 'Reparación cortocircuitos', 'Certificación RETIE'];
     }
     if (titleLower.includes('tecno') || titleLower.includes('web') || nameLower.includes('ana')) {
-      return ['Mantenimiento PC', 'Desarrollo web y apps', 'Redes WiFi', 'Seguridad informática', 'Soporte remoto'];
+      return ['Mantenimiento PC', 'Desarrollo web y apps', 'Redes WiFi', 'Seguridad informática'];
     }
     if (titleLower.includes('plom') || nameLower.includes('luis')) {
-      return ['Reparación de fugas', 'Destape de cañerías', 'Instalación de grifería', 'Motobombas', 'Calentadores de agua'];
+      return ['Reparación de fugas', 'Destape de cañerías', 'Instalación de grifería', 'Motobombas'];
     }
     if (titleLower.includes('repar') || nameLower.includes('roberto')) {
-      return ['Reparación electrodomésticos', 'Drywall y techos', 'Pintura residencial', 'Enchapes y pisos', 'Soldadura'];
+      return ['Reparación electrodomésticos', 'Drywall y techos', 'Pintura residencial', 'Enchapes y pisos'];
     }
     if (titleLower.includes('diseñ') || nameLower.includes('diana')) {
-      return ['Diseño de logos', 'Diseño UI/UX móvil', 'Branding corporativo', 'Publicidad digital', 'Edición de video'];
+      return ['Diseño de logos', 'Diseño UI/UX móvil', 'Branding corporativo', 'Publicidad digital'];
     }
     if (titleLower.includes('educ') || nameLower.includes('sofia')) {
-      return ['Matemáticas y física', 'Inglés interactivo', 'Pruebas Saber 11', 'Refuerzo escolar', 'Clases online'];
+      return ['Matemáticas y física', 'Inglés interactivo', 'Pruebas Saber 11', 'Refuerzo escolar'];
     }
     if (titleLower.includes('salud') || nameLower.includes('valeria')) {
-      return ['Fisioterapia a domicilio', 'Rehabilitación física', 'Masaje terapéutico', 'Ergonomía postural', 'Acondicionamiento'];
+      return ['Fisioterapia a domicilio', 'Rehabilitación física', 'Masaje terapéutico', 'Ergonomía postural'];
     }
-    return ['Diagnóstico técnico', 'Servicio a domicilio en Cali', 'Mantenimiento preventivo', 'Garantía de servicio', 'Atención inmediata'];
+    return ['Diagnóstico técnico', 'Servicio a domicilio en Cali', 'Mantenimiento preventivo', 'Garantía de servicio'];
   };
 
   // Renderizar tarjeta de servicio
@@ -809,7 +809,7 @@ export default function Home() {
               <span className="truncate">{locationStr}</span>
             </div>
 
-            {/* 5 Actividades Principales de la Persona en la Tarjeta Exterior */}
+            {/* 4 Actividades Principales de la Persona en la Tarjeta Exterior */}
             <div className="pt-2 border-t border-slate-100 space-y-1">
               <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">
                 Actividades Principales ({activitiesToShow.length}):
@@ -1773,7 +1773,7 @@ export default function Home() {
             </div>
             <div>
               <h3 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight leading-tight">
-                ¿Listo para encontrar o ofrecer servicios?
+                ¿Listo para encontrar u ofrecer servicios?
               </h3>
               <p className="text-xs sm:text-sm text-slate-200 mt-1">
                 Únete a Conecta360 y sé parte de una comunidad que hace la vida más fácil.

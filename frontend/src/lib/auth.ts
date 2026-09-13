@@ -76,7 +76,7 @@ export interface ProviderServiceItem {
   categoryName: string;
   hourlyRate: number;
   activities: string[]; // Límite máximo de 10 actividades
-  featuredActivities?: string[]; // Hasta 5 actividades elegidas para exhibir en la tarjeta pública
+  featuredActivities?: string[]; // Hasta 4 actividades elegidas para exhibir en la tarjeta pública
   city: string;
   department: string;
   coverageZones?: string;
@@ -122,19 +122,23 @@ export function getInitialProviderSession(): UserSession {
         categoryName: 'Electricidad',
         hourlyRate: global.defaultHourlyRate, // Tarifa por defecto configurada por el admin
         activities: [
-          'Instalación de acometidas',
-          'Reparación de cortocircuitos',
-          'Tableros de breakers',
-          'Iluminación LED y tomas',
-          'Mantenimiento preventivo',
-        ], // 5/10 actividades
+          'Instalación de acometidas y circuitos',
+          'Reparación de cortocircuitos y fallas',
+          'Montaje de tableros de breakers',
+          'Instalación de iluminación LED y tomas',
+          'Mantenimiento preventivo locativo',
+          'Cableado estructurado y canaletas',
+          'Detección de sobrecargas y fugas',
+          'Instalación de polo a tierra y GFCI',
+          'Revisión y certificación RETIE',
+          'Asesoría técnica y pruebas de carga',
+        ], // 10 actividades completas del servicio
         featuredActivities: [
-          'Instalación de acometidas',
-          'Reparación de cortocircuitos',
-          'Tableros de breakers',
-          'Iluminación LED y tomas',
-          'Mantenimiento preventivo',
-        ], // 5 elegidas para la tarjeta pública
+          'Instalación de acometidas y circuitos',
+          'Reparación de cortocircuitos y fallas',
+          'Montaje de tableros de breakers',
+          'Instalación de iluminación LED y tomas',
+        ], // 4 elegidas para la tarjeta pública exterior
         city: 'Cali',
         department: 'Valle del Cauca',
         coverageZones: 'Cali (Norte, Sur, Oeste), Jamundí, Yumbo',
@@ -478,6 +482,7 @@ export function addServiceToUser(serviceData: Omit<ProviderServiceItem, 'id' | '
 
   const newService: ProviderServiceItem = {
     ...serviceData,
+    featuredActivities: serviceData.activities.slice(0, 4),
     id: `srv-${Date.now()}`,
     createdAt: new Date().toISOString(),
   };
@@ -645,7 +650,7 @@ export function createTeamBooking(teamData: {
   return { success: true, teamBookingId: teamId };
 }
 
-// Configurar hasta 5 actividades principales destacadas para la tarjeta pública
+// Configurar hasta 4 actividades principales destacadas para la tarjeta pública
 export function setFeaturedActivitiesForService(serviceId: string, activities: string[]): boolean {
   const current = getCurrentUser();
   if (!current || !current.services) return false;
@@ -653,8 +658,8 @@ export function setFeaturedActivitiesForService(serviceId: string, activities: s
   const srv = current.services.find((s) => s.id === serviceId);
   if (!srv) return false;
 
-  // Límite de hasta 5 actividades elegidas
-  srv.featuredActivities = activities.slice(0, 5);
+  // Límite de hasta 4 actividades elegidas
+  srv.featuredActivities = activities.slice(0, 4);
   setCurrentUser(current);
   return true;
 }
