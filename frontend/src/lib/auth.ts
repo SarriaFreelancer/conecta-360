@@ -10,7 +10,7 @@ export interface ServiceHistoryItem {
   providerName: string;
   providerPhone?: string;
   date: string;
-  status: 'SOLICITADO' | 'CONFIRMADO' | 'EN_PROGRESO' | 'COMPLETADO' | 'CANCELADO' | 'PENDIENTE';
+  status: 'SOLICITADO' | 'CONFIRMADO' | 'EN_PROGRESO' | 'COMPLETADO' | 'CANCELADO' | 'PENDIENTE' | 'RECHAZADO';
   amount: number; // Monto en COP
   paymentStatus: 'PAGADO' | 'PENDIENTE';
   paymentMethod: 'Transferencia Bancaria' | 'Efectivo' | 'Tarjeta de Crédito / Débito';
@@ -19,6 +19,12 @@ export interface ServiceHistoryItem {
   rating?: number; // 1 a 5 estrellas
   reviewComment?: string;
   estimatedTimeRange?: string; // Rango de tiempo estimado (ej. "2 a 4 horas", "1 día hábil", etc.)
+  rejectionReason?: string; // Motivo del rechazo (ej. "El lugar está muy lejos de mi zona de cobertura")
+  rejectionExplanation?: string; // Explicación obligatoria del servidor
+  penaltyPointsApplied?: number; // Puntos negativos incurridos si el rechazo no fue justificado
+  locationZone?: string; // Ubicación o barrio del servicio solicitado
+  clientId?: number | string;
+  providerId?: number | string;
   teamBookingId?: string; // ID si pertenece a una solicitud de equipo de trabajo
   teamProjectName?: string;
   teamMembersCount?: number;
@@ -30,7 +36,7 @@ export interface AppNotification {
   userId: number | string;
   title: string;
   message: string;
-  type: 'SERVICE_REQUEST' | 'SERVICE_CONFIRMED' | 'TEAM_REQUEST' | 'MESSAGE' | 'SYSTEM';
+  type: 'SERVICE_REQUEST' | 'SERVICE_CONFIRMED' | 'SERVICE_REJECTED' | 'TEAM_REQUEST' | 'MESSAGE' | 'SYSTEM';
   date: string;
   createdAt?: string;
   read: boolean;
@@ -39,6 +45,7 @@ export interface AppNotification {
   serviceId?: string;
   timeRange?: string;
   estimatedTimeRange?: string;
+  rejectionReason?: string;
 }
 
 export interface UserSession {
@@ -52,6 +59,10 @@ export interface UserSession {
   isVerified: boolean;
   plan: 'FREE' | 'PRO';
   createdAt: string;
+  reputationPoints?: number; // Reputación inicial (ej: 100 pts)
+  negativePoints?: number; // Puntos negativos acumulados por rechazos injustificados
+  rejectedServicesCount?: number; // Total servicios rechazados
+  acceptedServicesCount?: number; // Total servicios aceptados/confirmados
   profile: {
     city: string;
     department: string;
@@ -89,6 +100,7 @@ export interface ProviderServiceItem {
 const AUTH_STORAGE_KEY = 'conecta360_user_session';
 const ALL_USERS_STORAGE_KEY = 'conecta360_registered_users';
 const NOTIFICATIONS_STORAGE_KEY = 'conecta360_notifications';
+const ALL_BOOKINGS_STORAGE_KEY = 'conecta360_all_bookings';
 
 export function getInitialProviderSession(): UserSession {
   const global = getGlobalSettings();
@@ -103,6 +115,10 @@ export function getInitialProviderSession(): UserSession {
     isVerified: false,  // Tarjeta muestra "Pendiente de verificación" hasta que el admin apruebe
     plan: 'FREE',       // Plan gratis: solo 1 servicio
     createdAt: new Date().toISOString(),
+    reputationPoints: 100, // Inicia con 100 puntos de reputación
+    negativePoints: 0,
+    rejectedServicesCount: 0,
+    acceptedServicesCount: 2,
     profile: {
       city: 'Cali',
       department: 'Valle del Cauca',
@@ -528,6 +544,123 @@ export function updateServiceHistoryStatus(
   return true;
 }
 
+// Solicitudes globales del sistema (visibles para Admin, Clientes y Servidores)
+export function getInitialSeedBookings(): ServiceHistoryItem[] {
+  return [
+    {
+      id: 'req-101',
+      serviceTitle: 'Instalaciones Eléctricas y Reparaciones Residenciales',
+      categoryName: 'Electricidad',
+      clientName: 'María Camila Vargas',
+      clientPhone: '+57 312 456 7890',
+      clientId: 501,
+      providerId: 999,
+      providerName: 'Carlos Andrés Rodríguez',
+      date: 'Hoy, 09:30 AM',
+      status: 'SOLICITADO',
+      amount: 45000,
+      paymentStatus: 'PENDIENTE',
+      paymentMethod: 'Transferencia Bancaria',
+      platformFee: 2250,
+      platformDebtStatus: 'EN_DEUDA',
+      estimatedTimeRange: '2 a 4 horas (Media jornada)',
+      locationZone: 'Cali (Barrio Granada - Norte)',
+      messageNotes: 'Revisión urgente de breakers principales y balance de carga en apartamento.',
+    },
+    {
+      id: 'req-102',
+      serviceTitle: 'Cerrajería de Urgencias y Residencial',
+      categoryName: 'Cerrajería',
+      clientName: 'Andrés Felipe Morales',
+      clientPhone: '+57 316 789 1234',
+      clientId: 502,
+      providerId: 1,
+      providerName: 'Juan Pérez',
+      date: 'Ayer, 03:15 PM',
+      status: 'CONFIRMADO',
+      amount: 50000,
+      paymentStatus: 'PENDIENTE',
+      paymentMethod: 'Transferencia Bancaria',
+      platformFee: 2500,
+      platformDebtStatus: 'EN_DEUDA',
+      estimatedTimeRange: '1 a 2 horas (Urgencia)',
+      locationZone: 'Cali (Barrio Ciudad Jardín - Sur)',
+      messageNotes: 'Apertura e instalación de cerradura de alta seguridad multipunto.',
+    },
+    {
+      id: 'req-103',
+      serviceTitle: 'Plomería y Destapes a Domicilio',
+      categoryName: 'Plomería',
+      clientName: 'David Fernando Ospina',
+      clientPhone: '+57 318 901 2345',
+      clientId: 503,
+      providerId: 4,
+      providerName: 'Luis García',
+      date: 'Hace 2 días',
+      status: 'RECHAZADO',
+      amount: 35000,
+      paymentStatus: 'PENDIENTE',
+      paymentMethod: 'Efectivo',
+      platformFee: 1750,
+      platformDebtStatus: 'NO_APLICA',
+      estimatedTimeRange: '2 a 3 horas',
+      locationZone: 'Jamundí (Condominio campestre a 28 km)',
+      rejectionReason: 'El lugar está muy lejos de mi zona de cobertura',
+      rejectionExplanation: 'La ubicación en Jamundí campestre queda a más de 25 km de mi base operativa en Cali Norte y excede mi radio de cobertura diario pactado en Conecta 360.',
+      penaltyPointsApplied: 0,
+      messageNotes: 'Destape mecánico de caja de inspección en casa campestre.',
+    },
+    {
+      id: 'req-104',
+      serviceTitle: 'Electricidad Residencial e Industrial',
+      categoryName: 'Electricidad',
+      clientName: 'Carolina Gómez Perea',
+      clientPhone: '+57 310 345 6789',
+      clientId: 504,
+      providerId: 2,
+      providerName: 'Carlos Mendoza',
+      date: 'Hace 3 días',
+      status: 'RECHAZADO',
+      amount: 40000,
+      paymentStatus: 'PENDIENTE',
+      paymentMethod: 'Transferencia Bancaria',
+      platformFee: 2000,
+      platformDebtStatus: 'NO_APLICA',
+      estimatedTimeRange: '4 a 6 horas',
+      locationZone: 'Cali (Barrio San Fernando)',
+      rejectionReason: 'Sin justificación / No deseo tomar el servicio',
+      rejectionExplanation: 'Rechazado sin causa justificada por el servidor tras 24 horas de espera.',
+      penaltyPointsApplied: 10,
+      messageNotes: 'Instalación de reflectores LED en terraza residencial.',
+    },
+  ];
+}
+
+export function getAllBookings(): ServiceHistoryItem[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(ALL_BOOKINGS_STORAGE_KEY);
+    if (!raw) {
+      const seeds = getInitialSeedBookings();
+      saveAllBookings(seeds);
+      return seeds;
+    }
+    return JSON.parse(raw);
+  } catch (e) {
+    console.error('Error cargando solicitudes:', e);
+    return [];
+  }
+}
+
+export function saveAllBookings(bookings: ServiceHistoryItem[]): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(ALL_BOOKINGS_STORAGE_KEY, JSON.stringify(bookings));
+  } catch (e) {
+    console.error('Error guardando solicitudes:', e);
+  }
+}
+
 export function createServiceBooking(booking: {
   providerId: number | string;
   providerName: string;
@@ -537,6 +670,7 @@ export function createServiceBooking(booking: {
   date?: string;
   notes?: string;
   estimatedTimeRange?: string;
+  locationZone?: string;
   teamBookingId?: string;
   teamProjectName?: string;
   teamMembersCount?: number;
@@ -550,6 +684,8 @@ export function createServiceBooking(booking: {
     categoryName: booking.categoryName,
     clientName: `${current.firstName} ${current.lastName}`,
     clientPhone: current.phone,
+    clientId: current.id,
+    providerId: booking.providerId,
     providerName: booking.providerName,
     date: booking.date || new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }),
     status: 'SOLICITADO',
@@ -560,23 +696,41 @@ export function createServiceBooking(booking: {
     platformDebtStatus: 'EN_DEUDA', // Cliente paga directo por transferencia -> prestador queda en deuda
     reviewComment: booking.notes,
     estimatedTimeRange: booking.estimatedTimeRange || '2 a 4 horas estimadas',
+    locationZone: booking.locationZone || `${current.profile?.city || 'Cali'} (${current.profile?.department || 'Valle'})`,
     teamBookingId: booking.teamBookingId,
     teamProjectName: booking.teamProjectName,
     teamMembersCount: booking.teamMembersCount,
     messageNotes: booking.notes,
   };
 
+  // 1. Guardar en el historial del usuario actual
   if (!current.history) current.history = [];
   current.history.unshift(newHistoryItem);
   setCurrentUser(current);
 
-  // Generar notificación para el prestador
+  // 2. Guardar en la base global de todas las solicitudes (para que el Admin y el Servidor las vean)
+  const allBookings = getAllBookings();
+  allBookings.unshift(newHistoryItem);
+  saveAllBookings(allBookings);
+
+  // 3. Notificación para el servidor / prestador
   addNotification({
     userId: booking.providerId,
     title: 'Nueva Solicitud de Servicio Recibida',
-    message: `${current.firstName} ${current.lastName} ha solicitado tu servicio "${booking.serviceTitle}". Rango estimado: ${booking.estimatedTimeRange || '2 a 4 horas'}. Ingresa para confirmar.`,
+    message: `${current.firstName} ${current.lastName} ha solicitado tu servicio "${booking.serviceTitle}". Rango estimado: ${booking.estimatedTimeRange || '2 a 4 horas'}. Ingresa para aprobar o rechazar con justificación.`,
     type: booking.teamBookingId ? 'TEAM_REQUEST' : 'SERVICE_REQUEST',
     actionRequired: true,
+    serviceId: newHistoryItem.id,
+    timeRange: booking.estimatedTimeRange || '2 a 4 horas',
+  });
+
+  // 4. Notificación para el Administrador
+  addNotification({
+    userId: 'admin',
+    title: 'Nueva Solicitud de Cliente Registrada',
+    message: `El cliente ${current.firstName} ${current.lastName} solicitó "${booking.serviceTitle}" al servidor ${booking.providerName}. Estado: Pendiente de aprobación por el servidor.`,
+    type: 'SERVICE_REQUEST',
+    actionRequired: false,
     serviceId: newHistoryItem.id,
     timeRange: booking.estimatedTimeRange || '2 a 4 horas',
   });
@@ -584,29 +738,189 @@ export function createServiceBooking(booking: {
   return true;
 }
 
-// Confirmar solicitud de servicio por parte del prestador
+// Aprobar / Confirmar solicitud de servicio por parte del servidor
 export function confirmServiceBooking(bookingId: string, confirmedTimeRange?: string): boolean {
   const current = getCurrentUser();
-  if (!current || !current.history) return false;
 
-  const item = current.history.find((h) => h.id === bookingId);
-  if (!item) return false;
+  // Actualizar en el almacén global
+  const allBookings = getAllBookings();
+  const globalIndex = allBookings.findIndex((b) => b.id === bookingId);
+  let updatedItem: ServiceHistoryItem | null = null;
 
-  item.status = 'CONFIRMADO';
-  if (confirmedTimeRange) {
-    item.estimatedTimeRange = confirmedTimeRange;
+  if (globalIndex >= 0) {
+    allBookings[globalIndex].status = 'CONFIRMADO';
+    if (confirmedTimeRange) {
+      allBookings[globalIndex].estimatedTimeRange = confirmedTimeRange;
+    }
+    updatedItem = allBookings[globalIndex];
+    saveAllBookings(allBookings);
   }
-  setCurrentUser(current);
+
+  // Actualizar en la sesión actual
+  if (current && current.history) {
+    const item = current.history.find((h) => h.id === bookingId);
+    if (item) {
+      item.status = 'CONFIRMADO';
+      if (confirmedTimeRange) {
+        item.estimatedTimeRange = confirmedTimeRange;
+      }
+      if (!updatedItem) updatedItem = item;
+    }
+    current.acceptedServicesCount = (current.acceptedServicesCount || 0) + 1;
+    setCurrentUser(current);
+  }
+
+  const clientNameOrId = updatedItem?.clientId || updatedItem?.clientName || 'cliente';
+  const providerName = updatedItem?.providerName || current?.firstName || 'El profesional';
+  const servTitle = updatedItem?.serviceTitle || 'Servicio';
+  const finalRange = confirmedTimeRange || updatedItem?.estimatedTimeRange || 'Confirmado';
 
   // Despachar notificación de vuelta al cliente
   addNotification({
-    userId: item.clientName,
-    title: '¡Servicio Confirmado por el Profesional!',
-    message: `${item.providerName} ha confirmado la solicitud para "${item.serviceTitle}". Rango de tiempo estimado acordado: ${confirmedTimeRange || item.estimatedTimeRange || 'Confirmado'}.`,
+    userId: clientNameOrId,
+    title: '¡Servicio Aprobado por el Profesional!',
+    message: `${providerName} ha aprobado tu solicitud para "${servTitle}". Rango de tiempo estimado acordado: ${finalRange}.`,
     type: 'SERVICE_CONFIRMED',
     actionRequired: false,
-    serviceId: item.id,
-    timeRange: confirmedTimeRange || item.estimatedTimeRange,
+    serviceId: bookingId,
+    timeRange: finalRange,
+  });
+
+  // Notificar al Administrador
+  addNotification({
+    userId: 'admin',
+    title: 'Servicio Aprobado por el Servidor',
+    message: `El servidor ${providerName} aprobó la solicitud #${bookingId} para el cliente ${updatedItem?.clientName || 'Cliente'}. Rango: ${finalRange}.`,
+    type: 'SERVICE_CONFIRMED',
+    actionRequired: false,
+    serviceId: bookingId,
+  });
+
+  return true;
+}
+
+// Rechazar solicitud de servicio por parte del servidor (incurre en explicación y posibles puntos negativos)
+export function rejectServiceBooking(
+  bookingId: string,
+  rejectionData: {
+    reason: string;
+    explanation: string;
+    penaltyPoints?: number;
+  }
+): boolean {
+  const current = getCurrentUser();
+
+  // Calcular puntos negativos:
+  // Si el motivo es "Lugar muy lejos de mi zona de cobertura" o está bien explicado (>15 caracteres), 0 puntos negativos.
+  // Si no tiene justificación válida o explicación es vacía, 10 puntos negativos.
+  let penalty = rejectionData.penaltyPoints !== undefined ? rejectionData.penaltyPoints : 0;
+  const isFarLocation = rejectionData.reason.toLowerCase().includes('lejos') || rejectionData.reason.toLowerCase().includes('cobertura');
+  const hasGoodExplanation = rejectionData.explanation.trim().length >= 15;
+
+  if (!isFarLocation && !hasGoodExplanation) {
+    penalty = 10;
+  }
+
+  // Actualizar en el almacén global
+  const allBookings = getAllBookings();
+  const globalIndex = allBookings.findIndex((b) => b.id === bookingId);
+  let updatedItem: ServiceHistoryItem | null = null;
+
+  if (globalIndex >= 0) {
+    allBookings[globalIndex].status = 'RECHAZADO';
+    allBookings[globalIndex].rejectionReason = rejectionData.reason;
+    allBookings[globalIndex].rejectionExplanation = rejectionData.explanation.trim();
+    allBookings[globalIndex].penaltyPointsApplied = penalty;
+    allBookings[globalIndex].platformDebtStatus = 'NO_APLICA';
+    updatedItem = allBookings[globalIndex];
+    saveAllBookings(allBookings);
+  }
+
+  // Actualizar en la sesión actual
+  if (current) {
+    if (current.history) {
+      const item = current.history.find((h) => h.id === bookingId);
+      if (item) {
+        item.status = 'RECHAZADO';
+        item.rejectionReason = rejectionData.reason;
+        item.rejectionExplanation = rejectionData.explanation.trim();
+        item.penaltyPointsApplied = penalty;
+        item.platformDebtStatus = 'NO_APLICA';
+        if (!updatedItem) updatedItem = item;
+      }
+    }
+    current.rejectedServicesCount = (current.rejectedServicesCount || 0) + 1;
+    if (penalty > 0) {
+      current.negativePoints = (current.negativePoints || 0) + penalty;
+      current.reputationPoints = Math.max(0, (current.reputationPoints || 100) - penalty);
+    }
+    setCurrentUser(current);
+  }
+
+  const clientNameOrId = updatedItem?.clientId || updatedItem?.clientName || 'cliente';
+  const providerName = updatedItem?.providerName || `${current?.firstName} ${current?.lastName}` || 'El profesional';
+  const servTitle = updatedItem?.serviceTitle || 'Servicio';
+
+  // 1. Despachar notificación al Cliente
+  addNotification({
+    userId: clientNameOrId,
+    title: 'Solicitud de Servicio No Disponible',
+    message: `${providerName} no pudo tomar tu solicitud para "${servTitle}". Motivo indicado: ${rejectionData.reason}. Explicación: "${rejectionData.explanation.trim()}". Te invitamos a solicitar a otro profesional disponible.`,
+    type: 'SERVICE_REJECTED',
+    actionRequired: false,
+    serviceId: bookingId,
+    rejectionReason: rejectionData.reason,
+  });
+
+  // 2. Despachar notificación al Administrador
+  addNotification({
+    userId: 'admin',
+    title: `Servicio Rechazado por Servidor (${penalty > 0 ? `+${penalty} Pts Negativos` : 'Justificado'})`,
+    message: `El servidor ${providerName} rechazó la solicitud #${bookingId} de ${updatedItem?.clientName || 'Cliente'}. Motivo: "${rejectionData.reason}". Explicación: "${rejectionData.explanation.trim()}". Puntos negativos aplicados: ${penalty}.`,
+    type: 'SERVICE_REJECTED',
+    actionRequired: penalty > 0,
+    serviceId: bookingId,
+  });
+
+  return true;
+}
+
+// Reasignar una solicitud rechazada a otro prestador (Acción del Administrador)
+export function reassignBookingByAdmin(
+  bookingId: string,
+  newProviderId: number | string,
+  newProviderName: string
+): boolean {
+  const allBookings = getAllBookings();
+  const bIndex = allBookings.findIndex((b) => b.id === bookingId);
+  if (bIndex < 0) return false;
+
+  allBookings[bIndex].providerId = newProviderId;
+  allBookings[bIndex].providerName = newProviderName;
+  allBookings[bIndex].status = 'SOLICITADO';
+  allBookings[bIndex].rejectionReason = undefined;
+  allBookings[bIndex].rejectionExplanation = undefined;
+  allBookings[bIndex].penaltyPointsApplied = undefined;
+  saveAllBookings(allBookings);
+
+  // Notificar al nuevo prestador
+  addNotification({
+    userId: newProviderId,
+    title: 'Solicitud Reasignada por Administrador',
+    message: `Se te ha reasignado la solicitud "${allBookings[bIndex].serviceTitle}" del cliente ${allBookings[bIndex].clientName}. Ingresa para aprobar o indicar disponibilidad.`,
+    type: 'SERVICE_REQUEST',
+    actionRequired: true,
+    serviceId: bookingId,
+  });
+
+  // Notificar al cliente
+  addNotification({
+    userId: allBookings[bIndex].clientId || allBookings[bIndex].clientName,
+    title: 'Tu Solicitud fue Reasignada a un Nuevo Profesional',
+    message: `El administrador de Conecta 360 ha reasignado tu solicitud para "${allBookings[bIndex].serviceTitle}" al profesional ${newProviderName}. Pronto confirmará el horario.`,
+    type: 'SERVICE_REQUEST',
+    actionRequired: false,
+    serviceId: bookingId,
   });
 
   return true;

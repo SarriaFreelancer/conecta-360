@@ -37,7 +37,9 @@ import {
   Bell,
   MessageCircle,
   CheckSquare,
-  Square
+  Square,
+  ShieldAlert,
+  AlertCircle
 } from 'lucide-react';
 import {
   getCurrentUser,
@@ -52,6 +54,7 @@ import {
   payUserPlatformDebt,
   calculateUserPlatformDebt,
   confirmServiceBooking,
+  rejectServiceBooking,
   setFeaturedActivitiesForService,
   updateWhatsAppSettings,
   getUserNotifications,
@@ -93,6 +96,12 @@ function UserDashboardContent() {
   // Switch de WhatsApp en el Perfil Público (ON / OFF)
   const [whatsAppToggle, setWhatsAppToggle] = useState(true);
   const [whatsAppInput, setWhatsAppInput] = useState('');
+
+  // Modal de Rechazo de Solicitud con justificación y cálculo de puntos (Modo Prestador)
+  const [rejectModalItem, setRejectModalItem] = useState<ServiceHistoryItem | null>(null);
+  const [rejectReason, setRejectReason] = useState('El lugar está muy lejos de mi zona de cobertura (Fuera de perímetro)');
+  const [rejectExplanation, setRejectExplanation] = useState('');
+  const [penaltyWarning, setPenaltyWarning] = useState<number>(0);
 
   // Categorías disponibles con requerimiento de título
   const categoriesList = [
@@ -326,6 +335,52 @@ function UserDashboardContent() {
       if (refreshed) setNotifications(getUserNotifications(refreshed.id));
       setToastMessage('✓ ¡Solicitud de servicio confirmada con éxito! El cliente ha recibido la notificación en el sistema.');
       setTimeout(() => setToastMessage(null), 4500);
+    }
+  };
+
+  // Manejar selección de motivo de rechazo y cálculo de advertencia de puntos
+  const handleSelectRejectReason = (reason: string) => {
+    setRejectReason(reason);
+    if (reason.includes('lejos') || reason.includes('cobertura')) {
+      setPenaltyWarning(0);
+    } else if (reason.includes('Sin justificación')) {
+      setPenaltyWarning(10);
+    } else {
+      setPenaltyWarning(rejectExplanation.trim().length < 15 ? 10 : 0);
+    }
+  };
+
+  // Confirmar rechazo de solicitud con justificación obligatoria y advertencia de puntos
+  const handleConfirmRejection = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!rejectModalItem) return;
+
+    if (!rejectExplanation.trim()) {
+      alert('Por favor explica detalladamente el por qué rechazas este servicio para que el cliente y el administrador lo revisen.');
+      return;
+    }
+
+    const isFarLocation = rejectReason.toLowerCase().includes('lejos') || rejectReason.toLowerCase().includes('cobertura');
+    const penaltyToApply = (isFarLocation || rejectExplanation.trim().length >= 15) && !rejectReason.includes('Sin justificación') ? 0 : 10;
+
+    const success = rejectServiceBooking(rejectModalItem.id, {
+      reason: rejectReason,
+      explanation: rejectExplanation.trim(),
+      penaltyPoints: penaltyToApply,
+    });
+
+    if (success) {
+      const refreshed = getCurrentUser();
+      setUser(refreshed);
+      if (refreshed) setNotifications(getUserNotifications(refreshed.id));
+      setRejectModalItem(null);
+      setRejectExplanation('');
+      if (penaltyToApply > 0) {
+        setToastMessage(`⚠️ Solicitud rechazada. Incurriste en -${penaltyToApply} puntos negativos de reputación.`);
+      } else {
+        setToastMessage('✓ Solicitud rechazada con causa justificada (0 puntos negativos). El cliente y el admin fueron notificados.');
+      }
+      setTimeout(() => setToastMessage(null), 5000);
     }
   };
 
@@ -618,13 +673,31 @@ function UserDashboardContent() {
                       <span>Esperando tu confirmación</span>
                     </span>
 
-                    <button
-                      onClick={() => handleConfirmService(req.id, req.estimatedTimeRange)}
-                      className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center space-x-1.5"
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>Confirmar Solicitud</span>
-                    </button>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRejectModalItem(req);
+                          setRejectReason('El lugar está muy lejos de mi zona de cobertura (Fuera de perímetro)');
+                          setRejectExplanation('');
+                          setPenaltyWarning(0);
+                        }}
+                        className="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs border border-rose-200 transition-all flex items-center space-x-1 cursor-pointer"
+                        title="Rechazar solicitud explicando el motivo"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                        <span>Rechazar</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleConfirmService(req.id, req.estimatedTimeRange)}
+                        className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center space-x-1.5 cursor-pointer"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Aprobar / Confirmar</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -1374,6 +1447,12 @@ function UserDashboardContent() {
                               <span>Cancelado</span>
                             </span>
                           )}
+                          {item.status === 'RECHAZADO' && (
+                            <span className="px-3 py-1 rounded-full text-xs font-black bg-rose-50 text-rose-700 border border-rose-300 flex items-center space-x-1">
+                              <X className="w-3.5 h-3.5" />
+                              <span>Rechazado por el Servidor</span>
+                            </span>
+                          )}
                         </div>
 
                         {/* Pago del Servicio */}
@@ -1439,17 +1518,60 @@ function UserDashboardContent() {
                       </div>
                     )}
 
+                    {/* Detalle si fue Rechazado por el Servidor */}
+                    {item.status === 'RECHAZADO' && item.rejectionReason && (
+                      <div className="p-3.5 bg-rose-50/70 border border-rose-200 rounded-2xl space-y-1.5 text-xs text-rose-900">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="font-bold flex items-center space-x-1.5">
+                            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                            <span>Motivo de rechazo: {item.rejectionReason}</span>
+                          </span>
+                          {item.penaltyPointsApplied !== undefined && item.penaltyPointsApplied > 0 ? (
+                            <span className="px-2.5 py-0.5 rounded-full bg-rose-200 text-rose-800 text-[10px] font-black">
+                              ⚠️ -{item.penaltyPointsApplied} Pts Negativos
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black">
+                              ✓ Justificado (0 Pts Negativos)
+                            </span>
+                          )}
+                        </div>
+                        {item.rejectionExplanation && (
+                          <p className="text-slate-700 italic text-[11px] bg-white/70 p-2.5 rounded-xl border border-rose-100 leading-relaxed">
+                            "{item.rejectionExplanation}"
+                          </p>
+                        )}
+                      </div>
+                    )}
+
                     {/* Botones de acción rápida para cambiar estado */}
-                    {user.role === 'PROVIDER' && item.status !== 'COMPLETADO' && (
+                    {user.role === 'PROVIDER' && item.status !== 'COMPLETADO' && item.status !== 'RECHAZADO' && (
                       <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-end gap-2">
                         {item.status === 'SOLICITADO' && (
-                          <button
-                            onClick={() => handleConfirmService(item.id, item.estimatedTimeRange)}
-                            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-colors flex items-center space-x-1.5"
-                          >
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>Confirmar Solicitud con Rango Estimado</span>
-                          </button>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setRejectModalItem(item);
+                                setRejectReason('El lugar está muy lejos de mi zona de cobertura (Fuera de perímetro)');
+                                setRejectExplanation('');
+                                setPenaltyWarning(0);
+                              }}
+                              className="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs border border-rose-200 transition-colors flex items-center space-x-1 cursor-pointer"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                              <span>Rechazar con Justificación</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleConfirmService(item.id, item.estimatedTimeRange)}
+                              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-colors flex items-center space-x-1.5 cursor-pointer"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Aprobar y Confirmar Rango</span>
+                            </button>
+                          </div>
                         )}
                         {item.status === 'CONFIRMADO' && (
                           <button
@@ -1546,6 +1668,11 @@ function UserDashboardContent() {
                           <CheckCircle2 className="w-3 h-3" />
                           <span>Completado</span>
                         </span>
+                      ) : item.status === 'RECHAZADO' ? (
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-rose-50 text-rose-700 border border-rose-200 flex items-center space-x-1">
+                          <X className="w-3 h-3" />
+                          <span>Rechazado por el Servidor</span>
+                        </span>
                       ) : (
                         <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-blue-50 text-[#0056d2] border border-blue-200 flex items-center space-x-1">
                           <Clock className="w-3 h-3" />
@@ -1600,6 +1727,29 @@ function UserDashboardContent() {
                         </span>
                       )}
                     </div>
+
+                    {/* Detalle si fue Rechazado por el Servidor para conocimiento del Cliente */}
+                    {item.status === 'RECHAZADO' && item.rejectionReason && (
+                      <div className="mt-3 p-3.5 bg-rose-50/70 border border-rose-200 rounded-2xl text-xs text-rose-900 space-y-2">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="font-bold flex items-center space-x-1.5">
+                            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                            <span>Motivo indicado por el servidor: {item.rejectionReason}</span>
+                          </span>
+                          <Link
+                            href="/services"
+                            className="px-3 py-1 rounded-lg bg-[#0056d2] text-white font-bold text-xs hover:bg-[#0046a8] transition-colors"
+                          >
+                            Solicitar a otro profesional
+                          </Link>
+                        </div>
+                        {item.rejectionExplanation && (
+                          <p className="text-slate-600 italic text-[11px] bg-white/70 p-2.5 rounded-xl border border-rose-100 leading-relaxed">
+                            "{item.rejectionExplanation}"
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -1623,6 +1773,56 @@ function UserDashboardContent() {
                 </p>
               </div>
             </div>
+
+            {/* Tarjeta de Reputación y Puntos del Servidor (Solo para prestadores) */}
+            {user.role === 'PROVIDER' && (
+              <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white shadow-md space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Award className="w-5 h-5 text-amber-400" />
+                    <h4 className="text-sm font-black tracking-tight">Reputación y Puntos de Servidor</h4>
+                  </div>
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-black border border-emerald-400/30">
+                    Servidor Activo
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+                  <div className="p-3 rounded-xl bg-white/10 border border-white/10">
+                    <span className="text-[10px] text-slate-300 block uppercase font-bold">Puntaje Global</span>
+                    <span className="text-xl font-black text-white">
+                      {user.reputationPoints !== undefined ? user.reputationPoints : 100}
+                      <span className="text-xs text-slate-400 font-normal">/100</span>
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-white/10 border border-white/10">
+                    <span className="text-[10px] text-slate-300 block uppercase font-bold">Puntos Negativos</span>
+                    <span className={`text-xl font-black ${(user.negativePoints || 0) > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                      {user.negativePoints || 0} pts
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-white/10 border border-white/10">
+                    <span className="text-[10px] text-slate-300 block uppercase font-bold">Aprobados</span>
+                    <span className="text-xl font-black text-emerald-400">
+                      {user.acceptedServicesCount || completedJobs.length}
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-white/10 border border-white/10">
+                    <span className="text-[10px] text-slate-300 block uppercase font-bold">Rechazados</span>
+                    <span className="text-xl font-black text-amber-400">
+                      {user.rejectedServicesCount || historyItems.filter((h) => h.status === 'RECHAZADO').length}
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-slate-300 leading-relaxed pt-1">
+                  💡 <strong>Regla de calidad:</strong> Rechazos justificados (como lugares muy lejanos o fuera del perímetro de Cali) no generan puntos negativos. Rechazar sin justificación incurre en <strong>-10 puntos</strong>.
+                </p>
+              </div>
+            )}
 
             <form onSubmit={handleSaveProfile} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -2357,6 +2557,131 @@ function UserDashboardContent() {
                       <span>Confirmar Pago (${(user.platformDebt || 0).toLocaleString('es-CO')} COP)</span>
                     </>
                   )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Rechazo de Solicitud de Servicio (con justificación obligatoria y advertencia de puntos negativos) */}
+      {rejectModalItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-5 shadow-2xl border border-slate-200">
+            <div className="flex items-start justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center font-black">
+                  <AlertCircle className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-black text-slate-900">
+                    Rechazar Solicitud de Servicio
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    {rejectModalItem.serviceTitle} • Cliente: {rejectModalItem.clientName}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRejectModalItem(null)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Advertencia del sistema sobre puntos negativos */}
+            <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1">
+              <span className="font-black flex items-center space-x-1.5">
+                <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>Política de Calidad y Puntos de Servidor:</span>
+              </span>
+              <p className="text-[11px] leading-relaxed text-slate-700">
+                Como servidor debes explicar el por qué rechazas la solicitud. Si la causa es justificada (ej. <strong>el lugar es muy lejos</strong>, cruce de horarios o falta de repuestos específicos), <strong>no incurres en puntos negativos</strong>. Si rechazas sin justificación válida, se aplicarán <strong>-10 puntos negativos</strong> a tu reputación en la plataforma.
+              </p>
+            </div>
+
+            <form onSubmit={handleConfirmRejection} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Motivo Principal de Rechazo *
+                </label>
+                <select
+                  value={rejectReason}
+                  onChange={(e) => handleSelectRejectReason(e.target.value)}
+                  className="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#0056d2]"
+                >
+                  <option value="El lugar está muy lejos de mi zona de cobertura (Fuera de perímetro)">
+                    📍 El lugar está muy lejos de mi zona de cobertura (Fuera de perímetro) [Válido - 0 pts negativos]
+                  </option>
+                  <option value="Cruce de horarios / Sin disponibilidad en esa fecha">
+                    ⏰ Cruce de horarios / Ya tengo otro servicio asignado [Válido con explicación]
+                  </option>
+                  <option value="No cuento con las herramientas o repuestos especializados requeridos">
+                    🛠️ No cuento con repuestos o herramientas especializadas [Válido con explicación]
+                  </option>
+                  <option value="Motivo de fuerza mayor o salud">
+                    🩺 Motivo de fuerza mayor o salud [Válido con explicación]
+                  </option>
+                  <option value="Sin justificación / No deseo tomar el servicio">
+                    ⚠️ Sin justificación / No deseo tomar el servicio [Incurre en -10 puntos negativos]
+                  </option>
+                  <option value="Otro motivo (Especificar detalladamente)">
+                    📝 Otro motivo (Especificar detalladamente)
+                  </option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Explicación Detallada del Rechazo *
+                </label>
+                <textarea
+                  rows={3}
+                  required
+                  placeholder="Ej: La dirección indicada en Jamundí o periferia queda a más de 25 km de mi base en Cali Norte y no alcanzo a desplazarme en el horario pactado..."
+                  value={rejectExplanation}
+                  onChange={(e) => {
+                    setRejectExplanation(e.target.value);
+                    if (!rejectReason.includes('lejos') && !rejectReason.includes('cobertura')) {
+                      setPenaltyWarning(e.target.value.trim().length < 15 || rejectReason.includes('Sin justificación') ? 10 : 0);
+                    }
+                  }}
+                  className="w-full text-xs font-medium bg-slate-50 border border-slate-200 rounded-xl p-3 focus:outline-none focus:border-[#0056d2] resize-none"
+                ></textarea>
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Mínimo 15 caracteres para validar la justificación ante el administrador y cliente.
+                </p>
+              </div>
+
+              {/* Indicador en tiempo real de penalización */}
+              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                <span className="font-semibold text-slate-600">Impacto en Reputación:</span>
+                {penaltyWarning > 0 ? (
+                  <span className="px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 font-black text-[11px]">
+                    ⚠️ Se aplicarán -10 puntos negativos
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-black text-[11px]">
+                    ✓ Justificado (0 puntos negativos)
+                  </span>
+                )}
+              </div>
+
+              <div className="pt-2 flex items-center justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setRejectModalItem(null)}
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs shadow-md shadow-rose-600/20 transition-all cursor-pointer"
+                >
+                  Confirmar Rechazo
                 </button>
               </div>
             </form>
